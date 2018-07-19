@@ -470,7 +470,6 @@ class FoodRow extends Component {
     this.lastStateUpdateTime = new Date();
     this.lastDatabaseUpdateTime = new Date(0);
     this.databaseUpdateIntervalId = null;
-    this.isDirty = false;
     this.onClick = this.onClick.bind(this);
     this.checkboxRef = React.createRef();
   }
@@ -479,29 +478,30 @@ class FoodRow extends Component {
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     this.lastStateUpdateTime = new Date();
+    // Check if we're already waiting to update
     if (this.databaseUpdateIntervalId != null) {
       return;
     }
+    // Not yet waiting to update, so set up an interval to wait until the user stops editing
     var that = this;
+    console.log("New Interval");
     this.databaseUpdateIntervalId = setInterval(function(){
-      if (new Date() - that.lastStateUpdateTime < 5000) {
-        return; // Update database after 5s of no modifications.
+      if (new Date() - that.lastStateUpdateTime < 2000) {
+        return; // There's been a change in the last 5s, so don't update the database yet
       }
       // TODO: Update database here
+      that.updateDatabase();
+      console.log("Clearing Interval");
       clearInterval(that.databaseUpdateIntervalId);
-    }, 5000);
+    }, 1000);
 	}
   updateDatabase() {
     var stateClone = JSON.parse(JSON.stringify(this.state));
-    if (stateClone['date'] == '') {
-      //stateClone['date'] = 
-    }
-    // Submit entry to server
     var that = this;
-    axios.post("https://97.107.137.19:5000/data/food", stateClone, {withCredentials: true})
+    axios.post("https://97.107.137.19:5000/data/food/"+this.props.id, stateClone, {withCredentials: true})
         .then(function(response){
-          // Parent Callback
-          that.onSubmit(stateClone);
+          console.log('Updating db');
+          that.lastDatabaseUpdateTime = new Date();
         });
   }
   getOnUpdateHandler(propName) {
@@ -510,7 +510,6 @@ class FoodRow extends Component {
       var x = {};
       x[propName] = val;
       that.setState(x);
-      that.isDirty = true;
     }
   }
   render() {
