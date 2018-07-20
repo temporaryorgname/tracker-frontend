@@ -465,7 +465,7 @@ class FoodRow extends Component {
       quantity: props.quantity,
       calories: props.calories,
       protein: props.protein,
-      photos: []
+      photos: props.photos
     };
     this.lastStateUpdateTime = new Date();
     this.lastDatabaseUpdateTime = new Date(0);
@@ -484,15 +484,13 @@ class FoodRow extends Component {
     }
     // Not yet waiting to update, so set up an interval to wait until the user stops editing
     var that = this;
-    console.log("New Interval");
-    this.databaseUpdateIntervalId = setInterval(function(){
+    this.databaseUpdateIntervalId = setInterval(function() {
       if (new Date() - that.lastStateUpdateTime < 2000) {
         return; // There's been a change in the last 5s, so don't update the database yet
       }
-      // TODO: Update database here
       that.updateDatabase();
-      console.log("Clearing Interval");
       clearInterval(that.databaseUpdateIntervalId);
+      that.databaseUpdateIntervalId = null;
     }, 1000);
 	}
   updateDatabase() {
@@ -521,7 +519,9 @@ class FoodRow extends Component {
         <FoodRowCell value={this.state.quantity} onChange={this.getOnUpdateHandler('quantity')} />
         <FoodRowCell value={this.state.calories} onChange={this.getOnUpdateHandler('calories')} />
         <FoodRowCell value={this.state.protein} onChange={this.getOnUpdateHandler('protein')} />
-        <FoodRowPhotoCell photos={this.state.photos} onChange={this.getOnUpdateHandler('photos')} />
+        <td>
+          <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.photos}/>
+        </td>
       </tr>
     );
   }
@@ -567,15 +567,11 @@ class FoodRowCell extends Component {
 }
 
 class FoodRowPhotoCell extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      photos: props.photos
-    }
-  }
   render() {
     return (
-      <td><i className="material-icons">photo</i></td>
+      <td>
+        <FileUploadDialog onUpload={this.props.onChange} files={this.props.photos}/>
+      </td>
     );
   }
 }
