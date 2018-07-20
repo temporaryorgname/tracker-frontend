@@ -352,7 +352,9 @@ class FoodTable extends Component {
   }
   computeTotal(key) {
     return this.state.data.reduce(function(acc, cur) {
-      return acc + cur[key];
+      if (cur[key] == null)
+        return acc;
+      return acc + parseFloat(cur[key]);
     }, 0);
   }
   render() {
