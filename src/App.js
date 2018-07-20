@@ -115,7 +115,9 @@ class Login extends Component {
     super(props);
     this.state = {
       email: '',
-      password: ''
+      password: '',
+      loggingIn: false,
+      errors: []
     };
     this.onLogin = props['onLogin'];
     this.login = this.login.bind(this);
@@ -126,15 +128,20 @@ class Login extends Component {
     // TODO: Login
     console.log("Attempting to log in.");
     console.log(this.state);
+    this.setState({ loggingIn: true });
     var that = this;
     axios.post("https://97.107.137.19:5000/auth/login", this.state, {withCredentials: true, rejectUnauthorized: false})
         .then(function(response){
+          that.setState({ loggingIn: false });
           console.log(response);
           that.onLogin(response);
-          that.props.history.push('/diet');
+          that.props.history.push('/food');
         })
         .catch(function(error){
-          console.log("Login failure. Try again.");
+          that.setState({
+            loggingIn: false
+            errors: ["Login failure. Try again."]
+          });
         });
   }
   handleFormChange(e) {
@@ -153,7 +160,7 @@ class Login extends Component {
           <label>Password: </label>
           <input className='form-control' type='password' name='password' onChange={this.handleFormChange}/>
         </div>
-        <input className='btn btn-primary' type='submit' value='Login' />
+        <input className='btn btn-primary' type='submit' value={this.state.loggingIn ? 'Logging in...' : 'Login'} />
       </form>
     );
   }
@@ -211,29 +218,6 @@ class Signup extends Component {
         </div>
         <input className='btn btn-primary' type='submit' value='Sign Up' onClick={this.signup} />
       </div>
-    );
-  }
-}
-
-class FileUploader extends Component {
-  constructor(props) {
-    super(props);
-    this.handleFileUpload = this.handleFileUpload.bind(this);
-  }
-  handleFileUpload(e) {
-    window.x = e.target;
-    var formData = new FormData();
-    formData.append("file", e.target.files[0]);
-    axios.post("https://97.107.137.19:5000/data/food/photo", formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            },
-            withCredentials: true
-        });
-  }
-  render() {
-    return (
-      <input type="file" name="file" onChange={this.handleFileUpload}/>
     );
   }
 }
@@ -381,13 +365,13 @@ class FoodTable extends Component {
 
 class FoodRowNewEntry extends Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
-      date: props.date,
-      itemName: props.itemName,
-      quantity: props.quantity,
-      calories: props.calories,
-      protein: props.protein,
+      date: new Date().toISOString().substr(0,10),
+      name: '',
+      quantity: '',
+      calories: '',
+      protein: '',
       photos: []
     };
     if ("onSubmit" in props) {
@@ -406,7 +390,7 @@ class FoodRowNewEntry extends Component {
   addEntry(e) {
     var stateClone = JSON.parse(JSON.stringify(this.state));
     if (stateClone['date'] == '') {
-      //stateClone['date'] = 
+      stateClone['date'] = new Date().toISOString().substr(0,10);
     }
     // Submit entry to server
     var that = this;
@@ -415,8 +399,14 @@ class FoodRowNewEntry extends Component {
           stateClone['id'] = response.data;
           // Parent Callback
           that.onSubmit(stateClone);
+          that.setState({
+            name: '',
+            quantity: '',
+            calories: '',
+            protein: '',
+            photos: []
+          });
         });
-
 
     // Clear form and place cursor
     window.x = this.ref.current;
@@ -442,11 +432,11 @@ class FoodRowNewEntry extends Component {
     return (
       <tr ref={this.ref} onKeyPress={this.handleKeyPress}>
         <td><Button color='primary' onClick={this.addEntry}>Save</Button></td>
-        <td><input type='text' onChange={this.onChange} name='date' /></td>
-        <td><input type='text' onChange={this.onChange} name='itemName' /></td>
-        <td><input type='text' onChange={this.onChange} name='quantity' /></td>
-        <td><input type='text' onChange={this.onChange} name='calories' /></td>
-        <td><input type='text' onChange={this.onChange} name='protein' /></td>
+        <td><input type='text' value={this.state.date} onChange={this.onChange} name='date' /></td>
+        <td><input type='text' value={this.state.name} onChange={this.onChange} name='name' /></td>
+        <td><input type='text' value={this.state.quantity} onChange={this.onChange} name='quantity' /></td>
+        <td><input type='text' value={this.state.calories} onChange={this.onChange} name='calories' /></td>
+        <td><input type='text' value={this.state.protein} onChange={this.onChange} name='protein' /></td>
         <td>
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>
@@ -461,7 +451,7 @@ class FoodRow extends Component {
     this.state = {
       id: props.id,
       date: props.date,
-      itemName: props.itemName,
+      name: props.name,
       quantity: props.quantity,
       calories: props.calories,
       protein: props.protein,
@@ -470,10 +460,10 @@ class FoodRow extends Component {
     this.lastStateUpdateTime = new Date();
     this.lastDatabaseUpdateTime = new Date(0);
     this.databaseUpdateIntervalId = null;
-    this.onClick = this.onClick.bind(this);
+    this.onSelect = this.onSelect.bind(this);
     this.checkboxRef = React.createRef();
   }
-  onClick() {
+  onSelect() {
     // TODO: Call parent handler for selection
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -515,7 +505,7 @@ class FoodRow extends Component {
       <tr draggable='true'>
         <td onClick={this.onClick}><input ref={this.checkboxRef} type='checkbox' /></td>
         <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
-        <FoodRowCell value={this.state.itemName} onChange={this.getOnUpdateHandler('itemName')} />
+        <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
         <FoodRowCell value={this.state.quantity} onChange={this.getOnUpdateHandler('quantity')} />
         <FoodRowCell value={this.state.calories} onChange={this.getOnUpdateHandler('calories')} />
         <FoodRowCell value={this.state.protein} onChange={this.getOnUpdateHandler('protein')} />
