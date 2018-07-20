@@ -289,7 +289,7 @@ class FileUploadDialog extends Component {
           <i className="material-icons">add_a_photo</i>
         </Link>
         <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
-          <ModalHeader toggle={this.toggle}>Modal title</ModalHeader>
+          <ModalHeader toggle={this.toggle}>Upload Photo</ModalHeader>
           <ModalBody>
             <div>
               {
@@ -299,7 +299,7 @@ class FileUploadDialog extends Component {
               }
             </div>
             <FormGroup>
-              <Label for="exampleFile">File</Label>
+              <Label for="file"></Label>
               <Input type="file" name="file" onChange={this.uploadFile}/>
               <FormText color="muted">
                 Select a photo to include with your entry.
@@ -352,12 +352,11 @@ class FoodTable extends Component {
   render() {
     return (
       <div className='row'>
-        <div className='col col-3'>
-          <i className="material-icons">date_range</i>
-          <input className='form-control' type='date' onChange={this.handleDateChange}/>
-        </div>
         <div className='col col-6'>
-          <span>Food intake on {this.state.date}</span>
+          <FormGroup>
+            <Label for="date"><i className="material-icons">date_range</i></Label>
+            <Input className='form-control' value={this.state.date} type='date' onChange={this.handleDateChange}/>
+          </FormGroup>
         </div>
         <div className='col col-12'>
           <table className="Food table">
@@ -373,7 +372,7 @@ class FoodTable extends Component {
             </tr>
             </thead>
             <tbody>
-            <FoodRowNewEntry onSubmit={this.handleAddEntry}/>
+            <FoodRowNewEntry defaultDate={this.state.date} onSubmit={this.handleAddEntry}/>
             {
               this.state.data.map(function(data){
                 return <FoodRow key={data.id} {...data}/>
@@ -390,8 +389,9 @@ class FoodTable extends Component {
 class FoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
+    console.log(props.defaultDate);
     this.state = {
-      date: new Date().toISOString().substr(0,10),
+      date: '',
       name: '',
       quantity: '',
       calories: '',
@@ -403,13 +403,16 @@ class FoodRowNewEntry extends Component {
     } else {
       this.onSubmit = function(){};
     }
-    this.ref = React.createRef();
-    this.dialogRef = React.createRef();
-    window.ref = this.dialogRef;
+    this.nameRef = React.createRef();
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+  }
+  componentWillReceiveProps(props) {
+    this.setState({
+      date: props.defaultDate || new Date().toISOString().substr(0,10),
+    });  
   }
   addEntry(e) {
     var stateClone = JSON.parse(JSON.stringify(this.state));
@@ -423,18 +426,19 @@ class FoodRowNewEntry extends Component {
           stateClone['id'] = response.data;
           // Parent Callback
           that.onSubmit(stateClone);
+          // Clear form
           that.setState({
+            date: that.props.defaultDate || new Date().toISOString().substr(0,10),
             name: '',
             quantity: '',
             calories: '',
             protein: '',
             photos: []
           });
+          // Place cursor
+          that.nameRef.current.focus();
         });
 
-    // Clear form and place cursor
-    window.x = this.ref.current;
-    //$(this.ref.current).find('input:text').val('');
   }
   onChange(e) {
     var x = {}
@@ -454,10 +458,10 @@ class FoodRowNewEntry extends Component {
   render() {
     //<td><input type='button' className='btn btn-primary' value='Save' onClick={this.addEntry}/></td>
     return (
-      <tr ref={this.ref} onKeyPress={this.handleKeyPress}>
+      <tr onKeyPress={this.handleKeyPress}>
         <td><Button color='primary' onClick={this.addEntry}>Save</Button></td>
         <td><input type='text' value={this.state.date} onChange={this.onChange} name='date' /></td>
-        <td><input type='text' value={this.state.name} onChange={this.onChange} name='name' /></td>
+        <td><input type='text' value={this.state.name} onChange={this.onChange} name='name' ref={this.nameRef} /></td>
         <td><input type='text' value={this.state.quantity} onChange={this.onChange} name='quantity' /></td>
         <td><input type='text' value={this.state.calories} onChange={this.onChange} name='calories' /></td>
         <td><input type='text' value={this.state.protein} onChange={this.onChange} name='protein' /></td>
@@ -582,16 +586,6 @@ class FoodRowCell extends Component {
         <td><input type='textfield' value={this.props.value} onKeyPress={this.handleKeyPress} onBlur={this.doneEdit} onChange={this.handleChange}/></td>
       );
     }
-  }
-}
-
-class FoodRowPhotoCell extends Component {
-  render() {
-    return (
-      <td>
-        <FileUploadDialog onUpload={this.props.onChange} files={this.props.photos}/>
-      </td>
-    );
   }
 }
 
