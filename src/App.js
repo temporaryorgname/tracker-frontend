@@ -325,6 +325,7 @@ class FoodTable extends Component {
     this.handleAddEntry = this.handleAddEntry.bind(this);
     this.handleDateChange = this.handleDateChange.bind(this);
     this.updateData = this.updateData.bind(this);
+    this.computeTotal = this.computeTotal.bind(this);
   }
   componentDidMount() {
     this.updateData();
@@ -348,6 +349,11 @@ class FoodTable extends Component {
     this.setState({
       data: [entry].concat(this.state.data)
     });
+  }
+  computeTotal(key) {
+    return this.state.data.reduce(function(acc, cur) {
+      return acc + cur[key];
+    }, 0);
   }
   render() {
     return (
@@ -378,6 +384,15 @@ class FoodTable extends Component {
                 return <FoodRow key={data.id} {...data}/>
               })
             }
+            <tr>
+              <th>Total</th>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>{this.computeTotal('calories')}</td>
+              <td>{this.computeTotal('protein')}</td>
+              <td></td>
+            </tr>
             </tbody>
           </table>
         </div>
