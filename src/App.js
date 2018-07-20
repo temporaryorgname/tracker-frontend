@@ -479,7 +479,8 @@ class FoodRow extends Component {
       quantity: props.quantity,
       calories: props.calories,
       protein: props.protein,
-      photos: props.photos
+      photos: props.photos,
+      dirty: false
     };
     this.lastStateUpdateTime = new Date();
     this.lastDatabaseUpdateTime = new Date(0);
@@ -491,21 +492,6 @@ class FoodRow extends Component {
     // TODO: Call parent handler for selection
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    this.lastStateUpdateTime = new Date();
-    // Check if we're already waiting to update
-    if (this.databaseUpdateIntervalId != null) {
-      return;
-    }
-    // Not yet waiting to update, so set up an interval to wait until the user stops editing
-    var that = this;
-    this.databaseUpdateIntervalId = setInterval(function() {
-      if (new Date() - that.lastStateUpdateTime < 2000) {
-        return; // There's been a change in the last 5s, so don't update the database yet
-      }
-      that.updateDatabase();
-      clearInterval(that.databaseUpdateIntervalId);
-      that.databaseUpdateIntervalId = null;
-    }, 1000);
 	}
   updateDatabase() {
     var stateClone = JSON.parse(JSON.stringify(this.state));
@@ -519,14 +505,33 @@ class FoodRow extends Component {
   getOnUpdateHandler(propName) {
     var that = this;
     return function(val) {
+      // Update entry values
       var x = {};
       x[propName] = val;
       that.setState(x);
+
+      // Update dirty state
+      that.lastStateUpdateTime = new Date();
+      that.setState({ dirty: true });
+      // Check if we're already waiting to update
+      if (that.databaseUpdateIntervalId != null) {
+        return;
+      }
+      // Not yet waiting to update, so set up an interval to wait until the user stops editing
+      that.databaseUpdateIntervalId = setInterval(function() {
+        if (new Date() - that.lastStateUpdateTime < 2000) {
+          return; // There's been a change in the last 5s, so don't update the database yet
+        }
+        that.updateDatabase();
+        clearInterval(that.databaseUpdateIntervalId);
+        that.databaseUpdateIntervalId = null;
+        that.setState({ dirty: false });
+      }, 1000);
     }
   }
   render() {
     return (
-      <tr draggable='true'>
+      <tr draggable='true' className={this.state.dirty ? 'table-info' : ''}>
         <td onClick={this.onClick}><input ref={this.checkboxRef} type='checkbox' /></td>
         <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
         <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
