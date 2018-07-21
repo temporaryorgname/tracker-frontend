@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
 import axios from 'axios';
 import https from 'https';
 import './App.css';
@@ -32,7 +32,7 @@ class App extends Component {
         <Router>
           <div className="App container-fluid">
             <Navigation loggedIn={this.state.loggedIn}/>
-            <Route path="/food" component={FoodTable} />
+            <Route path="/food" component={DietPage} />
             <Route path="/logout" render={(props) => <Logout onLogout={this.updateLoggedInStatus} {...props} />}/>
           </div>
         </Router>
@@ -315,35 +315,62 @@ class FileUploadDialog extends Component {
   }
 }
 
+class DietPage extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      date: new Date().toISOString().substr(0,10),
+    }
+    this.handleDateChange = this.handleDateChange.bind(this);
+  }
+  handleDateChange(event) {
+    this.setState({
+      date: event.target.value
+    });
+  }
+  render() {
+    return (
+      <div>
+        <div className='row'>
+          <div className='col col-6'>
+            <Form inline>
+              <FormGroup>
+                <Label for="date"><i className="material-icons">date_range</i></Label>
+                <Input className='form-control' value={this.state.date} type='date' onChange={this.handleDateChange}/>
+              </FormGroup>
+            </Form>
+          </div>
+        </div>
+        <FoodTable date={this.state.date} />
+      </div>
+    );
+  }
+}
+
 class FoodTable extends Component {
   constructor(props){
     super(props)
     this.state = {
-      date: new Date().toISOString().substr(0,10),
       data: []
     }
     this.handleAddEntry = this.handleAddEntry.bind(this);
-    this.handleDateChange = this.handleDateChange.bind(this);
     this.updateData = this.updateData.bind(this);
     this.computeTotal = this.computeTotal.bind(this);
   }
-  componentDidMount() {
-    this.updateData();
+  componentDidUpdate(prevProps) {
+    if (prevProps.date != this.props.date) {
+      this.updateData();
+    }
   }
   updateData() {
     var that = this;
-    axios.get("https://97.107.137.19:5000/data/food", {params: {date: this.state.date}, withCredentials: true})
+    axios.get("https://97.107.137.19:5000/data/food", {params: {date: this.props.date}, withCredentials: true})
         .then(function(response){
           window.result = response;
           that.setState({
             data: response.data
           });
         });
-  }
-  handleDateChange(event) {
-    this.setState({
-      date: event.target.value
-    }, this.updateData);
   }
   handleAddEntry(entry) {
     this.setState({
@@ -360,12 +387,6 @@ class FoodTable extends Component {
   render() {
     return (
       <div className='row'>
-        <div className='col col-6'>
-          <FormGroup>
-            <Label for="date"><i className="material-icons">date_range</i></Label>
-            <Input className='form-control' value={this.state.date} type='date' onChange={this.handleDateChange}/>
-          </FormGroup>
-        </div>
         <div className='col col-12'>
           <table className="Food table">
             <thead>
@@ -380,7 +401,7 @@ class FoodTable extends Component {
             </tr>
             </thead>
             <tbody>
-            <FoodRowNewEntry defaultDate={this.state.date} onSubmit={this.handleAddEntry}/>
+            <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
             {
               this.state.data.map(function(data){
                 return <FoodRow key={data.id} {...data}/>
