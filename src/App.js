@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
 import axios from 'axios';
-import https from 'https';
 import './App.css';
 
 class App extends Component {
@@ -16,9 +15,8 @@ class App extends Component {
   }
   updateLoggedInStatus() {
     var that = this;
-    axios.get("https://97.107.137.19:5000/auth/current_session", {withCredentials: true})
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/auth/current_session", {withCredentials: true})
         .then(function(response){
-          console.log(response);
           if (response.data != 'None') {
             that.setState({loggedIn: true});
           } else {
@@ -97,11 +95,9 @@ class Logout extends Component {
     this.logout = this.logout.bind(this);
   }
   logout() {
-    console.log("Attempting to log out.");
     var that = this;
-    axios.post("https://97.107.137.19:5000/auth/logout", this.state, {withCredentials: true})
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/auth/logout", this.state, {withCredentials: true})
         .then(function(response){
-          console.log(response);
           that.props.onLogout(response);
           that.props.history.push('/login');
         });
@@ -133,7 +129,7 @@ class Login extends Component {
     e.preventDefault(); // Prevent the form from routing the user elsewhere
     this.setState({ loggingIn: true, errors: [] });
     var that = this;
-    axios.post("https://97.107.137.19:5000/auth/login", this.state, {withCredentials: true})
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/auth/login", this.state, {withCredentials: true})
         .then(function(response){
           that.setState({ loggingIn: false });
           that.onLogin(response);
@@ -204,7 +200,7 @@ class Signup extends Component {
       return;
     }
     var that = this;
-    axios.post("https://97.107.137.19:5000/auth/signup", this.state, {withCredentials: true})
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/auth/signup", this.state, {withCredentials: true})
         .then(function(response){
           that.setState({ signingUp: false, errors: [] });
           that.onSignup(response);
@@ -262,23 +258,18 @@ class FileUploadDialog extends Component {
     this.toggle = this.toggle.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.onUpload = props.onUpload;
-    console.log(this.onUpload);
   }
   uploadFile(event) {
-    console.log('uploading stuff');
-    console.log(event);
     var target = event.target;
     var formData = new FormData();
     var that = this;
     formData.append("file", target.files[0]);
-    axios.post("https://97.107.137.19:5000/data/food/photo", formData, {
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo", formData, {
             headers: {
               'Content-Type': 'multipart/form-data'
             },
             withCredentials: true
         }).then(function(response){
-          console.log(response);
-          console.log(event);
           target.value = "";
           that.onUpload(that.props.files.concat([response.data.id]));
         });
@@ -370,7 +361,7 @@ class FoodTable extends Component {
   }
   updateData() {
     var that = this;
-    axios.get("https://97.107.137.19:5000/data/food", {params: {date: this.props.date}, withCredentials: true})
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {params: {date: this.props.date}, withCredentials: true})
         .then(function(response){
           window.result = response;
           that.setState({
@@ -407,12 +398,6 @@ class FoodTable extends Component {
             </tr>
             </thead>
             <tbody>
-            <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
-            {
-              this.state.data.map(function(data){
-                return <FoodRow key={data.id} {...data}/>
-              })
-            }
             <tr>
               <th>Total</th>
               <td></td>
@@ -422,6 +407,12 @@ class FoodTable extends Component {
               <td>{this.computeTotal('protein')}</td>
               <td></td>
             </tr>
+            <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
+            {
+              this.state.data.map(function(data){
+                return <FoodRow key={data.id} {...data}/>
+              })
+            }
             </tbody>
           </table>
         </div>
@@ -433,7 +424,6 @@ class FoodTable extends Component {
 class FoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
-    console.log(props.defaultDate);
     this.state = {
       date: '',
       name: '',
@@ -465,7 +455,7 @@ class FoodRowNewEntry extends Component {
     }
     // Submit entry to server
     var that = this;
-    axios.post("https://97.107.137.19:5000/data/food", stateClone, {withCredentials: true})
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", stateClone, {withCredentials: true})
         .then(function(response){
           stateClone['id'] = response.data;
           // Parent Callback
@@ -544,9 +534,8 @@ class FoodRow extends Component {
   updateDatabase() {
     var stateClone = JSON.parse(JSON.stringify(this.state));
     var that = this;
-    axios.post("https://97.107.137.19:5000/data/food/"+this.props.id, stateClone, {withCredentials: true})
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/"+this.props.id, stateClone, {withCredentials: true})
         .then(function(response){
-          console.log('Updating db');
           that.lastDatabaseUpdateTime = new Date();
         });
   }
@@ -642,7 +631,7 @@ class FoodPhotoThumbnail extends Component {
   }
   componentWillMount() {
     var that = this;
-    axios.get("https://97.107.137.19:5000/data/food/photo/"+this.props.fileid, {withCredentials: true})
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid, {withCredentials: true})
         .then(function(response){
           that.setState({data: response.data.data});
         });
