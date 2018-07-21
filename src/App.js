@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
 import axios from 'axios';
 import https from 'https';
@@ -32,8 +32,11 @@ class App extends Component {
         <Router>
           <div className="App container-fluid">
             <Navigation loggedIn={this.state.loggedIn}/>
-            <Route path="/food" component={DietPage} />
-            <Route path="/logout" render={(props) => <Logout onLogout={this.updateLoggedInStatus} {...props} />}/>
+            <Switch>
+              <Route path="/food" component={DietPage} />
+              <Route path="/logout" render={(props) => <Logout onLogout={this.updateLoggedInStatus} {...props} />}/>
+              <Route render={(props) => <ErrorPage404 />}/>
+            </Switch>
           </div>
         </Router>
       );
@@ -42,8 +45,11 @@ class App extends Component {
         <Router>
           <div className="App container-fluid">
             <Navigation loggedIn={this.state.loggedIn}/>
-            <Route path="/login" render={(props) => <Login onLogin={this.updateLoggedInStatus} {...props} />}/>
-            <Route path="/signup" render={(props) => <Signup onSignup={this.updateLoggedInStatus} {...props} />}/>
+            <Switch>
+              <Route path="/login" render={(props) => <Login onLogin={this.updateLoggedInStatus} {...props} />}/>
+              <Route path="/signup" render={(props) => <Signup onSignup={this.updateLoggedInStatus} {...props} />}/>
+              <Route render={(props) => <ErrorPage404 />}/>
+            </Switch>
           </div>
         </Router>
       );
@@ -644,6 +650,16 @@ class FoodPhotoThumbnail extends Component {
   render() {
     return (
       <img width="32" height="32" src={"data:image/png;base64,"+this.state.data} />
+    );
+  }
+}
+
+class ErrorPage404 extends Component {
+  render() {
+    return (
+      <div>
+        404 - Page not found.
+      </div>
     );
   }
 }
