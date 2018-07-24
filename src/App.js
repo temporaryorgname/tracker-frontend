@@ -353,6 +353,8 @@ class FoodTable extends Component {
     this.handleAddEntry = this.handleAddEntry.bind(this);
     this.updateData = this.updateData.bind(this);
     this.computeTotal = this.computeTotal.bind(this);
+
+    this.updateData();
   }
   componentDidUpdate(prevProps) {
     if (prevProps.date != this.props.date) {
