@@ -638,7 +638,7 @@ class FoodPhotoThumbnail extends Component {
   }
   render() {
     return (
-      <img width="32" height="32" src={"data:image/png;base64,"+this.state.data} />
+      <img width="32" src={"data:image/png;base64,"+this.state.data} />
     );
   }
 }
