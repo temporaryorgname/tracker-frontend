@@ -348,11 +348,14 @@ class FoodTable extends Component {
   constructor(props){
     super(props)
     this.state = {
-      data: []
+      data: [],
+      selected: []
     }
     this.handleAddEntry = this.handleAddEntry.bind(this);
+    this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.updateData = this.updateData.bind(this);
     this.computeTotal = this.computeTotal.bind(this);
+    this.getToggleSelectedHandler = this.getToggleSelectedHandler.bind(this);
 
     this.updateData();
   }
@@ -376,6 +379,33 @@ class FoodTable extends Component {
       data: [entry].concat(this.state.data)
     });
   }
+  deleteSelectedEntries() {
+    var that = this;
+    axios.delete(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {data: {id: this.state.selected}, withCredentials: true})
+        .then(function(response) {
+          that.setState({
+            selected: []
+          });
+          that.updateData();
+        });
+  }
+  getToggleSelectedHandler(entryId) {
+    var that = this;
+    return function() {
+      if (that.state.selected.includes(entryId)){
+        var index = that.state.selected.indexOf(entryId);
+        var array = that.state.selected.slice();
+        array.splice(index, 1);
+        that.setState({
+          selected: array
+        });
+      } else {
+        that.setState({
+          selected: that.state.selected.concat([entryId])
+        });
+      }
+    }
+  }
   computeTotal(key) {
     return this.state.data.reduce(function(acc, cur) {
       var num = cur[key];
@@ -388,8 +418,12 @@ class FoodTable extends Component {
     }, 0);
   }
   render() {
+    var that = this;
     return (
       <div className='row'>
+        <div className='col col-12'>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+        </div>
         <div className='col col-12 table-responsive'>
           <table className="Food table">
             <thead>
@@ -416,7 +450,10 @@ class FoodTable extends Component {
             <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
             {
               this.state.data.map(function(data){
-                return <FoodRow key={data.id} {...data}/>
+                return <FoodRow key={data.id} 
+                            selected={that.state.selected.includes(data.id)}
+                            onToggleSelected={that.getToggleSelectedHandler(data.id)}
+                            {...data}/>
               })
             }
             </tbody>
@@ -528,11 +565,7 @@ class FoodRow extends Component {
     this.lastStateUpdateTime = new Date();
     this.lastDatabaseUpdateTime = new Date(0);
     this.databaseUpdateIntervalId = null;
-    this.onSelect = this.onSelect.bind(this);
     this.checkboxRef = React.createRef();
-  }
-  onSelect() {
-    // TODO: Call parent handler for selection
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
 	}
@@ -574,7 +607,7 @@ class FoodRow extends Component {
   render() {
     return (
       <tr draggable='true' className={this.state.dirty ? 'table-info' : ''}>
-        <td onClick={this.onClick}><input ref={this.checkboxRef} type='checkbox' /></td>
+        <td onClick={this.props.onToggleSelected}><input type='checkbox' checked={this.props.selected}/></td>
         <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
         <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
         <FoodRowCell value={this.state.quantity} onChange={this.getOnUpdateHandler('quantity')} />
