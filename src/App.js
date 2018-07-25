@@ -285,7 +285,7 @@ class FileUploadDialog extends Component {
         <Link to='#' onClick={this.toggle}>
           <i className="material-icons">add_a_photo</i>
         </Link>
-        <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+        <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-sm">
           <ModalHeader toggle={this.toggle}>Upload Photo</ModalHeader>
           <ModalBody>
             <div>
@@ -386,7 +386,7 @@ class FoodTable extends Component {
   render() {
     return (
       <div className='row'>
-        <div className='col col-12'>
+        <div className='col col-12 table-responsive'>
           <table className="Food table">
             <thead>
             <tr>
@@ -492,7 +492,6 @@ class FoodRowNewEntry extends Component {
     }
   }
   render() {
-    //<td><input type='button' className='btn btn-primary' value='Save' onClick={this.addEntry}/></td>
     return (
       <tr onKeyPress={this.handleKeyPress}>
         <td><Button color='primary' onClick={this.addEntry}>Save</Button></td>
