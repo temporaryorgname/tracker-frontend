@@ -316,7 +316,7 @@ class DietPage extends Component {
   constructor(props) {
     super(props)
     var now = new Date();
-    var nowString = now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
+    var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
     this.state = {
       date: new Date(nowString).toISOString().substr(0,10),
     }
