@@ -666,7 +666,7 @@ class FoodPhotoThumbnail extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      data: "R0lGODlhEAAQAMQAAORHHOVSKudfOulrSOp3WOyDZu6QdvCchPGolfO0o/XBs/fNwfjZ0frl3/zy7////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAkAABAALAAAAAAQABAAAAVVICSOZGlCQAosJ6mu7fiyZeKqNKToQGDsM8hBADgUXoGAiqhSvp5QAnQKGIgUhwFUYLCVDFCrKUE1lBavAViFIDlTImbKC5Gm2hB0SlBCBMQiB0UjIQA7"
+      data: ""
     }
   }
   componentWillMount() {
@@ -677,9 +677,13 @@ class FoodPhotoThumbnail extends Component {
         });
   }
   render() {
-    return (
-      <img width="32" src={"data:image/png;base64,"+this.state.data} />
-    );
+    if (this.state.data == "") {
+      return (<i className="material-icons">fastfood</i>);
+    } else {
+      return (
+        <img src={"data:image/png;base64,"+this.state.data} />
+      );
+    }
   }
 }
 
