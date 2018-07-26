@@ -315,8 +315,10 @@ class FileUploadDialog extends Component {
 class DietPage extends Component {
   constructor(props) {
     super(props)
+    var now = new Date();
+    var nowString = now.getFullYear()+"-"+now.getMonth()+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
     this.state = {
-      date: new Date().toISOString().substr(0,10),
+      date: new Date(nowString).toISOString().substr(0,10),
     }
     this.handleDateChange = this.handleDateChange.bind(this);
   }
