@@ -5,6 +5,7 @@ import axios from 'axios';
 import './App.css';
 
 import { DietPage } from './Diet.js'
+import { BodyStatsPage } from './Body.js'
 
 class App extends Component {
   constructor(props) {
@@ -34,6 +35,7 @@ class App extends Component {
             <Navigation loggedIn={this.state.loggedIn}/>
             <Switch>
               <Route path="/food" component={DietPage} />
+              <Route path="/body" component={BodyStatsPage} />
               <Route path="/logout" render={(props) => <Logout onLogout={this.updateLoggedInStatus} {...props} />}/>
               <Route render={(props) => <ErrorPage404 />}/>
             </Switch>
