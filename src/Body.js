@@ -75,6 +75,7 @@ class NewBodyWeightEntryForm extends Component {
     var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
     var payload = {
       date: nowString,
+      time: now.toLocaleTimeString(),
       bodyweight: this.state.bodyweight
     }
     var that = this;
