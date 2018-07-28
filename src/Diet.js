@@ -86,7 +86,7 @@ class FileUploadDialog extends Component {
             </div>
             <FormGroup>
               <Label for="file"></Label>
-              <Input type="file" name="file" onChange={this.uploadFile}/>
+              <Input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
               <FormText color="muted">
                 Select a photo to include with your entry.
               </FormText>
