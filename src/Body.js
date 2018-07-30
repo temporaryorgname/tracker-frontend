@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import { Link } from "react-router-dom";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert, Table, FormFeedback } from 'reactstrap';
+import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart } from "react-timeseries-charts";
+import { TimeSeries, TimeRange } from "pondjs";
 import axios from 'axios';
 
 export class BodyStatsPage extends Component {
   render() {
     return (
       <div>
+        <BodyWeightTimeSeries />
         <BodyWeightTable />
       </div>
     );
@@ -111,7 +114,7 @@ class NewBodyWeightEntryForm extends Component {
           <Label for='bodyweight'>Body Weight: </Label>
           <Input type='text' name='bodyweight' value={this.state.bodyweight} onChange={this.handleFormChange} valid={this.state.successMessage} invalid={this.state.errorMessage}/>
           <FormFeedback valid>{this.state.successMessage}</FormFeedback>
-          <FormFeedback invalid>{this.state.errorMessage}</FormFeedback>
+          <FormFeedback invalid='true'>{this.state.errorMessage}</FormFeedback>
         </FormGroup>
       </Form>
     );
@@ -126,6 +129,66 @@ class BodyWeightTableRow extends Component {
         <td></td>
         <td>{this.props.bodyweight}</td>
       </tr>
+    );
+  }
+}
+
+class BodyWeightTimeSeries extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: []
+    };
+    this.getTimeSeries = this.getTimeSeries.bind(this);
+    this.updateData = this.updateData.bind(this); //TODO: This is copied from BodyWeightTable. Move this somewhere else so there's no repeated code or repeat requests.
+    this.updateData();
+  }
+  updateData() {
+    var that = this;
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight", {withCredentials: true})
+        .then(function(response){
+          window.result = response;
+          that.setState({
+            data: response.data
+          });
+        });
+  }
+  getTimeSeries() {
+    if (this.state.data.length == 0) {
+      return null;
+    }
+    var data = {
+      name: 'Body Weight',
+      columns: ['time', 'value'],
+      points: this.state.data.map(function(datum){
+        return [new Date(datum.date), datum.bodyweight];
+      })
+    };
+    data.points.reverse();
+    console.log(data.points);
+    var series = new TimeSeries(data);
+    return series;
+  }
+  render() {
+    // Convert the data to numerical form
+    var series = this.getTimeSeries();
+    if (series == null) {
+      return (
+        <div>No data available yet.</div>
+      );
+    }
+    window.series = series;
+    return (
+      <Resizable>
+      <ChartContainer timeRange={series.timerange()} width={800}>
+        <ChartRow height="200">
+          <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" />
+          <Charts>
+            <LineChart axis="axis1" series={series} />
+          </Charts>
+        </ChartRow>
+      </ChartContainer>
+      </Resizable>
     );
   }
 }
