@@ -161,11 +161,13 @@ class BodyWeightTimeSeries extends Component {
       name: 'Body Weight',
       columns: ['time', 'value'],
       points: this.state.data.map(function(datum){
+        if (datum.time) {
+          return [new Date(datum.date+" "+datum.time), datum.bodyweight];
+        }
         return [new Date(datum.date), datum.bodyweight];
       })
     };
     data.points.reverse();
-    console.log(data.points);
     var series = new TimeSeries(data);
     return series;
   }
@@ -177,7 +179,6 @@ class BodyWeightTimeSeries extends Component {
         <div>No data available yet.</div>
       );
     }
-    window.series = series;
     return (
       <Resizable>
       <ChartContainer timeRange={series.timerange()} width={800}>
