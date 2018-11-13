@@ -101,140 +101,6 @@ class FileUploadDialog extends Component {
   }
 }
 
-class FoodTable extends Component {
-  constructor(props){
-    super(props)
-    this.state = {
-      data: [],
-      selected: []
-    }
-    this.state.data = [];
-    //this.state.data = [
-    //  {"id":1,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[]},
-    //  {"id":2,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[], "children": 
-    //    [{"id":3,"date":"2018-08-26","name":"child item","quantity":"","calories":1,"protein":9,"photos":[]},
-    //    {"id":4,"date":"2018-08-26","name":"child item 2","quantity":"","calories":1,"protein":9,"photos":[]}],
-    //  }
-    //];
-    this.handleAddEntry = this.handleAddEntry.bind(this);
-    this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
-    this.updateData = this.updateData.bind(this);
-    this.computeTotal = this.computeTotal.bind(this);
-    this.handleToggleSelected = this.handleToggleSelected.bind(this);
-    this.getToggleSelectedHandler = this.getToggleSelectedHandler.bind(this);
-
-    this.updateData();
-  }
-  componentDidUpdate(prevProps) {
-    if (prevProps.date != this.props.date) {
-      this.updateData();
-    }
-  }
-  updateData() {
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {params: {date: this.props.date}, withCredentials: true})
-        .then(function(response){
-          window.result = response;
-          that.setState({
-            data: response.data
-          });
-        });
-  }
-  handleAddEntry(entry) {
-    this.setState({
-      data: [entry].concat(this.state.data)
-    });
-  }
-  deleteSelectedEntries() {
-    var that = this;
-    axios.delete(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {data: {id: this.state.selected}, withCredentials: true})
-        .then(function(response) {
-          that.setState({
-            selected: []
-          });
-          that.updateData();
-        });
-  }
-  handleToggleSelected(entryId) {
-    /* Callback to be triggered when an entry has been selected. */
-    if (this.state.selected.includes(entryId)){
-      var index = this.state.selected.indexOf(entryId);
-      var array = this.state.selected.slice();
-      array.splice(index, 1);
-      this.setState({
-        selected: array
-      });
-    } else {
-      this.setState({
-        selected: this.state.selected.concat([entryId])
-      });
-    }
-  }
-  getToggleSelectedHandler(entryId) {
-    var that = this;
-    return function() {
-      that.handleToggleSelected(entryId);
-    }
-  }
-  computeTotal(key) {
-    return this.state.data.reduce(function(acc, cur) {
-      var num = cur[key];
-      if (num == null || !isFinite(num) || isNaN(num))
-        return acc;
-      num = parseFloat(num);
-      if (num == null || !isFinite(num) || isNaN(num))
-        return acc;
-      return acc + num;
-    }, 0);
-  }
-  render() {
-    var that = this;
-    return (
-      <div className='row'>
-        <div className='col col-12'>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
-        </div>
-        <div className='col col-12 table-responsive'>
-          <table className="Food table">
-            <thead>
-            <tr>
-              <td></td>
-              <th>Date</th>
-              <th>Item</th>
-              <th>Quantity</th>
-              <th>Calories</th>
-              <th>Protein</th>
-              <th></th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td></td>
-              <th>Total</th>
-              <td></td>
-              <td></td>
-              <td>{this.computeTotal('calories')}</td>
-              <td>{this.computeTotal('protein')}</td>
-              <td></td>
-            </tr>
-            <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
-            {
-              this.state.data.map(function(data){
-                return <FoodRow key={data.id} 
-                            selected={that.state.selected.includes(data.id)}
-                            onToggleSelected={that.getToggleSelectedHandler(data.id)}
-                            {...data}/>
-              })
-            }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  }
-}
-
 class FoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
@@ -526,6 +392,112 @@ class FoodPhotoThumbnail extends Component {
         <img src={"data:image/png;base64,"+this.state.data} />
       );
     }
+  }
+}
+
+class FoodTable extends FoodRow {
+  constructor(props){
+    super(props)
+    //this.state.children = [
+    //  {"id":1,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[]},
+    //  {"id":2,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[], "children": 
+    //    [{"id":3,"date":"2018-08-26","name":"child item","quantity":"","calories":1,"protein":9,"photos":[]},
+    //    {"id":4,"date":"2018-08-26","name":"child item 2","quantity":"","calories":1,"protein":9,"photos":[]}],
+    //  }
+    //];
+    this.handleAddEntry = this.handleAddEntry.bind(this);
+    this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
+    this.updateData = this.updateData.bind(this);
+    this.computeTotal = this.computeTotal.bind(this);
+
+    this.updateData();
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.date != this.props.date) {
+      this.updateData();
+    }
+  }
+  updateData() {
+    var that = this;
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {params: {date: this.props.date}, withCredentials: true})
+        .then(function(response){
+          window.result = response;
+          that.setState({
+            children: response.data
+          });
+        });
+  }
+  handleAddEntry(entry) {
+    this.setState({
+      children: [entry].concat(this.state.children)
+    });
+  }
+  deleteSelectedEntries() {
+    var that = this;
+    axios.delete(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {data: {id: this.state.selected}, withCredentials: true})
+        .then(function(response) {
+          that.setState({
+            selected: []
+          });
+          that.updateData();
+        });
+  }
+  computeTotal(key) {
+    return this.state.children.reduce(function(acc, cur) {
+      var num = cur[key];
+      if (num == null || !isFinite(num) || isNaN(num))
+        return acc;
+      num = parseFloat(num);
+      if (num == null || !isFinite(num) || isNaN(num))
+        return acc;
+      return acc + num;
+    }, 0);
+  }
+  render() {
+    var that = this;
+    return (
+      <div className='row'>
+        <div className='col col-12'>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+        </div>
+        <div className='col col-12 table-responsive'>
+          <table className="Food table">
+            <thead>
+            <tr>
+              <td></td>
+              <th>Date</th>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Calories</th>
+              <th>Protein</th>
+              <th></th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td></td>
+              <th>Total</th>
+              <td></td>
+              <td></td>
+              <td>{this.computeTotal('calories')}</td>
+              <td>{this.computeTotal('protein')}</td>
+              <td></td>
+            </tr>
+            <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
+            {
+              this.state.children.map(function(data){
+                return <FoodRow key={data.id} 
+                            selected={that.state.selected.includes(data.id)}
+                            onToggleSelected={that.getToggleSelectedHandler(data.id)}
+                            {...data}/>
+              })
+            }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   }
 }
 
