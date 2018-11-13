@@ -173,7 +173,7 @@ class FoodRowNewEntry extends Component {
     return (
       <tr onKeyPress={this.handleKeyPress}>
         <td></td>
-        <td><input type='text' value={this.state.date} onChange={this.onChange} name='date' /></td>
+        <td>{this.state.date}</td>
         <td><input type='text' value={this.state.name} onChange={this.onChange} name='name' ref={this.nameRef} /></td>
         <td><input type='text' value={this.state.quantity} onChange={this.onChange} name='quantity' /></td>
         <td><input type='text' value={this.state.calories} onChange={this.onChange} name='calories' /></td>
