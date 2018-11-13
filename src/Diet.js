@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import { Link } from "react-router-dom";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
 import axios from 'axios';
@@ -9,7 +9,7 @@ export class DietPage extends Component {
     var now = new Date();
     var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
     this.state = {
-      date: new Date(nowString).toISOString().substr(0,10),
+      date: nowString
     }
     this.handleDateChange = this.handleDateChange.bind(this);
   }
@@ -108,10 +108,19 @@ class FoodTable extends Component {
       data: [],
       selected: []
     }
+    this.state.data = [];
+    //this.state.data = [
+    //  {"id":1,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[]},
+    //  {"id":2,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[], "children": 
+    //    [{"id":3,"date":"2018-08-26","name":"child item","quantity":"","calories":1,"protein":9,"photos":[]},
+    //    {"id":4,"date":"2018-08-26","name":"child item 2","quantity":"","calories":1,"protein":9,"photos":[]}],
+    //  }
+    //];
     this.handleAddEntry = this.handleAddEntry.bind(this);
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.updateData = this.updateData.bind(this);
     this.computeTotal = this.computeTotal.bind(this);
+    this.handleToggleSelected = this.handleToggleSelected.bind(this);
     this.getToggleSelectedHandler = this.getToggleSelectedHandler.bind(this);
 
     this.updateData();
@@ -146,21 +155,25 @@ class FoodTable extends Component {
           that.updateData();
         });
   }
+  handleToggleSelected(entryId) {
+    /* Callback to be triggered when an entry has been selected. */
+    if (this.state.selected.includes(entryId)){
+      var index = this.state.selected.indexOf(entryId);
+      var array = this.state.selected.slice();
+      array.splice(index, 1);
+      this.setState({
+        selected: array
+      });
+    } else {
+      this.setState({
+        selected: this.state.selected.concat([entryId])
+      });
+    }
+  }
   getToggleSelectedHandler(entryId) {
     var that = this;
     return function() {
-      if (that.state.selected.includes(entryId)){
-        var index = that.state.selected.indexOf(entryId);
-        var array = that.state.selected.slice();
-        array.splice(index, 1);
-        that.setState({
-          selected: array
-        });
-      } else {
-        that.setState({
-          selected: that.state.selected.concat([entryId])
-        });
-      }
+      that.handleToggleSelected(entryId);
     }
   }
   computeTotal(key) {
@@ -185,19 +198,20 @@ class FoodTable extends Component {
           <table className="Food table">
             <thead>
             <tr>
-              <th></th>
+              <td></td>
               <th>Date</th>
               <th>Item</th>
               <th>Quantity</th>
               <th>Calories</th>
               <th>Protein</th>
               <th></th>
+              <th></th>
             </tr>
             </thead>
             <tbody>
             <tr>
-              <th>Total</th>
               <td></td>
+              <th>Total</th>
               <td></td>
               <td></td>
               <td>{this.computeTotal('calories')}</td>
@@ -292,7 +306,7 @@ class FoodRowNewEntry extends Component {
   render() {
     return (
       <tr onKeyPress={this.handleKeyPress}>
-        <td><Button color='primary' onClick={this.addEntry}>Save</Button></td>
+        <td></td>
         <td><input type='text' value={this.state.date} onChange={this.onChange} name='date' /></td>
         <td><input type='text' value={this.state.name} onChange={this.onChange} name='name' ref={this.nameRef} /></td>
         <td><input type='text' value={this.state.quantity} onChange={this.onChange} name='quantity' /></td>
@@ -301,14 +315,44 @@ class FoodRowNewEntry extends Component {
         <td>
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>
+        <td><Button color='primary' onClick={this.addEntry}>Save</Button></td>
       </tr>
+    );
+  }
+}
+
+class DropdownCheckbox extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      checked: props.checked
+    }
+    this.toggle = this.toggle.bind(this);
+  }
+  toggle() {
+    var newValue = !this.state.checked;
+    this.setState({
+      checked: newValue
+    });
+    if (this.props.onChange) {
+      this.props.onChange(newValue);
+    }
+  }
+  render() {
+    return (
+      <label className='dropdown-checkbox'>
+        <i className='material-icons'>
+          {this.state.checked ? 'arrow_drop_down':'arrow_right'}
+        </i>
+        <input type='checkbox' onChange={this.toggle}/>
+      </label>
     );
   }
 }
 
 class FoodRow extends Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       id: props.id,
       date: props.date,
@@ -317,15 +361,19 @@ class FoodRow extends Component {
       calories: props.calories,
       protein: props.protein,
       photos: props.photos,
-      dirty: false
+      children: props.children || [],
+      selected: [],
+      dirty: false,
+      expanded: false
     };
     this.lastStateUpdateTime = new Date();
     this.lastDatabaseUpdateTime = new Date(0);
     this.databaseUpdateIntervalId = null;
-    this.checkboxRef = React.createRef();
+    this.dropdownCheckbox = React.createRef();
+    this.handleToggleSelected = this.handleToggleSelected.bind(this);
+    this.getToggleSelectedHandler = this.getToggleSelectedHandler.bind(this);
+    this.toggleChildren = this.toggleChildren.bind(this);
   }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-	}
   updateDatabase() {
     var stateClone = JSON.parse(JSON.stringify(this.state));
     var that = this;
@@ -361,19 +409,58 @@ class FoodRow extends Component {
       }, 1000);
     }
   }
+  handleToggleSelected(entryId) {
+    /* Callback to be triggered when an entry has been selected. */
+    if (this.state.selected.includes(entryId)){
+      var index = this.state.selected.indexOf(entryId);
+      var array = this.state.selected.slice();
+      array.splice(index, 1);
+      this.setState({
+        selected: array
+      });
+    } else {
+      this.setState({
+        selected: this.state.selected.concat([entryId])
+      });
+    }
+  }
+  getToggleSelectedHandler(entryId) {
+    var that = this;
+    return function() {
+      that.handleToggleSelected(entryId);
+    }
+  }
+  toggleChildren(visible) {
+    this.setState({
+      expanded: visible
+    });
+  }
   render() {
+    var that = this;
     return (
-      <tr draggable='true' className={this.state.dirty ? 'table-info' : ''}>
-        <td onClick={this.props.onToggleSelected}><input type='checkbox' checked={this.props.selected}/></td>
-        <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
-        <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
-        <FoodRowCell value={this.state.quantity} onChange={this.getOnUpdateHandler('quantity')} />
-        <FoodRowCell value={this.state.calories} onChange={this.getOnUpdateHandler('calories')} />
-        <FoodRowCell value={this.state.protein} onChange={this.getOnUpdateHandler('protein')} />
-        <td>
-          <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.photos}/>
-        </td>
-      </tr>
+      <Fragment>
+        <tr draggable='true' className={this.state.dirty ? 'table-info' : ''}>
+          <td>{this.state.children.length > 0 && <DropdownCheckbox ref={this.dropdownCheckbox} onChange={this.toggleChildren}/>}</td>
+          <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
+          <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
+          <FoodRowCell value={this.state.quantity} onChange={this.getOnUpdateHandler('quantity')} />
+          <FoodRowCell value={this.state.calories} onChange={this.getOnUpdateHandler('calories')} />
+          <FoodRowCell value={this.state.protein} onChange={this.getOnUpdateHandler('protein')} />
+          <td>
+            <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.photos}/>
+          </td>
+          <td onClick={this.props.onToggleSelected}><input type='checkbox' checked={this.props.selected}/></td>
+        </tr>
+        {
+          this.state.expanded &&
+          this.state.children.map(function(data){
+            return <FoodRow key={data.id} 
+                        selected={that.state.selected.includes(data.id)}
+                        onToggleSelected={that.getToggleSelectedHandler(data.id)}
+                        {...data}/>
+          })
+        }
+      </Fragment>
     );
   }
 }
