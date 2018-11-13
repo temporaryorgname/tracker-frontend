@@ -30,13 +30,25 @@ class BodyWeightTable extends Component {
     var that = this;
     axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight", {withCredentials: true})
         .then(function(response){
-          window.result = response;
           that.setState({
             data: response.data
           });
         });
   }
+  getDeleteHandler(id) {
+    var that = this;
+    return function() {
+      if (window.confirm('Delete entry?')) {
+        console.log('Deleting stat with ID '+id);
+        axios.delete(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight/"+id, {withCredentials: true})
+          .then(function(response){
+            that.updateData();
+          });
+      }
+    }
+  }
   render() {
+    var that = this;
     return (
       <div>
         <NewBodyWeightEntryForm onAddWeight={this.updateData}/>
@@ -46,6 +58,7 @@ class BodyWeightTable extends Component {
               <th>Date</th>
               <th>Time</th>
               <th>Bodyweight</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -54,6 +67,11 @@ class BodyWeightTable extends Component {
                 <td>{data.date}</td>
                 <td>{data.time}</td>
                 <td>{data.bodyweight}</td>
+                <td>
+                  <Link to='#' onClick={that.getDeleteHandler(data.id)}>
+                    <i className='material-icons'>delete</i>
+                  </Link>
+                </td>
               </tr>);
             })}
           </tbody>
