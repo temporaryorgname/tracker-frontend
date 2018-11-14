@@ -22,18 +22,8 @@ export class DietPage extends Component {
   }
   render() {
     return (
-      <div>
-        <div className='row'>
-          <div className='col col-6'>
-            <Form inline>
-              <FormGroup>
-                <Label for="date"><i className="material-icons">date_range</i></Label>
-                <Input className='form-control' value={this.state.date} type='date' onChange={this.handleDateChange}/>
-              </FormGroup>
-            </Form>
-          </div>
-        </div>
-        <FoodTable date={this.state.date} />
+      <div className='diet-page-container'>
+        <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
       </div>
     );
   }
@@ -585,56 +575,64 @@ class FoodTable extends FoodRow {
   render() {
     var that = this;
     return (
-      <div className='row'>
-        <div className='col col-12'>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+      <div className='food-table'>
+        <div className='controls'>
+          <div className='table-controls'>
+            <Form inline>
+              <FormGroup>
+                <Label for="date"><i className="material-icons">date_range</i></Label>
+                <Input className='form-control' value={this.props.date} type='date' onChange={this.props.onDateChange}/>
+              </FormGroup>
+            </Form>
+          </div>
+          <div className='entry-controls'>
+            <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+          </div>
         </div>
-        <div className='col col-12'>
-          <table className="Food">
-            <colgroup>
-              <col className='expand' />
-              <col />
-              <col className='item'/>
-              <col className='numbers'/>
-              <col className='numbers'/>
-              <col className='numbers'/>
-              <col />
-              <col className='actions' />
-            </colgroup>
-            <thead>
-            <tr>
-              <td></td>
-              <th>Date</th>
-              <th>Item</th>
-              <th>Quantity</th>
-              <th>Calories</th>
-              <th>Protein</th>
-              <th></th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-              <td></td>
-              <th>Total</th>
-              <td></td>
-              <td></td>
-              <td>{this.computeTotal('calories')}</td>
-              <td>{this.computeTotal('protein')}</td>
-              <td></td>
-            </tr>
-            <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
-            {
-              this.state.children.map(function(data){
-                return <FoodRow key={data.id} 
-                            selected={that.state.selected.includes(data.id)}
-                            onToggleSelected={that.getToggleSelectedHandler(data.id)}
-                            {...data}/>
-              })
-            }
-            </tbody>
-          </table>
-        </div>
+        <table className="Food">
+          <colgroup>
+            <col className='expand' />
+            <col />
+            <col className='item'/>
+            <col className='numbers'/>
+            <col className='numbers'/>
+            <col className='numbers'/>
+            <col />
+            <col className='actions' />
+          </colgroup>
+          <thead>
+          <tr>
+            <td></td>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Calories</th>
+            <th>Protein</th>
+            <th></th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td></td>
+            <th>Total</th>
+            <td></td>
+            <td></td>
+            <td>{this.computeTotal('calories')}</td>
+            <td>{this.computeTotal('protein')}</td>
+            <td></td>
+          </tr>
+          <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
+          {
+            this.state.children.map(function(data){
+              return <FoodRow key={data.id}
+                          selected={that.state.selected.includes(data.id)}
+                          onToggleSelected={that.getToggleSelectedHandler(data.id)}
+                          {...data}/>
+            })
+          }
+          </tbody>
+        </table>
       </div>
     );
   }
