@@ -101,6 +101,140 @@ class FileUploadDialog extends Component {
   }
 }
 
+class FoodNameInput extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      value: '',
+      suggestions: [],
+      loading: false,
+      focused: false
+    }
+    this.ref = React.createRef();
+    this.handleChange = this.handleChange.bind(this);
+    this.loadSuggestions = this.loadSuggestions.bind(this);
+    this.loadSuggestionsTimeout = null;
+    this.handleFocus = this.handleFocus.bind(this);
+    this.handleBlur = this.handleBlur.bind(this);
+  }
+  handleChange(event) {
+    this.setState({
+      value: event.target.value
+    }, function() {
+      clearTimeout(this.loadSuggestionsTimeout);
+      this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
+    });
+    if (this.props.onChange) {
+      this.props.onChange(event);
+    }
+  }
+  handleBlur() {
+    this.setState({
+      focused: false
+    });
+  }
+  handleFocus() {
+    this.setState({
+      focused: true
+    });
+  }
+  loadSuggestions() {
+    if (this.state.value.length == 0) {
+      this.setState({
+        suggestions: [],
+        loading: true
+      });
+      return;
+    }
+    var that = this;
+    console.log('Searching for: '+this.state.value);
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.state.value), {withCredentials: true})
+        .then(function(response){
+          window.result = response;
+          that.setState({
+            suggestions: response.data,
+            loading: false
+          });
+        })
+        .catch(function(error){
+          console.error(error);
+        });
+  }
+  render() {
+    var inputField = <input type='text' value={this.state.value} onChange={this.handleChange} onFocus={this.handleFocus} onBlur={this.handleBlur} name={this.props.name} ref={this.ref} />;
+    var suggestions = (
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Cals</th>
+            <th>Prot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            this.state.suggestions.map(function(item){
+              return (
+                <tr>
+                  <td>{item.name}</td>
+                  <td>{item.quantity}</td>
+                  <td>{item.calories}</td>
+                  <td>{item.protein}</td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    );
+    var noSuggestions = (
+      <table>
+        <thead>
+          <tr>
+            <th>name</th>
+            <th>cals</th>
+            <th>prot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan='3'>No match for "{this.state.value}"</td></tr>
+        </tbody>
+      </table>
+    );
+    var loadingSuggestions = (
+      <table>
+        <thead>
+          <tr>
+            <th>name</th>
+            <th>cals</th>
+            <th>prot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td className='loading' colspan='3'><div className='loader'></div></td></tr>
+        </tbody>
+      </table>
+    );
+    var s = null;
+    if (this.state.value.length > 0 && this.state.focused) {
+      if (this.state.loading) {
+        s = loadingSuggestions;
+      } else if (this.state.suggestions.length > 0) {
+        s = suggestions;
+      } else {
+        s = null;
+      }
+    }
+    return (
+      <div className='food-name-input'>
+        {inputField}
+        {s}
+      </div>
+    );
+  }
+}
+
 class FoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
@@ -174,7 +308,7 @@ class FoodRowNewEntry extends Component {
       <tr onKeyPress={this.handleKeyPress}>
         <td></td>
         <td>{this.state.date}</td>
-        <td><input type='text' value={this.state.name} onChange={this.onChange} name='name' ref={this.nameRef} /></td>
+        <td><FoodNameInput value={this.state.name} onChange={this.onChange} name='name' ref={this.nameRef} /></td>
         <td><input type='text' value={this.state.quantity} onChange={this.onChange} name='quantity' /></td>
         <td><input type='text' value={this.state.calories} onChange={this.onChange} name='calories' /></td>
         <td><input type='text' value={this.state.protein} onChange={this.onChange} name='protein' /></td>
@@ -460,7 +594,7 @@ class FoodTable extends FoodRow {
         <div className='col col-12'>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
         </div>
-        <div className='col col-12 table-responsive'>
+        <div className='col col-12'>
           <table className="Food table">
             <thead>
             <tr>
