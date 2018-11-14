@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
 import axios from 'axios';
 
+import './Diet.css';
+
 export class DietPage extends Component {
   constructor(props) {
     super(props)
@@ -439,7 +441,7 @@ class FoodRow extends Component {
     var that = this;
     return (
       <Fragment>
-        <tr draggable='true' className={this.state.dirty ? 'table-info' : ''}>
+        <tr className={this.state.dirty ? 'table-info' : ''}>
           <td>{this.state.children.length > 0 && <DropdownCheckbox ref={this.dropdownCheckbox} onChange={this.toggleChildren}/>}</td>
           <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
           <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
@@ -595,15 +597,15 @@ class FoodTable extends FoodRow {
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
         </div>
         <div className='col col-12'>
-          <table className="Food table">
+          <table className="Food">
             <thead>
             <tr>
               <td></td>
               <th>Date</th>
               <th>Item</th>
-              <th>Quantity</th>
-              <th>Calories</th>
-              <th>Protein</th>
+              <th className='numbers'>Quantity</th>
+              <th className='numbers'>Calories</th>
+              <th className='numbers'>Protein</th>
               <th></th>
               <th></th>
             </tr>

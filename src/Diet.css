@@ -1,0 +1,51 @@
+table input {
+  width: 100%;
+}
+
+table td, table th {
+  margin: 10px;
+  padding: 5px 20px;
+  border: solid;
+  border-width: 1px 0;
+  border-color: #ccc;
+}
+
+table tr th.numbers {
+  width: 100px;
+}
+
+.dropdown-checkbox input{
+  display: none;
+}
+
+.food-name-input {
+  position: relative;
+}
+
+.food-name-input table {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  background-color: rgba(255,255,255,.8);
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
+}
+
+.food-name-input table td, .food-name-input table th {
+  width: 100%;
+  text-align: left;
+}
+
+.food-name-input table tr {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.food-name-input table tbody {
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.food-name-input table td.loading {
+  text-align: center;
+}
