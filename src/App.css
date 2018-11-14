@@ -1,28 +1,54 @@
-.App {
+input {
+  width: 100%;
+}
+
+.dropdown-checkbox input{
+  display: none;
+}
+
+.food-name-input {
+  position: relative;
+}
+
+.food-name-input table {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  background-color: rgba(255,255,255,.8);
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
+}
+
+.food-name-input table td, .food-name-input table th {
+  width: 100%;
+  text-align: left;
+}
+
+.food-name-input table tr {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.food-name-input table tbody {
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.food-name-input table td.loading {
   text-align: center;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+.loader {
+  display: inline-block;
+  border: 3px solid #f3f3f3; /* Light grey */
+  border-top: 3px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 2s linear infinite;
 }
 
-.App-header {
-  background-color: #222;
-  height: 150px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
