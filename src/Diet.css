@@ -10,7 +10,7 @@ table td, table th {
   border-color: #ccc;
 }
 
-table tr th.numbers {
+table col.numbers {
   width: 100px;
 }
 
