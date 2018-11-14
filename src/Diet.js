@@ -107,28 +107,19 @@ class FoodNameInput extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      value: '',
       suggestions: [],
       loading: false,
       focused: false
     }
     this.ref = React.createRef();
-    this.handleChange = this.handleChange.bind(this);
     this.loadSuggestions = this.loadSuggestions.bind(this);
     this.loadSuggestionsTimeout = null;
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
   }
-  handleChange(event) {
-    this.setState({
-      value: event.target.value
-    }, function() {
-      clearTimeout(this.loadSuggestionsTimeout);
-      this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
-    });
-    if (this.props.onChange) {
-      this.props.onChange(event);
-    }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    clearTimeout(this.loadSuggestionsTimeout);
+    this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
   }
   handleBlur() {
     this.setState({
@@ -141,7 +132,7 @@ class FoodNameInput extends Component {
     });
   }
   loadSuggestions() {
-    if (this.state.value.length == 0) {
+    if (this.props.value.length == 0) {
       this.setState({
         suggestions: [],
         loading: true
@@ -149,8 +140,8 @@ class FoodNameInput extends Component {
       return;
     }
     var that = this;
-    console.log('Searching for: '+this.state.value);
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.state.value), {withCredentials: true})
+    console.log('Searching for: '+this.props.value);
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.props.value), {withCredentials: true})
         .then(function(response){
           window.result = response;
           that.setState({
@@ -163,7 +154,7 @@ class FoodNameInput extends Component {
         });
   }
   render() {
-    var inputField = <input type='text' value={this.state.value} onChange={this.handleChange} onFocus={this.handleFocus} onBlur={this.handleBlur} name={this.props.name} ref={this.ref} />;
+    var inputField = <input type='text' value={this.props.value} onChange={this.props.onChange} onFocus={this.handleFocus} onBlur={this.handleBlur} name={this.props.name} ref={this.ref} />;
     var suggestions = (
       <table>
         <thead>
@@ -200,7 +191,7 @@ class FoodNameInput extends Component {
           </tr>
         </thead>
         <tbody>
-          <tr><td colspan='3'>No match for "{this.state.value}"</td></tr>
+          <tr><td colspan='3'>No match for "{this.props.value}"</td></tr>
         </tbody>
       </table>
     );
@@ -219,7 +210,7 @@ class FoodNameInput extends Component {
       </table>
     );
     var s = null;
-    if (this.state.value.length > 0 && this.state.focused) {
+    if (this.props.value.length > 0 && this.state.focused) {
       if (this.state.loading) {
         s = loadingSuggestions;
       } else if (this.state.suggestions.length > 0) {
