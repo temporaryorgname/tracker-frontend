@@ -151,7 +151,6 @@ class FoodNameInput extends Component {
     });
   }
   handleKeyDown(event) {
-    //console.log(event);
     var UP = 38;
     var DOWN = 40;
     if (event.keyCode == DOWN) {
@@ -294,11 +293,70 @@ class FoodNameInput extends Component {
   }
 }
 
+class QuantityInput extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      focused: false,
+      startingValue: this.props.value
+    };
+    this.scaleQuantity = this.scaleQuantity.bind(this);
+    this.handleFocus = this.handleFocus.bind(this);
+    this.handleBlur = this.handleBlur.bind(this);
+  }
+  scaleQuantity() {
+    function splitUnits(str) {
+      var val = parseFloat(str);
+      var units = str.substring(val.toString().length).trim();
+      return {val: val, units: units}
+    }
+    // Split numbers and units
+    var oldVals = splitUnits(this.state.startingValue);
+    var newVals = splitUnits(this.props.value);
+
+    // Check if the quantities use the same units
+    if (oldVals['units'] !== newVals['units']) {
+      return;
+    }
+
+    var scale = newVals['val']/oldVals['val'];
+
+    // Check if the number is valid
+    if (!isFinite(scale)) {
+      return;
+    }
+
+    // Callback
+    if (this.props.onScale) {
+      this.props.onScale(scale);
+    }
+  }
+  handleBlur() {
+    this.scaleQuantity()
+  }
+  handleFocus() {
+    this.setState({
+      startingValue: this.props.value
+    });
+  }
+  render() {
+    return (
+      <input
+          type='text'
+          value={this.props.value}
+          placeholder={this.props.placeholder}
+          onChange={this.props.onChange}
+          onBlur={this.handleBlur}
+          onFocus={this.handleFocus}
+          name='quantity' />
+    );
+  }
+}
+
 class FoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      date: '',
       name: '',
       quantity: '',
       calories: '',
@@ -317,17 +375,10 @@ class FoodRowNewEntry extends Component {
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleHighlight = this.handleHighlight.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
-  }
-  componentWillReceiveProps(props) {
-    this.setState({
-      date: props.defaultDate || new Date().toISOString().substr(0,10),
-    });  
+    this.handleQuantityScale = this.handleQuantityScale.bind(this);
   }
   addEntry(e) {
     var stateClone = JSON.parse(JSON.stringify(this.state));
-    if (stateClone['date'] == '') {
-      stateClone['date'] = new Date().toISOString().substr(0,10);
-    }
     // Submit entry to server
     var that = this;
     axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", stateClone, {withCredentials: true})
@@ -337,7 +388,7 @@ class FoodRowNewEntry extends Component {
           that.onSubmit(stateClone);
           // Clear form
           that.setState({
-            date: that.props.defaultDate || new Date().toISOString().substr(0,10),
+            date: that.props.defaultDate,
             name: '',
             quantity: '',
             calories: '',
@@ -377,6 +428,20 @@ class FoodRowNewEntry extends Component {
       protein: entry.protein || this.state.protein,
     });
   }
+  handleQuantityScale(scale) {
+    var cals = this.state.calories;
+    if (cals == parseFloat(cals)) {
+      cals = parseFloat(cals)*scale;
+    }
+    var prot = this.state.protein;
+    if (prot == parseFloat(prot)) {
+      prot = parseFloat(prot)*scale;
+    }
+    this.setState({
+      calories: cals.toString(),
+      protein: prot.toString()
+    });
+  }
   render() {
     return (
       <tr onKeyPress={this.handleKeyPress}>
@@ -392,11 +457,11 @@ class FoodRowNewEntry extends Component {
               ref={x => this.nameRef = x} />
         </td>
         <td>
-          <input
-              type='text'
+          <QuantityInput
               value={this.state.quantity}
               placeholder={this.state.suggestion.quantity}
               onChange={this.onChange}
+              onScale={this.handleQuantityScale}
               name='quantity' />
         </td>
         <td>
