@@ -99,18 +99,30 @@ class FoodNameInput extends Component {
     this.state = {
       suggestions: [],
       loading: false,
-      focused: false
+      focused: false,
+      selected: -1
     }
     this.ref = React.createRef();
     this.loadSuggestions = this.loadSuggestions.bind(this);
     this.loadSuggestionsTimeout = null;
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+    this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
     this.focus = this.focus.bind(this);
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    clearTimeout(this.loadSuggestionsTimeout);
-    this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
+    if (prevProps.value !== this.props.value) {
+      clearTimeout(this.loadSuggestionsTimeout);
+      this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
+    }
+    if (prevState.selected !== this.state.selected) {
+      if (this.state.selected == -1) {
+        this.props.onHighlight({});
+      } else if (this.props.onHighlight) {
+        this.props.onHighlight(this.state.suggestions[this.state.selected]);
+      }
+    }
   }
   handleBlur() {
     this.setState({
@@ -121,6 +133,35 @@ class FoodNameInput extends Component {
     this.setState({
       focused: true
     });
+  }
+  handleKeyDown(event) {
+    //console.log(event);
+    var UP = 38;
+    var DOWN = 40;
+    if (event.keyCode == DOWN) {
+      this.setState({
+        selected: (this.state.selected+2)%(this.state.suggestions.length+1)-1
+      });
+    } else if (event.keyCode == UP) {
+      this.setState({
+        selected: (this.state.selected+this.state.suggestions.length+1)%(this.state.suggestions.length+1)-1
+      });
+    }
+  }
+  handleKeyPress(event) {
+    var RETURN = 13;
+    if ((event.keyCode || event.which || event.charCode) == RETURN && this.state.selected !== -1) {
+      if (this.props.onSelect) {
+        this.props.onSelect(this.state.suggestions[this.state.selected]);
+      }
+      // Clear search results and selection
+      this.setState({
+        selected: -1,
+        suggestions: []
+      });
+      // Prevent the key press from affecting other things (e.g. form submission).
+      event.stopPropagation();
+    }
   }
   loadSuggestions() {
     if (this.props.value.length == 0) {
@@ -147,7 +188,18 @@ class FoodNameInput extends Component {
     this.ref.current.focus();
   }
   render() {
-    var inputField = <input type='text' value={this.props.value} onChange={this.props.onChange} onFocus={this.handleFocus} onBlur={this.handleBlur} name={this.props.name} ref={this.ref} />;
+    var that = this;
+    var inputField = (<input
+              autocomplate='off'
+              type='text'
+              value={this.props.value}
+              onKeyDown={this.handleKeyDown}
+              onKeyPress={this.handleKeyPress}
+              onChange={this.props.onChange}
+              onFocus={this.handleFocus}
+              onBlur={this.handleBlur}
+              name={this.props.name}
+              ref={this.ref} />);
     var suggestions = (
       <table>
         <thead>
@@ -160,9 +212,10 @@ class FoodNameInput extends Component {
         </thead>
         <tbody>
           {
-            this.state.suggestions.map(function(item){
+            this.state.suggestions.map(function(item,index){
+              var className = that.state.selected == index ? 'selected' : '';
               return (
-                <tr>
+                <tr className={className} key={item.id}>
                   <td>{item.name}</td>
                   <td>{item.quantity}</td>
                   <td>{item.calories}</td>
@@ -230,7 +283,8 @@ class FoodRowNewEntry extends Component {
       quantity: '',
       calories: '',
       protein: '',
-      photos: []
+      photos: [],
+      suggestion: {}
     };
     if ("onSubmit" in props) {
       this.onSubmit = props['onSubmit'];
@@ -241,6 +295,8 @@ class FoodRowNewEntry extends Component {
     this.onChange = this.onChange.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.handleHighlight = this.handleHighlight.bind(this);
+    this.handleSelect = this.handleSelect.bind(this);
   }
   componentWillReceiveProps(props) {
     this.setState({
@@ -288,15 +344,57 @@ class FoodRowNewEntry extends Component {
       this.addEntry(e);
     }
   }
+  handleHighlight(entry) {
+    this.setState({
+      suggestion: entry
+    });
+  }
+  handleSelect(entry) {
+    this.setState({
+      name: entry.name,
+      quantity: entry.quantity || this.state.quantity,
+      calories: entry.calories || this.state.calories,
+      protein: entry.protein || this.state.protein,
+    });
+  }
   render() {
     return (
       <tr onKeyPress={this.handleKeyPress}>
         <td></td>
         <td>{this.state.date}</td>
-        <td><FoodNameInput value={this.state.name} onChange={this.onChange} name='name' ref={x => this.nameRef = x} /></td>
-        <td><input type='text' value={this.state.quantity} onChange={this.onChange} name='quantity' /></td>
-        <td><input type='text' value={this.state.calories} onChange={this.onChange} name='calories' /></td>
-        <td><input type='text' value={this.state.protein} onChange={this.onChange} name='protein' /></td>
+        <td>
+          <FoodNameInput 
+              value={this.state.name} 
+              onChange={this.onChange}
+              onHighlight={this.handleHighlight}
+              onSelect={this.handleSelect}
+              name='name'
+              ref={x => this.nameRef = x} />
+        </td>
+        <td>
+          <input
+              type='text'
+              value={this.state.quantity}
+              placeholder={this.state.suggestion.quantity}
+              onChange={this.onChange}
+              name='quantity' />
+        </td>
+        <td>
+          <input
+              type='text'
+              value={this.state.calories}
+              placeholder={this.state.suggestion.calories}
+              onChange={this.onChange}
+              name='calories' />
+        </td>
+        <td>
+          <input 
+              type='text'
+              value={this.state.protein}
+              placeholder={this.state.suggestion.protein}
+              onChange={this.onChange}
+              name='protein' />
+        </td>
         <td>
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>

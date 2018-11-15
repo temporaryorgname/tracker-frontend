@@ -66,6 +66,10 @@ table col.numbers {
   text-overflow: ellipsis;
 }
 
+.food-name-input table tr.selected {
+  background-color: #88f;
+}
+
 .food-name-input table tbody {
   white-space: nowrap;
   text-overflow: clip;
