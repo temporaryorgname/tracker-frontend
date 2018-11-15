@@ -105,6 +105,7 @@ class FoodNameInput extends Component {
     this.ref = React.createRef();
     this.loadSuggestions = this.loadSuggestions.bind(this);
     this.loadSuggestionsTimeout = null;
+    this.handleSelect = this.handleSelect.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
     this.handleKeyDown = this.handleKeyDown.bind(this);
@@ -123,6 +124,21 @@ class FoodNameInput extends Component {
         this.props.onHighlight(this.state.suggestions[this.state.selected]);
       }
     }
+  }
+  handleSelect() {
+    // Check if the selection is valid
+    if (this.state.selected === -1) {
+      return;
+    }
+    // Call event handlers
+    if (this.props.onSelect) {
+      this.props.onSelect(this.state.suggestions[this.state.selected]);
+    }
+    // Clear search results and selection
+    this.setState({
+      selected: -1,
+      suggestions: []
+    });
   }
   handleBlur() {
     this.setState({
@@ -151,17 +167,21 @@ class FoodNameInput extends Component {
   handleKeyPress(event) {
     var RETURN = 13;
     if ((event.keyCode || event.which || event.charCode) == RETURN && this.state.selected !== -1) {
-      if (this.props.onSelect) {
-        this.props.onSelect(this.state.suggestions[this.state.selected]);
-      }
-      // Clear search results and selection
-      this.setState({
-        selected: -1,
-        suggestions: []
-      });
+      this.handleSelect();
       // Prevent the key press from affecting other things (e.g. form submission).
       event.stopPropagation();
     }
+  }
+  getMouseEnterHandler(index) {
+    var that = this;
+    return function(event) {
+      that.setState({
+        selected: index
+      });
+    }
+  }
+  handleMouseDown(event) {
+    this.handleSelect();
   }
   loadSuggestions() {
     if (this.props.value.length == 0) {
@@ -210,12 +230,12 @@ class FoodNameInput extends Component {
             <th>Prot</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody onMouseDown={this.handleSelect}>
           {
             this.state.suggestions.map(function(item,index){
               var className = that.state.selected == index ? 'selected' : '';
               return (
-                <tr className={className} key={item.id}>
+                <tr className={className} key={item.id} onMouseEnter={that.getMouseEnterHandler(index)}>
                   <td>{item.name}</td>
                   <td>{item.quantity}</td>
                   <td>{item.calories}</td>
