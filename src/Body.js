@@ -201,7 +201,7 @@ class BodyWeightTimeSeries extends Component {
       <Resizable>
       <ChartContainer timeRange={series.timerange()} width={800}>
         <ChartRow height="200">
-          <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" />
+          <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
           <Charts>
             <LineChart axis="axis1" series={series} />
           </Charts>
