@@ -407,6 +407,7 @@ class FoodRowNewEntry extends Component {
   }
   addEntry(e) {
     var stateClone = JSON.parse(JSON.stringify(this.state));
+    stateClone['date'] = this.props.defaultDate;
     // Submit entry to server
     var that = this;
     axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", stateClone, {withCredentials: true})
@@ -416,7 +417,6 @@ class FoodRowNewEntry extends Component {
           that.onSubmit(stateClone);
           // Clear form
           that.setState({
-            date: that.props.defaultDate,
             name: '',
             quantity: '',
             calories: '',
@@ -474,7 +474,7 @@ class FoodRowNewEntry extends Component {
     return (
       <tr onKeyPress={this.handleKeyPress}>
         <td></td>
-        <td>{this.state.date}</td>
+        <td>{this.props.defaultDate}</td>
         <td>
           <FoodNameInput 
               value={this.state.name} 
