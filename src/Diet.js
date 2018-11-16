@@ -34,11 +34,14 @@ class FileUploadDialog extends Component {
     super(props);
     this.state = {
       modal: false,
+      predictions: []
     }
     this.ref = React.createRef();
     this.toggle = this.toggle.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.onUpload = props.onUpload;
+    this.loadPrediction = this.loadPrediction.bind(this);
+    this.getSelectPredictionHandler = this.getSelectPredictionHandler.bind(this);
   }
   uploadFile(event) {
     var target = event.target;
@@ -53,7 +56,24 @@ class FileUploadDialog extends Component {
         }).then(function(response){
           target.value = "";
           that.onUpload(that.props.files.concat([response.data.id]));
+          that.loadPrediction(response.data.id);
         });
+  }
+  loadPrediction(photoId) {
+    var that = this;
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/predict/"+photoId, {withCredentials: true})
+        .then(function(response){
+          that.setState({
+            predictions: response.data
+          });
+        });
+  }
+  getSelectPredictionHandler(pred) {
+    return function() {
+      if (this.props.onSelectPrediction) {
+        this.props.onSelectPrediction(pred);
+      }
+    }
   }
   toggle() {
     this.setState({
@@ -61,6 +81,7 @@ class FileUploadDialog extends Component {
     });
   }
   render() {
+    var that = this;
     return (
       <div>
         <Link to='#' onClick={this.toggle}>
@@ -69,10 +90,17 @@ class FileUploadDialog extends Component {
         <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-sm">
           <ModalHeader toggle={this.toggle}>Upload Photo</ModalHeader>
           <ModalBody>
-            <div>
+            <div className='thumbnails'>
               {
                 this.props.files.map(function(file){
                   return <FoodPhotoThumbnail key={file} fileid={file}/>
+                })
+              }
+            </div>
+            <div className='predictions'>
+              {
+                this.state.predictions.map(function(s){
+                  return <Link to='#' onClick={that.getSelectPredictionHandler(s)}>{s}</Link>
                 })
               }
             </div>

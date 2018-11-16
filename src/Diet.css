@@ -64,6 +64,7 @@ table col.numbers {
 .food-name-input table tr {
   white-space: nowrap;
   text-overflow: ellipsis;
+  cursor: pointer;
 }
 
 .food-name-input table tr.selected {
