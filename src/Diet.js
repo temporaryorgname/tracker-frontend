@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
 import axios from 'axios';
 
+import { connect } from "react-redux";
+import { fetchFood, createFood, deleteFood } from './actions/Diet.js'
+
 import './Diet.css';
 
 export class DietPage extends Component {
@@ -381,7 +384,7 @@ class QuantityInput extends Component {
   }
 }
 
-class FoodRowNewEntry extends Component {
+class ConnectedFoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -392,11 +395,6 @@ class FoodRowNewEntry extends Component {
       photos: [],
       suggestion: {}
     };
-    if ("onSubmit" in props) {
-      this.onSubmit = props['onSubmit'];
-    } else {
-      this.onSubmit = function(){};
-    }
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
@@ -406,27 +404,27 @@ class FoodRowNewEntry extends Component {
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
   }
   addEntry(e) {
-    var stateClone = JSON.parse(JSON.stringify(this.state));
-    stateClone['date'] = this.props.defaultDate;
     // Submit entry to server
     var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", stateClone, {withCredentials: true})
-        .then(function(response){
-          stateClone['id'] = response.data;
-          // Parent Callback
-          that.onSubmit(stateClone);
-          // Clear form
-          that.setState({
-            name: '',
-            quantity: '',
-            calories: '',
-            protein: '',
-            photos: []
-          });
-          // Place cursor
-          that.nameRef.focus();
-        });
-
+    this.props.onSubmit({
+      date: this.props.date,
+      name: this.state.name,
+      quantity: this.state.quantity,
+      calories: this.state.calories,
+      protein: this.state.proteins,
+      photos: this.state.photos
+    }).then(function(response){
+      // Clear form
+      that.setState({
+        name: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photos: []
+      });
+      // Place cursor
+      that.nameRef.focus();
+    });
   }
   onChange(e) {
     var x = {}
@@ -474,7 +472,7 @@ class FoodRowNewEntry extends Component {
     return (
       <tr onKeyPress={this.handleKeyPress}>
         <td></td>
-        <td>{this.props.defaultDate}</td>
+        <td>{this.props.date}</td>
         <td>
           <FoodNameInput 
               value={this.state.name} 
@@ -516,6 +514,16 @@ class FoodRowNewEntry extends Component {
     );
   }
 }
+const FoodRowNewEntry = connect(
+  function(state, ownProps) {
+    return {}
+  },
+  function(dispatch, ownProps) {
+    return {
+      onSubmit: data => dispatch(createFood(data))
+    };
+  }
+)(ConnectedFoodRowNewEntry);
 
 class DropdownCheckbox extends Component {
   constructor(props) {
@@ -725,7 +733,7 @@ class FoodPhotoThumbnail extends Component {
   }
 }
 
-class FoodTable extends FoodRow {
+class ConnectedFoodTable extends FoodRow {
   constructor(props){
     super(props)
     //this.state.children = [
@@ -735,42 +743,26 @@ class FoodTable extends FoodRow {
     //    {"id":4,"date":"2018-08-26","name":"child item 2","quantity":"","calories":1,"protein":9,"photos":[]}],
     //  }
     //];
-    this.handleAddEntry = this.handleAddEntry.bind(this);
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
-    this.updateData = this.updateData.bind(this);
     this.computeTotal = this.computeTotal.bind(this);
 
-    this.updateData();
+    this.props.updateData(this.props.date);
   }
   componentDidUpdate(prevProps) {
     if (prevProps.date != this.props.date) {
-      this.updateData();
+      this.props.updateData(this.props.date);
     }
   }
-  updateData() {
+  deleteSelectedEntries(event) {
+    event.preventDefault();
     var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {params: {date: this.props.date}, withCredentials: true})
-        .then(function(response){
-          window.result = response;
-          that.setState({
-            children: response.data
-          });
+    this.props.deleteEntry(this.state.selected)
+      .then(function(response) {
+        that.setState({
+          selected: []
         });
-  }
-  handleAddEntry(entry) {
-    this.setState({
-      children: [entry].concat(this.state.children)
-    });
-  }
-  deleteSelectedEntries() {
-    var that = this;
-    axios.delete(process.env.REACT_APP_SERVER_ADDRESS+"/data/food", {data: {id: this.state.selected}, withCredentials: true})
-        .then(function(response) {
-          that.setState({
-            selected: []
-          });
-          that.updateData();
-        });
+        that.props.updateData(that.props.date);
+      });
   }
   computeTotal(key) {
     return this.state.children.reduce(function(acc, cur) {
@@ -833,9 +825,9 @@ class FoodTable extends FoodRow {
             <td>{this.computeTotal('protein')}</td>
             <td></td>
           </tr>
-          <FoodRowNewEntry defaultDate={this.props.date} onSubmit={this.handleAddEntry}/>
+          <FoodRowNewEntry date={this.props.date} />
           {
-            this.state.children.map(function(data){
+            this.props.data.map(function(data){
               return <FoodRow key={data.id}
                           selected={that.state.selected.includes(data.id)}
                           onToggleSelected={that.getToggleSelectedHandler(data.id)}
@@ -848,4 +840,19 @@ class FoodTable extends FoodRow {
     );
   }
 }
-
+const FoodTable = connect(
+  function(state, ownProps) {
+    var ids = state.food.entriesByDate[ownProps.date] || [];
+    return {
+      data: ids.map(function(id){
+        return state.food.entries[id];
+      })
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: date => dispatch(fetchFood(date)),
+      deleteEntry: ids => dispatch(deleteFood(ids))
+    };
+  }
+)(ConnectedFoodTable);

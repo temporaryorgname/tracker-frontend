@@ -4,6 +4,8 @@ import { Alert } from 'reactstrap';
 import axios from 'axios';
 import './App.css';
 
+import { connect } from "react-redux";
+
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 
@@ -263,3 +265,4 @@ class ErrorPage404 extends Component {
 }
 
 export default App;
+

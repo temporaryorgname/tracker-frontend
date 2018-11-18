@@ -5,6 +5,9 @@ import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart } from "r
 import { TimeSeries, TimeRange } from "pondjs";
 import axios from 'axios';
 
+import { connect } from "react-redux";
+import { fetchBodyweight, createBodyweight, deleteBodyweight } from './actions/Body.js'
+
 export class BodyStatsPage extends Component {
   render() {
     return (
@@ -16,34 +19,16 @@ export class BodyStatsPage extends Component {
   }
 }
 
-class BodyWeightTable extends Component {
+class ConnectedBodyWeightTable extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      data: []
-    };
-    this.updateData = this.updateData.bind(this);
-
-    this.updateData();
-  }
-  updateData() {
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight", {withCredentials: true})
-        .then(function(response){
-          that.setState({
-            data: response.data
-          });
-        });
+    this.props.updateData();
   }
   getDeleteHandler(id) {
     var that = this;
     return function() {
       if (window.confirm('Delete entry?')) {
-        console.log('Deleting stat with ID '+id);
-        axios.delete(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight/"+id, {withCredentials: true})
-          .then(function(response){
-            that.updateData();
-          });
+        that.props.deleteEntry(id);
       }
     }
   }
@@ -62,7 +47,7 @@ class BodyWeightTable extends Component {
             </tr>
           </thead>
           <tbody>
-            {this.state.data.map(function(data, index){
+            {this.props.data.map(function(data, index){
               return (<tr key={data.id}>
                 <td>{data.date}</td>
                 <td>{data.time}</td>
@@ -80,45 +65,47 @@ class BodyWeightTable extends Component {
     );
   }
 }
+const BodyWeightTable = connect(
+  function(state, ownProps) {
+    return {data: state.bodyweight}
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchBodyweight()),
+      deleteEntry: (id) => dispatch(deleteBodyweight(id))
+    };
+  }
+)(ConnectedBodyWeightTable);
 
-class NewBodyWeightEntryForm extends Component {
+class ConnectedNewBodyWeightEntryForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      bodyweight: ''
+      bodyweight: '',
+      successMessage: null,
+      errorMessage: null
     };
     this.addWeight = this.addWeight.bind(this);
     this.handleFormChange = this.handleFormChange.bind(this);
   }
   addWeight(event) {
     event.preventDefault();
-    var now = new Date();
-    var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
-    var payload = {
-      date: nowString,
-      time: now.toLocaleTimeString(),
-      bodyweight: this.state.bodyweight
-    }
     var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight", payload, {withCredentials: true})
-        .then(function(response){
-          console.log(response);
-          that.setState({
-            bodyweight: '',
-            successMessage: 'Added successfully!',
-            errorMessage: null
-          });
-          if (that.props.onAddWeight) {
-            that.props.onAddWeight();
-          }
-        })
-        .catch(function(error){
-          console.log(error);
-          that.setState({
-            successMessage: null,
-            errorMessage: 'Failed to add new entry'
-          })
+    this.props.onSubmit(this.state.bodyweight)
+      .then(function(response){
+        that.setState({
+          bodyweight: '',
+          successMessage: 'Added successfully!',
+          errorMessage: null
         });
+      })
+      .catch(function(error){
+        console.error(error);
+        that.setState({
+          successMessage: null,
+          errorMessage: 'Failed to add new entry'
+        })
+      });
   }
   handleFormChange(e) {
     var x = {successMessage: null, errorMessage: null};
@@ -138,6 +125,16 @@ class NewBodyWeightEntryForm extends Component {
     );
   }
 }
+const NewBodyWeightEntryForm = connect(
+  function(state, ownProps) {
+    return {data: state.bodyweight}
+  },
+  function(dispatch, ownProps) {
+    return {
+      onSubmit: weight => dispatch(createBodyweight(weight))
+    };
+  }
+)(ConnectedNewBodyWeightEntryForm);
 
 class BodyWeightTableRow extends Component {
   render() {
@@ -151,34 +148,20 @@ class BodyWeightTableRow extends Component {
   }
 }
 
-class BodyWeightTimeSeries extends Component {
+class ConnectedBodyWeightTimeSeries extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      data: []
-    };
     this.getTimeSeries = this.getTimeSeries.bind(this);
-    this.updateData = this.updateData.bind(this); //TODO: This is copied from BodyWeightTable. Move this somewhere else so there's no repeated code or repeat requests.
-    this.updateData();
-  }
-  updateData() {
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/body/weight", {withCredentials: true})
-        .then(function(response){
-          window.result = response;
-          that.setState({
-            data: response.data
-          });
-        });
+    this.props.updateData();
   }
   getTimeSeries() {
-    if (this.state.data.length == 0) {
+    if (this.props.data.length == 0) {
       return null;
     }
     var data = {
       name: 'Body Weight',
       columns: ['time', 'value'],
-      points: this.state.data.map(function(datum){
+      points: this.props.data.map(function(datum){
         if (datum.time) {
           return [new Date(datum.date+" "+datum.time), datum.bodyweight];
         }
@@ -211,3 +194,13 @@ class BodyWeightTimeSeries extends Component {
     );
   }
 }
+const BodyWeightTimeSeries = connect(
+  function(state, ownProps) {
+    return {data: state.bodyweight}
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchBodyweight())
+    };
+  }
+)(ConnectedBodyWeightTimeSeries);
