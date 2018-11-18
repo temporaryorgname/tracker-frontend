@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from "react-router-dom";
 import { Form, FormGroup, Label, Input, Table, FormFeedback } from 'reactstrap';
-import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart } from "react-timeseries-charts";
+import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart, ScatterChart } from "react-timeseries-charts";
 import { TimeSeries } from "pondjs";
 
 import { connect } from "react-redux";
@@ -12,6 +12,7 @@ export class BodyStatsPage extends Component {
     return (
       <div>
         <BodyWeightTimeSeries />
+        <BodyWeightScatterPlot />
         <BodyWeightTable />
       </div>
     );
@@ -139,7 +140,9 @@ class ConnectedBodyWeightTimeSeries extends Component {
   constructor(props) {
     super(props);
     this.getTimeSeries = this.getTimeSeries.bind(this);
-    this.props.updateData();
+    if (this.props.data.length === 0) {
+      this.props.updateData();
+    }
   }
   getTimeSeries() {
     if (this.props.data.length === 0) {
@@ -191,3 +194,59 @@ const BodyWeightTimeSeries = connect(
     };
   }
 )(ConnectedBodyWeightTimeSeries);
+
+class ConnectedBodyWeightScatterPlot extends Component {
+  constructor(props) {
+    super(props);
+    this.getTimeSeries = this.getTimeSeries.bind(this);
+    //this.props.updateData();
+  }
+  getTimeSeries() {
+    if (this.props.data.length === 0) {
+      return null;
+    }
+    var data = {
+      name: 'Body Weight',
+      columns: ['time', 'value'],
+      points: this.props.data
+        .filter(datum => datum.time)
+        .map(datum => [new Date('1900-01-01 '+datum.time), datum.bodyweight])
+        .sort((a,b) => (a[0]>b[0]))
+    };
+    console.log(this.props.data);
+    console.log(data);
+    var series = new TimeSeries(data);
+    return series;
+  }
+  render() {
+    // Convert the data to numerical form
+    var series = this.getTimeSeries();
+    if (series == null) {
+      return (
+        <div>No data available yet.</div>
+      );
+    }
+    return (
+      <Resizable>
+      <ChartContainer timeRange={series.timerange()} width={80}>
+        <ChartRow height="200">
+          <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
+          <Charts>
+            <ScatterChart axis="axis1" series={series} />
+          </Charts>
+        </ChartRow>
+      </ChartContainer>
+      </Resizable>
+    );
+  }
+}
+const BodyWeightScatterPlot = connect(
+  function(state, ownProps) {
+    return {data: state.bodyweight}
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchBodyweight())
+    };
+  }
+)(ConnectedBodyWeightScatterPlot);
