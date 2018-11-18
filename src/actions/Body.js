@@ -2,15 +2,12 @@ import axios from 'axios';
 
 import { 
   REQUEST_BODYWEIGHT,
-  FETCH_BODYWEIGHT,
-  RECEIVE_BODYWEIGHT,
-  CREATE_BODYWEIGHT,
-  DELETE_BODYWEIGHT
+  RECEIVE_BODYWEIGHT
 } from "../constants/action-types";
 
 export const requestBodyweight = function(date){
   return {
-    type: 'REQUEST_BODYWEIGHT',
+    type: REQUEST_BODYWEIGHT,
     payload: {date: date}
   }
 }

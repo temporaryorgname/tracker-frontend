@@ -4,8 +4,6 @@ import { Alert } from 'reactstrap';
 import axios from 'axios';
 import './App.css';
 
-import { connect } from "react-redux";
-
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 
@@ -22,7 +20,7 @@ class App extends Component {
     var that = this;
     axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/auth/current_session", {withCredentials: true})
         .then(function(response){
-          if (response.data != 'None') {
+          if (response.data !== 'None') {
             that.setState({loggedIn: true});
           } else {
             that.setState({loggedIn: false});
@@ -197,7 +195,7 @@ class Signup extends Component {
   signup(e) {
     e.preventDefault(); // Prevent the form from routing the user elsewhere
     this.setState({ signingUp: true, errors: [] });
-    if (this.state.password != this.state.password2) {
+    if (this.state.password !== this.state.password2) {
       this.setState({ signingUp: false, errors: ["Passwords do not match"] });
       return;
     }

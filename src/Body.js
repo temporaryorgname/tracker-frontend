@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import { Link } from "react-router-dom";
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert, Table, FormFeedback } from 'reactstrap';
+import { Form, FormGroup, Label, Input, Table, FormFeedback } from 'reactstrap';
 import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart } from "react-timeseries-charts";
-import { TimeSeries, TimeRange } from "pondjs";
-import axios from 'axios';
+import { TimeSeries } from "pondjs";
 
 import { connect } from "react-redux";
 import { fetchBodyweight, createBodyweight, deleteBodyweight } from './actions/Body.js'
@@ -136,18 +135,6 @@ const NewBodyWeightEntryForm = connect(
   }
 )(ConnectedNewBodyWeightEntryForm);
 
-class BodyWeightTableRow extends Component {
-  render() {
-    return (
-      <tr draggable='true'>
-        <td>{this.props.date.toISOString().substr(0,10)}</td>
-        <td></td>
-        <td>{this.props.bodyweight}</td>
-      </tr>
-    );
-  }
-}
-
 class ConnectedBodyWeightTimeSeries extends Component {
   constructor(props) {
     super(props);
@@ -155,7 +142,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
     this.props.updateData();
   }
   getTimeSeries() {
-    if (this.props.data.length == 0) {
+    if (this.props.data.length === 0) {
       return null;
     }
     var data = {

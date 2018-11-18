@@ -1,6 +1,6 @@
 import React, { Component, Fragment } from 'react';
 import { Link } from "react-router-dom";
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText, Alert } from 'reactstrap';
+import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText } from 'reactstrap';
 import axios from 'axios';
 
 import { connect } from "react-redux";
@@ -149,7 +149,7 @@ class FoodNameInput extends Component {
       this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
     }
     if (prevState.selected !== this.state.selected) {
-      if (this.state.selected == -1) {
+      if (this.state.selected === -1) {
         this.props.onHighlight({});
       } else if (this.props.onHighlight) {
         this.props.onHighlight(this.state.suggestions[this.state.selected]);
@@ -184,11 +184,11 @@ class FoodNameInput extends Component {
   handleKeyDown(event) {
     var UP = 38;
     var DOWN = 40;
-    if (event.keyCode == DOWN) {
+    if (event.keyCode === DOWN) {
       this.setState({
         selected: (this.state.selected+2)%(this.state.suggestions.length+1)-1
       });
-    } else if (event.keyCode == UP) {
+    } else if (event.keyCode === UP) {
       this.setState({
         selected: (this.state.selected+this.state.suggestions.length+1)%(this.state.suggestions.length+1)-1
       });
@@ -196,7 +196,7 @@ class FoodNameInput extends Component {
   }
   handleKeyPress(event) {
     var RETURN = 13;
-    if ((event.keyCode || event.which || event.charCode) == RETURN && this.state.selected !== -1) {
+    if ((event.keyCode || event.which || event.charCode) === RETURN && this.state.selected !== -1) {
       this.handleSelect();
       // Prevent the key press from affecting other things (e.g. form submission).
       event.stopPropagation();
@@ -214,7 +214,7 @@ class FoodNameInput extends Component {
     this.handleSelect();
   }
   loadSuggestions() {
-    if (this.props.value.length == 0) {
+    if (this.props.value.length === 0) {
       this.setState({
         suggestions: [],
         loading: true
@@ -263,7 +263,7 @@ class FoodNameInput extends Component {
         <tbody onMouseDown={this.handleSelect}>
           {
             this.state.suggestions.map(function(item,index){
-              var className = that.state.selected == index ? 'selected' : '';
+              var className = that.state.selected === index ? 'selected' : '';
               return (
                 <tr className={className} key={item.id} onMouseEnter={that.getMouseEnterHandler(index)}>
                   <td>{item.name}</td>
@@ -274,20 +274,6 @@ class FoodNameInput extends Component {
               );
             })
           }
-        </tbody>
-      </table>
-    );
-    var noSuggestions = (
-      <table>
-        <thead>
-          <tr>
-            <th>name</th>
-            <th>cals</th>
-            <th>prot</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td colspan='3'>No match for "{this.props.value}"</td></tr>
         </tbody>
       </table>
     );
@@ -456,11 +442,11 @@ class ConnectedFoodRowNewEntry extends Component {
   }
   handleQuantityScale(scale) {
     var cals = this.state.calories;
-    if (cals == parseFloat(cals)) {
+    if (isFinite(cals)) {
       cals = parseFloat(cals)*scale;
     }
     var prot = this.state.protein;
-    if (prot == parseFloat(prot)) {
+    if (isFinite(prot)) {
       prot = parseFloat(prot)*scale;
     }
     this.setState({
@@ -723,11 +709,11 @@ class FoodPhotoThumbnail extends Component {
         });
   }
   render() {
-    if (this.state.data == "") {
+    if (!this.state.data) {
       return (<i className="material-icons">fastfood</i>);
     } else {
       return (
-        <img src={"data:image/png;base64,"+this.state.data} />
+        <img src={"data:image/png;base64,"+this.state.data} alt='Thumbnail'/>
       );
     }
   }
@@ -749,7 +735,7 @@ class ConnectedFoodTable extends FoodRow {
     this.props.updateData(this.props.date);
   }
   componentDidUpdate(prevProps) {
-    if (prevProps.date != this.props.date) {
+    if (prevProps.date !== this.props.date) {
       this.props.updateData(this.props.date);
     }
   }

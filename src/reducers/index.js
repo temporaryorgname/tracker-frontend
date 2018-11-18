@@ -1,11 +1,8 @@
 import { combineReducers } from 'redux'
 
 import { 
-  REQUEST_FOOD,
-  FETCH_FOOD,
   RECEIVE_FOOD,
   REQUEST_BODYWEIGHT,
-  FETCH_BODYWEIGHT,
   RECEIVE_BODYWEIGHT
 } from "../constants/action-types";
 
@@ -39,8 +36,9 @@ function bodyweightReducer(state = [], action) {
       return state; //TODO: Mark as loading
     case RECEIVE_BODYWEIGHT:
       return action.payload.data;
+    default:
+      return state;
   }
-  return state;
 }
 
 const rootReducer = combineReducers({

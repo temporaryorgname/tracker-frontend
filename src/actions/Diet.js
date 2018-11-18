@@ -2,11 +2,7 @@ import axios from 'axios';
 
 import { 
   REQUEST_FOOD,
-  FETCH_FOOD,
-  RECEIVE_FOOD,
-  CREATE_FOOD,
-  UPDATE_FOOD,
-  DELETE_FOOD
+  RECEIVE_FOOD
 } from "../constants/action-types";
 
 export const requestFood = function(date){
