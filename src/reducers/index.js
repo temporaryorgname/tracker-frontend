@@ -8,7 +8,8 @@ import {
 
 const initialFoodState = {
   entriesByDate: {}, // Key: date, data: array of food IDs
-  entries: {} // Key: id, data: array of entries
+  entries: {}, // Key: id, data: array of entries
+  dirtyEntries: new Set() // IDs of entries that were modified
 };
 function foodReducer(state = initialFoodState, action) {
   switch (action.type) {
@@ -24,6 +25,23 @@ function foodReducer(state = initialFoodState, action) {
       return {...state,
         entriesByDate: {...state.entriesByDate, [date]: entryIds},
         entries: {...state.entries, ...entries}
+      };
+    case 'UPDATE_FOOD':
+      console.log('UPDATE_FOOD');
+      var id = action.payload.id;
+      var data = action.payload.data;
+      var dirtyEntriesCopy = new Set(state.dirtyEntries);
+      dirtyEntriesCopy.add(id);
+      return {...state,
+        entries: {...state.entries, [id]: data},
+        dirtyEntries: dirtyEntriesCopy
+      };
+    case 'UPDATE_FOOD_COMPLETED':
+      var id = action.payload.id;
+      var dirtyEntriesCopy = new Set(state.dirtyEntries);
+      dirtyEntriesCopy.delete(id);
+      return {...state,
+        dirtyEntries: dirtyEntriesCopy
       };
     default:
       return state;

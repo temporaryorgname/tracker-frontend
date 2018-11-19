@@ -4,7 +4,7 @@ import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, La
 import axios from 'axios';
 
 import { connect } from "react-redux";
-import { fetchFood, createFood, deleteFood } from './actions/Diet.js'
+import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
 
 import './Diet.css';
 
@@ -25,9 +25,7 @@ export class DietPage extends Component {
   }
   render() {
     return (
-      <div className='diet-page-container'>
-        <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
-      </div>
+      <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
     );
   }
 }
@@ -397,7 +395,7 @@ class ConnectedFoodRowNewEntry extends Component {
       name: this.state.name,
       quantity: this.state.quantity,
       calories: this.state.calories,
-      protein: this.state.proteins,
+      protein: this.state.protein,
       photos: this.state.photos
     }).then(function(response){
       // Clear form
@@ -540,84 +538,32 @@ class DropdownCheckbox extends Component {
   }
 }
 
-class FoodRow extends Component {
+class ConnectedFoodRow extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      id: props.id,
-      date: props.date,
-      name: props.name,
-      quantity: props.quantity,
-      calories: props.calories,
-      protein: props.protein,
-      photos: props.photos,
-      children: props.children || [],
-      selected: [],
+    console.log(props);
+    this.state = { // Keep a copy of the data
+      data: {
+        ...props.data
+      },
       dirty: false,
       expanded: false
     };
-    this.lastStateUpdateTime = new Date();
-    this.lastDatabaseUpdateTime = new Date(0);
-    this.databaseUpdateIntervalId = null;
     this.dropdownCheckbox = React.createRef();
-    this.handleToggleSelected = this.handleToggleSelected.bind(this);
-    this.getToggleSelectedHandler = this.getToggleSelectedHandler.bind(this);
     this.toggleChildren = this.toggleChildren.bind(this);
-  }
-  updateDatabase() {
-    var stateClone = JSON.parse(JSON.stringify(this.state));
-    var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/"+this.props.id, stateClone, {withCredentials: true})
-        .then(function(response){
-          that.lastDatabaseUpdateTime = new Date();
-        });
   }
   getOnUpdateHandler(propName) {
     var that = this;
     return function(val) {
       // Update entry values
-      var x = {};
-      x[propName] = val;
-      that.setState(x);
-
-      // Update dirty state
-      that.lastStateUpdateTime = new Date();
-      that.setState({ dirty: true });
-      // Check if we're already waiting to update
-      if (that.databaseUpdateIntervalId != null) {
-        return;
+      var updatedEntry = {
+        ...that.state.data,
+        [propName]: val
       }
-      // Not yet waiting to update, so set up an interval to wait until the user stops editing
-      that.databaseUpdateIntervalId = setInterval(function() {
-        if (new Date() - that.lastStateUpdateTime < 2000) {
-          return; // There's been a change in the last 5s, so don't update the database yet
-        }
-        that.updateDatabase();
-        clearInterval(that.databaseUpdateIntervalId);
-        that.databaseUpdateIntervalId = null;
-        that.setState({ dirty: false });
-      }, 1000);
-    }
-  }
-  handleToggleSelected(entryId) {
-    /* Callback to be triggered when an entry has been selected. */
-    if (this.state.selected.includes(entryId)){
-      var index = this.state.selected.indexOf(entryId);
-      var array = this.state.selected.slice();
-      array.splice(index, 1);
-      this.setState({
-        selected: array
+      that.setState({
+        data: updatedEntry
       });
-    } else {
-      this.setState({
-        selected: this.state.selected.concat([entryId])
-      });
-    }
-  }
-  getToggleSelectedHandler(entryId) {
-    var that = this;
-    return function() {
-      that.handleToggleSelected(entryId);
+      that.props.updateEntry(that.props.id, updatedEntry);
     }
   }
   toggleChildren(visible) {
@@ -627,33 +573,53 @@ class FoodRow extends Component {
   }
   render() {
     var that = this;
+    var selected = this.props.selected.has(this.props.id);
     return (
       <Fragment>
         <tr className={this.state.dirty ? 'table-info' : ''}>
-          <td>{this.state.children.length > 0 && <DropdownCheckbox ref={this.dropdownCheckbox} onChange={this.toggleChildren}/>}</td>
-          <FoodRowCell value={this.state.date} onChange={this.getOnUpdateHandler('date')} />
-          <FoodRowCell value={this.state.name} onChange={this.getOnUpdateHandler('name')} />
-          <FoodRowCell value={this.state.quantity} onChange={this.getOnUpdateHandler('quantity')} />
-          <FoodRowCell value={this.state.calories} onChange={this.getOnUpdateHandler('calories')} />
-          <FoodRowCell value={this.state.protein} onChange={this.getOnUpdateHandler('protein')} />
           <td>
-            <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.photos}/>
+            {
+              this.state.data.children.length > 0 && 
+              <DropdownCheckbox 
+                ref={this.dropdownCheckbox}
+                onChange={this.toggleChildren} />
+            }
           </td>
-          <td onClick={this.props.onToggleSelected}><input type='checkbox' checked={this.props.selected}/></td>
+          <FoodRowCell value={this.state.data.date} onChange={this.getOnUpdateHandler('date')} />
+          <FoodRowCell value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
+          <FoodRowCell value={this.state.data.quantity} onChange={this.getOnUpdateHandler('quantity')} />
+          <FoodRowCell value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
+          <FoodRowCell value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
+          <td>
+            <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.data.photos}/>
+          </td>
+          <td onClick={()=>this.props.onToggleSelected(this.props.id)}><input type='checkbox' checked={selected}/></td>
         </tr>
-        {
-          this.state.expanded &&
-          this.state.children.map(function(data){
-            return <FoodRow key={data.id} 
-                        selected={that.state.selected.includes(data.id)}
-                        onToggleSelected={that.getToggleSelectedHandler(data.id)}
-                        {...data}/>
-          })
-        }
       </Fragment>
     );
   }
 }
+const FoodRow = connect(
+  function(state, ownProps) {
+    var entry = state.food.entries[ownProps.id];
+    return {
+      data: {
+        date: entry.date || '',
+        name: entry.name || '',
+        quantity: entry.quantity || '',
+        calories: entry.calories || '',
+        protein: entry.protein || '',
+        photos: entry.photos || [],
+        children: entry.children || []
+      }
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateEntry: (id, data) => dispatch(updateFood(id, data))
+    };
+  }
+)(ConnectedFoodRow);
 
 class FoodRowCell extends Component {
   constructor(props) {
@@ -719,9 +685,12 @@ class FoodPhotoThumbnail extends Component {
   }
 }
 
-class ConnectedFoodTable extends FoodRow {
+class ConnectedFoodTable extends Component {
   constructor(props){
     super(props)
+    this.state = {
+      selected: new Set()
+    };
     //this.state.children = [
     //  {"id":1,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[]},
     //  {"id":2,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[], "children": 
@@ -730,7 +699,7 @@ class ConnectedFoodTable extends FoodRow {
     //  }
     //];
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
-    this.computeTotal = this.computeTotal.bind(this);
+    this.handleToggleSelected = this.handleToggleSelected.bind(this);
 
     this.props.updateData(this.props.date);
   }
@@ -739,27 +708,28 @@ class ConnectedFoodTable extends FoodRow {
       this.props.updateData(this.props.date);
     }
   }
+  handleToggleSelected(entryId) {
+    /* Callback to be triggered when an entry has been selected. */
+    var setCopy = new Set(this.state.selected);
+    if (this.state.selected.has(entryId)){
+      setCopy.delete(entryId);
+    } else {
+      setCopy.add(entryId);
+    }
+    this.setState({
+      selected: setCopy
+    });
+  }
   deleteSelectedEntries(event) {
     event.preventDefault();
     var that = this;
-    this.props.deleteEntry(this.state.selected)
+    this.props.deleteEntry(Array.from(this.state.selected))
       .then(function(response) {
         that.setState({
-          selected: []
+          selected: new Set()
         });
         that.props.updateData(that.props.date);
       });
-  }
-  computeTotal(key) {
-    return this.state.children.reduce(function(acc, cur) {
-      var num = cur[key];
-      if (num == null || !isFinite(num) || isNaN(num))
-        return acc;
-      num = parseFloat(num);
-      if (num == null || !isFinite(num) || isNaN(num))
-        return acc;
-      return acc + num;
-    }, 0);
   }
   render() {
     var that = this;
@@ -791,7 +761,7 @@ class ConnectedFoodTable extends FoodRow {
           </colgroup>
           <thead>
           <tr>
-            <td></td>
+            <td>{this.props.dirty ? <i className='material-icons' alt='Saving changes...'>refresh</i> : <i className='material-icons' alt='Changes saved'>check</i>}</td>
             <th>Date</th>
             <th>Item</th>
             <th>Quantity</th>
@@ -807,17 +777,17 @@ class ConnectedFoodTable extends FoodRow {
             <th>Total</th>
             <td></td>
             <td></td>
-            <td>{this.computeTotal('calories')}</td>
-            <td>{this.computeTotal('protein')}</td>
+            <td>{this.props.total.calories}</td>
+            <td>{this.props.total.protein}</td>
             <td></td>
           </tr>
           <FoodRowNewEntry date={this.props.date} />
           {
-            this.props.data.map(function(data){
-              return <FoodRow key={data.id}
-                          selected={that.state.selected.includes(data.id)}
-                          onToggleSelected={that.getToggleSelectedHandler(data.id)}
-                          {...data}/>
+            this.props.ids.map(function(id){
+              return <FoodRow key={id}
+                          id={id}
+                          selected={that.state.selected}
+                          onToggleSelected={that.handleToggleSelected}/>
             })
           }
           </tbody>
@@ -830,9 +800,24 @@ const FoodTable = connect(
   function(state, ownProps) {
     var ids = state.food.entriesByDate[ownProps.date] || [];
     return {
-      data: ids.map(function(id){
-        return state.food.entries[id];
-      })
+      ids: ids,
+      total: {
+        calories: ids.map(
+            id => state.food.entries[id].calories
+          ).filter(
+            val => val && isFinite(val)
+          ).reduce(
+            (acc, val) => acc+parseFloat(val), 0
+          ),
+        protein: ids.map(
+            id => state.food.entries[id].protein
+          ).filter(
+            val => val && isFinite(val)
+          ).reduce(
+            (acc, val) => acc+parseFloat(val), 0
+          )
+      },
+      dirty: state.food.dirtyEntries.size > 0
     }
   },
   function(dispatch, ownProps) {

@@ -39,7 +39,6 @@ export const receiveFood = function(date, data){
 
 export const createFood = function(data){
   return function(dispatch) {
-    console.log(data);
     return axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food",
       data,
@@ -47,6 +46,16 @@ export const createFood = function(data){
     ).then(function(response){
       dispatch(fetchFood(data.date))
     });
+  }
+}
+
+export const updateFood = function(id, data){
+  return {
+    type: 'UPDATE_FOOD',
+    payload: {
+      id: id,
+      data: data
+    }
   }
 }
 
