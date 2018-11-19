@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import { Alert } from 'reactstrap';
 import axios from 'axios';
-import './App.css';
+import './App.scss';
 
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'

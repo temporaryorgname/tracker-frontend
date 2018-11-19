@@ -6,7 +6,7 @@ import axios from 'axios';
 import { connect } from "react-redux";
 import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
 
-import './Diet.css';
+import './Diet.scss';
 
 export class DietPage extends Component {
   constructor(props) {

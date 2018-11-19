@@ -5,14 +5,14 @@
   "dependencies": {
     "axios": "^0.18.0",
     "pondjs": "^0.8.9",
-    "react": "^16.4.1",
-    "react-bootstrap": "^0.32.1",
-    "react-dom": "^16.4.1",
-    "react-router-dom": "^4.3.1",
-    "react-scripts": "1.1.4",
-    "react-timeseries-charts": "^0.15.2",
-    "reactstrap": "^6.3.0",
+    "react": "^16.6.3",
+    "react-bootstrap": "^0.32.4",
+    "react-dom": "^16.6.3",
     "react-redux": "^5.1.1",
+    "react-router-dom": "^4.3.1",
+    "react-scripts": "^2.1.1",
+    "react-timeseries-charts": "^0.15.5",
+    "reactstrap": "^6.5.0",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0"
   },
@@ -23,6 +23,14 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
-    "react-styleguidist": "^7.1.0"
-  }
+    "node-sass": "^4.10.0",
+    "react-styleguidist": "^8.0.5",
+    "sass-loader": "^7.1.0"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }

@@ -32,15 +32,12 @@ store.subscribe(function(){
   updateTimeout = setTimeout(
     function() { // Update one at a time
       var id = lastDirtyEntries.values().next().value;
-      console.log('Updating database: ID #'+id);
       var data = store.getState().food.entries[id];
-      console.log(data);
       axios.post(
         process.env.REACT_APP_SERVER_ADDRESS+"/data/food/"+id,
         data,
         {withCredentials: true}
       ).then(function(response){
-        console.log('Update successful for ID #'+id);
         store.dispatch({
           type: 'UPDATE_FOOD_COMPLETED',
           payload: {
