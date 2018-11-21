@@ -70,7 +70,27 @@ input {
     &:focus {
       border-color: rgba($primary-colour,1);
     }
+
+    &.valid {
+      box-shadow: 0 0 5px 0 rgba($success-colour,.5);
+      border-radius: 3px;
+    }
+
+    &.invalid {
+      box-shadow: 0 0 5px 0 rgba($error-colour,.5);
+      border-radius: 3px;
+    }
   }
+}
+
+div.success-message {
+  font-size: 10px;
+  color: $success-colour;
+}
+
+div.error-message {
+  font-size: 10px;
+  color: $error-colour;
 }
 
 div.react-datepicker-wrapper {

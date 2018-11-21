@@ -1,19 +1,21 @@
 import React, { Component } from 'react';
 import { Link } from "react-router-dom";
-import { Form, FormGroup, Label, Input, Table, FormFeedback } from 'reactstrap';
 import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart, ScatterChart } from "react-timeseries-charts";
 import { TimeSeries } from "pondjs";
 
 import { connect } from "react-redux";
 import { fetchBodyweight, createBodyweight, deleteBodyweight } from './actions/Body.js'
 
+import './Body.scss';
+
 export class BodyStatsPage extends Component {
   render() {
     return (
       <div>
+        <h2>Body Stats</h2>
+        <BodyWeightTable />
         <BodyWeightTimeSeries />
         <BodyWeightScatterPlot />
-        <BodyWeightTable />
       </div>
     );
   }
@@ -35,9 +37,9 @@ class ConnectedBodyWeightTable extends Component {
   render() {
     var that = this;
     return (
-      <div>
+      <div class='bodyweight-table-container'>
         <NewBodyWeightEntryForm onAddWeight={this.updateData}/>
-        <Table>
+        <table>
           <thead>
             <tr>
               <th>Date</th>
@@ -60,7 +62,7 @@ class ConnectedBodyWeightTable extends Component {
               </tr>);
             })}
           </tbody>
-        </Table>
+        </table>
       </div>
     );
   }
@@ -113,15 +115,20 @@ class ConnectedNewBodyWeightEntryForm extends Component {
     this.setState(x);
   }
   render() {
+    var classNames = [];
+    if (this.state.successMessage) {
+      classNames.push('valid');
+    } else if (this.state.errorMessage) {
+      classNames.push('invalid');
+    }
+    classNames = classNames.join(' ');
     return (
-      <Form action='#' onSubmit={this.addWeight}>
-        <FormGroup>
-          <Label for='bodyweight'>Body Weight: </Label>
-          <Input type='text' name='bodyweight' value={this.state.bodyweight} onChange={this.handleFormChange} valid={this.state.successMessage} invalid={this.state.errorMessage}/>
-          <FormFeedback valid>{this.state.successMessage}</FormFeedback>
-          <FormFeedback invalid='true'>{this.state.errorMessage}</FormFeedback>
-        </FormGroup>
-      </Form>
+      <form action='#' onSubmit={this.addWeight}>
+        <label for='bodyweight'>Body Weight: </label>
+        <input type='text' name='bodyweight' className={classNames} value={this.state.bodyweight} onChange={this.handleFormChange} />
+        <div className='success-message'>{this.state.successMessage}</div>
+        <div className='error-message'>{this.state.errorMessage}</div>
+      </form>
     );
   }
 }
@@ -171,8 +178,9 @@ class ConnectedBodyWeightTimeSeries extends Component {
       );
     }
     return (
+      <div className='bodyweight-plot-container'>
       <Resizable>
-      <ChartContainer timeRange={series.timerange()} width={800}>
+      <ChartContainer timeRange={series.timerange()}>
         <ChartRow height="200">
           <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
           <Charts>
@@ -181,6 +189,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
         </ChartRow>
       </ChartContainer>
       </Resizable>
+      </div>
     );
   }
 }
@@ -227,8 +236,9 @@ class ConnectedBodyWeightScatterPlot extends Component {
       );
     }
     return (
+      <div className='bodyweight-plot-container'>
       <Resizable>
-      <ChartContainer timeRange={series.timerange()} width={80}>
+      <ChartContainer timeRange={series.timerange()}>
         <ChartRow height="200">
           <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
           <Charts>
@@ -237,6 +247,7 @@ class ConnectedBodyWeightScatterPlot extends Component {
         </ChartRow>
       </ChartContainer>
       </Resizable>
+      </div>
     );
   }
 }
