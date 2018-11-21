@@ -63,6 +63,7 @@ class Navigation extends Component {
   render() {
     if (this.props.loggedIn) {
       return (
+        <nav>
         <ul className="nav">
           <li className="nav-item">
             <Link className="nav-link" to="food">Diet</Link>
@@ -77,6 +78,7 @@ class Navigation extends Component {
             <Link className="nav-link" to="logout">Logout</Link>
           </li>
         </ul>
+        </nav>
       );
     } else {
       return (
@@ -262,5 +264,64 @@ class ErrorPage404 extends Component {
   }
 }
 
+class Modal extends Component {
+  constructor(props) {
+    super(props);
+    this.handleClickOutside = this.handleClickOutside.bind(this);
+  }
+  handleClickOutside(event) {
+    if (event.target !== this.ref) {
+      return;
+    }
+    this.props.toggle();
+  }
+  render() {
+    var className = 'modal-background';
+    if (this.props.isOpen) {
+      className += ' visible';
+    }
+    console.log(className);
+    return (
+      <div className={className} onClick={this.handleClickOutside} ref={(x)=>(this.ref=x)}>
+        <div className='modal'>
+          <div className='close' onClick={this.props.toggle}><i className='material-icons'>close</i></div>
+          {this.props.children}
+        </div>
+      </div>
+    );
+  }
+}
+
+class ModalHeader extends Component {
+  render() {
+    return (
+      <div className='modal-header'>
+        {this.props.children}
+      </div>
+    );
+  }
+}
+
+class ModalBody extends Component {
+  render() {
+    return (
+      <div className='modal-body'>
+        {this.props.children}
+      </div>
+    );
+  }
+}
+
+class ModalFooter extends Component {
+  render() {
+    return (
+      <div className='modal-footer'>
+        {this.props.children}
+      </div>
+    );
+  }
+}
+
 export default App;
+export { Modal, ModalHeader, ModalBody, ModalFooter };
 

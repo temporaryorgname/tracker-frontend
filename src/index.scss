@@ -1,5 +1,176 @@
+@import '_variables';
+
 body {
   margin: 0;
   padding: 0;
   font-family: sans-serif;
+  font-size: 16px;
+  background: $background-colour;
+  color: $primary-colour;
+  text-align: center;
 }
+
+nav {
+  text-align: left;
+  li {
+    display: inline-block;
+    margin: 0.1rem 1rem;
+  }
+  a {
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+button {
+  background-color: $primary-colour;
+  color: white;
+  border: none;
+  margin: 5px;
+  padding: 5px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+
+  &::-moz-focus-inner {
+    border: 0;
+  }
+
+  &:focus {
+    background-color: $focus-colour;
+  }
+}
+
+a {
+  color: $primary-colour;
+}
+
+input {
+  width: 100%;
+  &[type=text] {
+    color: $primary-colour;
+    background-color: $background-colour;
+    width: 100%;
+    padding: 3px 5px;
+    margin: 5px 0;
+    box-sizing: border-box;
+    border-width: 0 0 1px 0;
+    border-style: solid;
+    border-color: rgba($primary-colour,0.4);
+    font-size: 16px;
+    font-family: sans-serif;
+
+    transition: 0.3s ease;
+    &:focus {
+      border-color: rgba($primary-colour,1);
+    }
+  }
+}
+
+div.react-datepicker-wrapper {
+  cursor: pointer;
+}
+
+.loader {
+  display: inline-block;
+  border: 3px solid #f3f3f3; /* Light grey */
+  border-top: 3px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 2s linear infinite;
+}
+
+.spin {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+div.modal-background {
+  z-index: 10000;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw; /* Full width */
+  height: 100vh; /* Full height */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  text-align: center;
+  display: none;
+
+  &.visible {
+    display: block;
+  }
+
+  div.modal {
+    background: $background-colour;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid $accent-colour;
+    display: inline-block;
+    text-align: left;
+    min-width: 500px;
+    border-radius: 5px;
+
+    div.close {
+      float: right;
+      cursor: pointer;
+    }
+
+    div.modal-header {
+      display: block;
+      width: 100%;
+      font-size: 24pt;
+      white-space: nowrap;
+      margin-right: 50px;
+      border-bottom: 1px solid $accent-colour;
+    }
+
+    div.modal-body {
+      margin: 10px;
+    }
+
+    div.modal-footer {
+      text-align: right;
+    }
+  }
+}
+
+table {
+  border-collapse:collapse;
+  col {
+    &.numbers {
+      width: 100px;
+    }
+  }
+  tr {
+    border-bottom: solid 1px;
+    border-top: solid 1px;
+    border-color: rgba($muted-colour, 0.4);
+  }
+  td, th {
+    text-align: left;
+    margin: 10px;
+    padding: 5px 20px;
+    border: 0;
+  }
+}
+
+.dropdown-checkbox input{
+  display: none;
+}
+
+.react-datepicker {
+  left: -40px;
+}
+

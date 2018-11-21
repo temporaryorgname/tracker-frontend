@@ -1,31 +1,39 @@
 import React, { Component, Fragment } from 'react';
 import { Link } from "react-router-dom";
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Form, FormGroup, Label, Input, FormText } from 'reactstrap';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
 import axios from 'axios';
 
 import { connect } from "react-redux";
+
 import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
+
+import { Modal, ModalHeader, ModalBody, ModalFooter } from './App.js';
+import { formatDate } from './Utils.js';
 
 import './Diet.scss';
 
 export class DietPage extends Component {
   constructor(props) {
     super(props)
-    var now = new Date();
-    var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
     this.state = {
-      date: nowString
+      date: formatDate(new Date())
     }
     this.handleDateChange = this.handleDateChange.bind(this);
   }
-  handleDateChange(event) {
+  handleDateChange(date) {
     this.setState({
-      date: event.target.value
+      date: formatDate(date)
     });
   }
   render() {
     return (
-      <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
+      <div>
+        <h2>Diet Log</h2>
+        <h3>{this.state.date}</h3>
+        <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
+      </div>
     );
   }
 }
@@ -105,16 +113,16 @@ class FileUploadDialog extends Component {
                 })
               }
             </div>
-            <FormGroup>
-              <Label for="file"></Label>
-              <Input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
-              <FormText color="muted">
+            <form>
+              <label for="file"></label>
+              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+              <span color="muted">
                 Select a photo to include with your entry.
-              </FormText>
-            </FormGroup>
+              </span>
+            </form>
           </ModalBody>
           <ModalFooter>
-            <Button color="primary" onClick={this.toggle}>Done</Button>
+            <button className="primary" onClick={this.toggle}>Done</button>
           </ModalFooter>
         </Modal>
       </div>
@@ -456,7 +464,7 @@ class ConnectedFoodRowNewEntry extends Component {
     return (
       <tr onKeyPress={this.handleKeyPress}>
         <td></td>
-        <td>{this.props.date}</td>
+        <td>{formatDate(this.props.date)}</td>
         <td>
           <FoodNameInput 
               value={this.state.name} 
@@ -493,7 +501,7 @@ class ConnectedFoodRowNewEntry extends Component {
         <td>
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>
-        <td><Button color='primary' onClick={this.addEntry}>Save</Button></td>
+        <td><button className='primary' onClick={this.addEntry}>Save</button></td>
       </tr>
     );
   }
@@ -634,7 +642,10 @@ class FoodRowCell extends Component {
     this.handleKeyPress = this.handleKeyPress.bind(this);
   }
   startEdit(e) {
-    this.setState({ edit: true });
+    var that = this;
+    this.setState(
+      { edit: true }
+    );
   }
   doneEdit(e) {
     this.setState({ edit: false });
@@ -654,7 +665,7 @@ class FoodRowCell extends Component {
       );
     } else {
       return (
-        <td><input type='textfield' value={this.props.value} onKeyPress={this.handleKeyPress} onBlur={this.doneEdit} onChange={this.handleChange}/></td>
+        <td><input type='text' value={this.props.value} onKeyPress={this.handleKeyPress} onBlur={this.doneEdit} onChange={this.handleChange} ref={x=>this.ref=x}/></td>
       );
     }
   }
@@ -737,12 +748,9 @@ class ConnectedFoodTable extends Component {
       <div className='food-table'>
         <div className='controls'>
           <div className='table-controls'>
-            <Form inline>
-              <FormGroup>
-                <Label for="date"><i className="material-icons">date_range</i></Label>
-                <Input className='form-control' value={this.props.date} type='date' onChange={this.props.onDateChange}/>
-              </FormGroup>
-            </Form>
+            <DatePicker 
+              onChange={this.props.onDateChange}
+              customInput={<span><i className="material-icons">date_range</i></span>}/>
           </div>
           <div className='entry-controls'>
             <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
@@ -761,7 +769,7 @@ class ConnectedFoodTable extends Component {
           </colgroup>
           <thead>
           <tr>
-            <td>{this.props.dirty ? <i className='material-icons' alt='Saving changes...'>refresh</i> : <i className='material-icons' alt='Changes saved'>check</i>}</td>
+            <td>{this.props.dirty ? <i className='material-icons spin' alt='Saving changes...'>autorenew</i> : <i className='material-icons' alt='Changes saved'>check</i>}</td>
             <th>Date</th>
             <th>Item</th>
             <th>Quantity</th>
