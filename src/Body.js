@@ -43,8 +43,8 @@ class ConnectedBodyWeightTable extends Component {
           <thead>
             <tr>
               <th>Date</th>
-              <th>Time</th>
-              <th>Bodyweight</th>
+              <th className='hide-mobile'>Time</th>
+              <th>Weight</th>
               <th></th>
             </tr>
           </thead>
@@ -52,7 +52,7 @@ class ConnectedBodyWeightTable extends Component {
             {this.props.data.map(function(data, index){
               return (<tr key={data.id}>
                 <td>{data.date}</td>
-                <td>{data.time}</td>
+                <td className='hide-mobile'>{data.time}</td>
                 <td>{data.bodyweight}</td>
                 <td>
                   <Link to='#' onClick={that.getDeleteHandler(data.id)}>
@@ -178,7 +178,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
       );
     }
     return (
-      <div className='bodyweight-plot-container'>
+      <div className='bodyweight-plot-container hide-mobile'>
       <Resizable>
       <ChartContainer timeRange={series.timerange()}>
         <ChartRow height="200">
@@ -236,17 +236,17 @@ class ConnectedBodyWeightScatterPlot extends Component {
       );
     }
     return (
-      <div className='bodyweight-plot-container'>
-      <Resizable>
-      <ChartContainer timeRange={series.timerange()}>
-        <ChartRow height="200">
-          <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
-          <Charts>
-            <ScatterChart axis="axis1" series={series} />
-          </Charts>
-        </ChartRow>
-      </ChartContainer>
-      </Resizable>
+      <div className='bodyweight-plot-container hide-mobile'>
+        <Resizable>
+        <ChartContainer timeRange={series.timerange()}>
+          <ChartRow height="200">
+            <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
+            <Charts>
+              <ScatterChart axis="axis1" series={series} />
+            </Charts>
+          </ChartRow>
+        </ChartContainer>
+        </Resizable>
       </div>
     );
   }
