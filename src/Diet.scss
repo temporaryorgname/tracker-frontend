@@ -40,6 +40,13 @@
       }
     }
   }
+
+  .react-datepicker-popper {
+    z-index: 2;
+  }
+  .react-datepicker {
+    left: -40px;
+  }
 }
 
 .food-name-input {
@@ -104,6 +111,7 @@
         display: block;
         top: 0;
         background-color: $background-colour;
+        z-index: $sticky-z;
         td {
           display: none;
           &[data-label] {
@@ -168,13 +176,6 @@
       &:last-child {
         border-bottom: 0;
       }
-      //&::before {
-      //  content: attr(data-label);
-      //  float: left;
-      //  text-transform: uppercase;
-      //  font-weight: bold;
-      //  margin-right: 10px;
-      //}
 
       &.actions {
         display: inline-block;
