@@ -24,36 +24,13 @@ nav {
   }
 }
 
-button {
-  background-color: $primary-colour;
-  color: white;
-  border: none;
-  margin: 5px;
-  padding: 5px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  border-radius: 3px;
-  cursor: pointer;
-  outline: none;
-
-  &::-moz-focus-inner {
-    border: 0;
-  }
-
-  &:focus {
-    background-color: $focus-colour;
-  }
-}
-
 a {
   color: $primary-colour;
 }
 
 input {
   width: 100%;
-  &[type=text] {
+  &[type=text], &[type=password] {
     color: $primary-colour;
     background-color: $background-colour;
     width: 100%;
@@ -80,6 +57,29 @@ input {
       box-shadow: 0 0 5px 0 rgba($error-colour,.5);
       border-radius: 3px;
     }
+  }
+}
+
+input[type=button], input[type=submit], button {
+  background-color: $primary-colour;
+  color: white;
+  border: none;
+  margin: 5px;
+  padding: 5px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  outline: none;
+
+  &::-moz-focus-inner {
+    border: 0;
+  }
+
+  &:focus {
+    background-color: $focus-colour;
   }
 }
 

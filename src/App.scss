@@ -1,2 +1,9 @@
 @import 'variables';
 
+div.login-container, div.signup-container {
+  text-align: center;
+  form {
+    display: inline-block;
+    max-width: 500px;
+  }
+}

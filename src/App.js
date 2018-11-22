@@ -82,6 +82,7 @@ class Navigation extends Component {
       );
     } else {
       return (
+        <nav>
         <ul className="nav">
           <li className="nav-item">
             <Link className="nav-link" to="login">Login</Link>
@@ -90,6 +91,7 @@ class Navigation extends Component {
             <Link className="nav-link" to="signup">Sign Up</Link>
           </li>
         </ul>
+        </nav>
       );
     }
   }
@@ -155,6 +157,8 @@ class Login extends Component {
   }
   render() {
     return (
+      <div className='login-container'>
+      <h2>Login</h2>
       <form onSubmit={this.login}>
         {
           this.state.errors.map(function(error){
@@ -165,16 +169,15 @@ class Login extends Component {
             );
           })
         }
-        <div className="form-group">
-          <label>E-mail: </label>
-          <input className='form-control' type='text' name='email' onChange={this.handleFormChange}/>
+        <div>
+          <input type='text' name='email' placeholder='E-mail' onChange={this.handleFormChange}/>
         </div>
-        <div className="form-group">
-          <label>Password: </label>
-          <input className='form-control' type='password' name='password' onChange={this.handleFormChange}/>
+        <div>
+          <input type='password' name='password' placeholder='Password' onChange={this.handleFormChange}/>
         </div>
-        <input className='btn btn-primary' type='submit' value={this.state.loggingIn ? 'Logging in...' : 'Login'} />
+        <input type='submit' value={this.state.loggingIn ? 'Logging in...' : 'Login'} />
       </form>
+      </div>
     );
   }
 }
@@ -222,6 +225,8 @@ class Signup extends Component {
   }
   render() {
     return (
+      <div className='signup-container'>
+      <h2>Sign Up</h2>
       <form onSubmit={this.signup}>
         {
           this.state.errors.map(function(error){
@@ -250,6 +255,7 @@ class Signup extends Component {
         </div>
         <input className='btn btn-primary' type='submit' value={this.state.signingUp ? 'Signing up...' : 'Sign Up'} />
       </form>
+      </div>
     );
   }
 }
