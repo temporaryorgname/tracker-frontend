@@ -1,3 +1,5 @@
+@import 'variables';
+
 .diet-page-container {
   text-align: center;
 }
@@ -9,17 +11,34 @@
   .controls{
     padding: 5px 20px;
   }
-
   .table-controls{
     display: inline-block;
     width: 50%;
     text-align: left;
   }
-
   .entry-controls{
     display: inline-block;
     width: 50%;
     text-align: right;
+  }
+
+  tr {
+    &.new-entry {
+      input[type='text'] {
+        border-style: solid;
+      }
+    }
+    &.entry {
+      label {
+        display: none;
+      }
+      input[type='text'] {
+        border-style: none;
+        &:focus {
+          border-style: solid;
+        }
+      }
+    }
   }
 }
 
@@ -38,7 +57,6 @@
       white-space: nowrap;
       text-overflow: clip;
     }
-
     td, th {
       width: 100%;
       text-align: left;
@@ -53,7 +71,169 @@
       cursor: pointer;
 
       &.selected {
-        background-color: #88f;
+        background-color: $background-colour;
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .food-table {
+    width: 100%;
+  }
+
+  table.cards {
+    border: 0;
+    width: 100%;
+
+    colgroup {
+      display: none;
+    }
+
+    thead {
+      display: none;
+    }
+
+    tr {
+      margin: 10px;
+      display: inline-block;
+      border: 1px solid #ddd;
+
+      &.total {
+        position: sticky;
+        display: block;
+        top: 0;
+        background-color: $background-colour;
+        td {
+          display: none;
+          &[data-label] {
+            display: inline-block;
+          }
+        }
+        th {
+          display: inline-block;
+        }
+      }
+
+      &.new-entry {
+        display: block;
+        td {
+          margin: 5px;
+          padding: 5px;
+          input[type='text'] {
+            font-size: 12px;
+            margin: 0px;
+            padding: 0px;
+          }
+          &.actions {
+            display: inline-block;
+          }
+          &.submit {
+            display: inline-block;
+          }
+        }
+      }
+
+      &.entry {
+        td {
+          margin: 5px;
+          padding: 5px;
+        }
+        label {
+          display: inline-block;
+          text-align: left;
+        }
+        input[type='text'] {
+          font-size: 12px;
+          display: inline-block;
+          width: auto;
+          text-align: right;
+          margin: 0;
+          padding: 0 5px;
+          border-style: none;
+
+          transition: 0.3s ease;
+
+          &:focus {
+            border-style: solid;
+          }
+        }
+      }
+    }
+
+    td {
+      display: block;
+      text-align: right;
+      font-size: 13px;
+      &:last-child {
+        border-bottom: 0;
+      }
+      //&::before {
+      //  content: attr(data-label);
+      //  float: left;
+      //  text-transform: uppercase;
+      //  font-weight: bold;
+      //  margin-right: 10px;
+      //}
+
+      &.actions {
+        display: inline-block;
+      }
+
+      &.select {
+        display: inline-block;
+        float: right;
+      }
+    }
+  }
+
+  .food-name-input {
+    position: relative;
+
+    table {
+      position: absolute;
+      z-index: 1;
+      left: 0;
+      background-color: rgba(255,255,255,.8);
+      box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
+      width: 100%;
+
+      tbody {
+        white-space: nowrap;
+        text-overflow: clip;
+      }
+      td, th {
+        width: 100%;
+        text-align: left;
+
+        &.loading {
+          text-align: center;
+        }
+        &.name {
+          display: block;
+        }
+        &.numbers {
+          display: inline-block;
+          width: 20%;
+          text-align: right;
+          &::before {
+            content: attr(data-label);
+            float: left;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-right: 10px;
+          }
+        }
+      }
+      tr {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        display: block;
+
+        &.selected {
+          background-color: $background-colour;
+        }
       }
     }
   }

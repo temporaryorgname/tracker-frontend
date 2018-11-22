@@ -255,6 +255,7 @@ class FoodNameInput extends Component {
               onFocus={this.handleFocus}
               onBlur={this.handleBlur}
               name={this.props.name}
+              placeholder={this.props.placeholder}
               ref={this.ref} />);
     var suggestions = (
       <table>
@@ -272,10 +273,10 @@ class FoodNameInput extends Component {
               var className = that.state.selected === index ? 'selected' : '';
               return (
                 <tr className={className} key={item.id} onMouseEnter={that.getMouseEnterHandler(index)}>
-                  <td>{item.name}</td>
-                  <td>{item.quantity}</td>
-                  <td>{item.calories}</td>
-                  <td>{item.protein}</td>
+                  <td className='name'>{item.name}</td>
+                  <td className='numbers' data-label='qty'>{item.quantity}</td>
+                  <td className='numbers' data-label='cals'>{item.calories}</td>
+                  <td className='numbers' data-label='prot'>{item.protein}</td>
                 </tr>
               );
             })
@@ -439,20 +440,25 @@ class ConnectedFoodRowNewEntry extends Component {
     });
   }
   handleSelect(entry) {
+    function foo(x) {
+      return (x === null) ? x : x.toString();
+    }
     this.setState({
       name: entry.name,
-      quantity: entry.quantity || this.state.quantity,
-      calories: entry.calories || this.state.calories,
-      protein: entry.protein || this.state.protein,
+      quantity: foo(entry.quantity) || this.state.quantity,
+      calories: foo(entry.calories) || this.state.calories,
+      protein:  foo(entry.protein) || this.state.protein,
     });
   }
   handleQuantityScale(scale) {
     var cals = this.state.calories;
-    if (isFinite(cals)) {
+    console.log('cals length '+cals.length);
+    console.log(cals);
+    if (isFinite(cals) && cals.length > 0) {
       cals = parseFloat(cals)*scale;
     }
     var prot = this.state.protein;
-    if (isFinite(prot)) {
+    if (isFinite(prot) && prot.length > 0) {
       prot = parseFloat(prot)*scale;
     }
     this.setState({
@@ -462,7 +468,7 @@ class ConnectedFoodRowNewEntry extends Component {
   }
   render() {
     return (
-      <tr onKeyPress={this.handleKeyPress}>
+      <tr className='new-entry' onKeyPress={this.handleKeyPress}>
         <td></td>
         <td>{formatDate(this.props.date)}</td>
         <td>
@@ -472,6 +478,7 @@ class ConnectedFoodRowNewEntry extends Component {
               onHighlight={this.handleHighlight}
               onSelect={this.handleSelect}
               name='name'
+              placeholder='name'
               ref={x => this.nameRef = x} />
         </td>
         <td>
@@ -480,6 +487,7 @@ class ConnectedFoodRowNewEntry extends Component {
               placeholder={this.state.suggestion.quantity}
               onChange={this.onChange}
               onScale={this.handleQuantityScale}
+              placeholder='quantity'
               name='quantity' />
         </td>
         <td>
@@ -488,6 +496,7 @@ class ConnectedFoodRowNewEntry extends Component {
               value={this.state.calories}
               placeholder={this.state.suggestion.calories}
               onChange={this.onChange}
+              placeholder='calories'
               name='calories' />
         </td>
         <td>
@@ -496,12 +505,13 @@ class ConnectedFoodRowNewEntry extends Component {
               value={this.state.protein}
               placeholder={this.state.suggestion.protein}
               onChange={this.onChange}
+              placeholder='protein'
               name='protein' />
         </td>
-        <td>
+        <td className='actions'>
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>
-        <td><button className='primary' onClick={this.addEntry}>Save</button></td>
+        <td className='submit'><button className='primary' onClick={this.addEntry}>Save</button></td>
       </tr>
     );
   }
@@ -584,7 +594,7 @@ class ConnectedFoodRow extends Component {
     var selected = this.props.selected.has(this.props.id);
     return (
       <Fragment>
-        <tr className={this.state.dirty ? 'table-info' : ''}>
+        <tr className='entry'>
           <td>
             {
               this.state.data.children.length > 0 && 
@@ -593,15 +603,15 @@ class ConnectedFoodRow extends Component {
                 onChange={this.toggleChildren} />
             }
           </td>
-          <FoodRowCell value={this.state.data.date} onChange={this.getOnUpdateHandler('date')} />
-          <FoodRowCell value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
-          <FoodRowCell value={this.state.data.quantity} onChange={this.getOnUpdateHandler('quantity')} />
-          <FoodRowCell value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
-          <FoodRowCell value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
-          <td>
+          <FoodRowCell data-label='Date' value={this.state.data.date} onChange={this.getOnUpdateHandler('date')} />
+          <FoodRowCell data-label='Item' value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
+          <FoodRowCell data-label='Qty' value={this.state.data.quantity} onChange={this.getOnUpdateHandler('quantity')} />
+          <FoodRowCell data-label='Cals' value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
+          <FoodRowCell data-label='Prot' value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
+          <td className='actions'>
             <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.data.photos}/>
           </td>
-          <td onClick={()=>this.props.onToggleSelected(this.props.id)}><input type='checkbox' checked={selected}/></td>
+          <td className='select' onClick={()=>this.props.onToggleSelected(this.props.id)}><input type='checkbox' checked={selected}/></td>
         </tr>
       </Fragment>
     );
@@ -632,42 +642,31 @@ const FoodRow = connect(
 class FoodRowCell extends Component {
   constructor(props) {
     super(props)
-    this.state = {
-      edit: false,
-    }
     this.onChange = props.onChange;
-    this.startEdit = this.startEdit.bind(this);
-    this.doneEdit = this.doneEdit.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
-  }
-  startEdit(e) {
-    var that = this;
-    this.setState(
-      { edit: true }
-    );
-  }
-  doneEdit(e) {
-    this.setState({ edit: false });
   }
   handleChange(e) {
     this.onChange(e.target.value);
   }
   handleKeyPress(e) {
     if (e.key === 'Enter') {
-      this.doneEdit(e);
+      e.target.blur();
     }
   }
   render() {
-    if (!this.state.edit) {
-      return (
-        <td onClick={this.startEdit}>{this.props.value}</td>
-      );
-    } else {
-      return (
-        <td><input type='text' value={this.props.value} onKeyPress={this.handleKeyPress} onBlur={this.doneEdit} onChange={this.handleChange} ref={x=>this.ref=x}/></td>
-      );
-    }
+    return (
+      <td data-label={this.props['data-label']}>
+        <label>
+          {this.props['data-label']}
+        </label>
+        <input type='text' 
+          value={this.props.value}
+          onChange={this.handleChange}
+          onKeyPress={this.handleKeyPress}
+          ref={x=>this.ref=x}/>
+      </td>
+    );
   }
 }
 
@@ -756,7 +755,7 @@ class ConnectedFoodTable extends Component {
             <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
           </div>
         </div>
-        <table className="Food">
+        <table className="Food cards">
           <colgroup>
             <col className='expand' />
             <col />
@@ -780,13 +779,13 @@ class ConnectedFoodTable extends Component {
           </tr>
           </thead>
           <tbody>
-          <tr>
+          <tr className='total'>
             <td></td>
             <th>Total</th>
             <td></td>
             <td></td>
-            <td>{this.props.total.calories}</td>
-            <td>{this.props.total.protein}</td>
+            <td data-label='Cals'>{this.props.total.calories}</td>
+            <td data-label='Prot'>{this.props.total.protein}</td>
             <td></td>
           </tr>
           <FoodRowNewEntry date={this.props.date} />
