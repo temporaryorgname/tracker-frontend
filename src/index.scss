@@ -12,6 +12,16 @@ body {
 
 nav {
   text-align: left;
+  white-space: nowrap;
+  ul {
+    display: inline-block;
+  }
+  div {
+    display: inline-block;
+    text-align: right;
+    margin: 15px;
+    float: right;
+  }
   li {
     display: inline-block;
     margin: 0.1rem 1rem;

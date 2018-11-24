@@ -3,7 +3,9 @@ import { combineReducers } from 'redux'
 import { 
   RECEIVE_FOOD,
   REQUEST_BODYWEIGHT,
-  RECEIVE_BODYWEIGHT
+  RECEIVE_BODYWEIGHT,
+  REQUEST_USER_PROFILE,
+  RECEIVE_USER_PROFILE
 } from "../constants/action-types";
 
 const initialFoodState = {
@@ -59,9 +61,89 @@ function bodyweightReducer(state = [], action) {
   }
 }
 
+const initialUserState = {
+  session: {},
+  profiles: {} // Key: user id
+};
+function userReducer(state = initialUserState, action) {
+  switch (action.type) {
+    case 'UPDATE_SESSION_COMPLETED': {
+      if (isFinite(action.payload)) {
+        return {
+          ...state,
+          session: {
+            uid: action.payload
+          }
+        };
+      } else {
+        return {
+          ...state,
+          session: {}
+        };
+      }
+    }
+    case 'LOGIN_START': {
+      return {
+        ...state,
+        session: {
+          loggingIn: true
+        }
+      };
+    }
+    case 'LOGIN_COMPLETED': {
+      if (action.payload.error) {
+        return {
+          ...state,
+          session: {
+            error: action.payload.error
+          }
+        };
+      }
+      if (action.payload.id) {
+        return {
+          ...state,
+          session: {
+            uid: action.payload.id
+          }
+        };
+      }
+      return {};
+    }
+    case 'LOGOUT_COMPLETED': {
+      return {
+        ...state,
+        session: {}
+      };
+    }
+    case REQUEST_USER_PROFILE:
+      var userId = action.payload.userId;
+      return {
+        ...state,
+        profiles: {
+          ...state.profiles,
+          [userId]: {
+            loading: true
+          }
+        }
+      }
+    case RECEIVE_USER_PROFILE:
+      var data = action.payload.data;
+      return {
+        ...state,
+        profiles: {
+          ...state.profiles,
+          [data.id]: data
+        }
+      }
+    default:
+      return state;
+  }
+}
+
 const rootReducer = combineReducers({
   food: foodReducer,
-  bodyweight: bodyweightReducer
+  bodyweight: bodyweightReducer,
+  user: userReducer
 });
 
 export default rootReducer;

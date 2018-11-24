@@ -4,40 +4,29 @@ import { Alert } from 'reactstrap';
 import axios from 'axios';
 import './App.scss';
 
+import { connect } from "react-redux";
+import { login, logout, updateSession } from './actions/User.js';
+
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
+import { UserPage } from './User.js'
 
-class App extends Component {
+class ConnectedApp extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      loggedIn: false
-    };
-    this.updateLoggedInStatus = this.updateLoggedInStatus.bind(this);
-    this.updateLoggedInStatus();
-  }
-  updateLoggedInStatus() {
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/auth/current_session", {withCredentials: true})
-        .then(function(response){
-          if (response.data !== 'None') {
-            that.setState({loggedIn: true});
-          } else {
-            that.setState({loggedIn: false});
-          }
-        });
+    props.updateSession();
   }
   render() {
-    if (this.state.loggedIn) {
+    if (this.props.loggedIn) {
       return (
         <Router>
           <div className="App container-fluid">
-            <Navigation loggedIn={this.state.loggedIn}/>
+            <Navigation loggedIn={this.props.loggedIn}/>
             <Switch>
               <Route path="/food" component={DietPage} />
               <Route path="/body" component={BodyStatsPage} />
-              <Route path="/logout" render={(props) => <Logout onLogout={this.updateLoggedInStatus} {...props} />}/>
-              <Route render={(props) => <ErrorPage404 />}/>
+              <Route path="/user" component={UserPage} />
+              <Route render={() => <ErrorPage404 />}/>
             </Switch>
           </div>
         </Router>
@@ -46,11 +35,11 @@ class App extends Component {
       return (
         <Router>
           <div className="App container-fluid">
-            <Navigation loggedIn={this.state.loggedIn}/>
+            <Navigation loggedIn={this.props.loggedIn}/>
             <Switch>
-              <Route path="/login" render={(props) => <Login onLogin={this.updateLoggedInStatus} {...props} />}/>
-              <Route path="/signup" render={(props) => <Signup onSignup={this.updateLoggedInStatus} {...props} />}/>
-              <Route render={(props) => <ErrorPage404 />}/>
+              <Route path="/login" component={LoginPrompt} />
+              <Route path="/signup" component={Signup} />
+              <Route component={LoginPrompt} />
             </Switch>
           </div>
         </Router>
@@ -58,26 +47,47 @@ class App extends Component {
     }
   }
 }
+const App = connect(
+  function(state, ownProps) {
+    console.log('App: '+state.user.session.uid);
+    if (state.user.session.uid) {
+      return {
+        loggedIn: true
+      };
+    }
+    return {
+      loggedIn: false
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateSession: () => dispatch(updateSession())
+    }
+  }
+)(ConnectedApp);
 
-class Navigation extends Component {
+class ConnectedNavigation extends Component {
   render() {
     if (this.props.loggedIn) {
       return (
         <nav>
-        <ul className="nav">
-          <li className="nav-item">
-            <Link className="nav-link" to="food">Diet</Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="workout">Workouts</Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="body">Body Stats</Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="logout">Logout</Link>
-          </li>
-        </ul>
+          <ul className="nav">
+            <li>
+              <Link to="food">Diet</Link>
+            </li>
+            <li>
+              <Link to="workout">Workouts</Link>
+            </li>
+            <li>
+              <Link to="body">Body Stats</Link>
+            </li>
+            <li>
+              <Link to="#" onClick={(e) => {e.preventDefault(); this.props.logout();}}>Logout</Link>
+            </li>
+          </ul>
+          <div className='user'>
+            <Link to="user"><i className='material-icons'>account_circle</i></Link>
+          </div>
         </nav>
       );
     } else {
@@ -96,31 +106,16 @@ class Navigation extends Component {
     }
   }
 }
+const Navigation = connect(
+  function(state, ownProps) {},
+  function(dispatch, ownProps) {
+    return {
+      logout: () => dispatch(logout())
+    };
+  }
+)(ConnectedNavigation);
 
-class Logout extends Component {
-  constructor(props) {
-    super(props);
-    this.logout = this.logout.bind(this);
-  }
-  logout() {
-    var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/auth/logout", this.state, {withCredentials: true})
-        .then(function(response){
-          that.props.onLogout(response);
-          that.props.history.push('/login');
-        });
-  }
-  componentWillMount() {
-    this.logout();
-  }
-  render() {
-    return (
-      <div>Logging out...</div>
-    );
-  }
-}
-
-class Login extends Component {
+class ConnectedLoginPrompt extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -135,20 +130,7 @@ class Login extends Component {
   }
   login(e) {
     e.preventDefault(); // Prevent the form from routing the user elsewhere
-    this.setState({ loggingIn: true, errors: [] });
-    var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/auth/login", this.state, {withCredentials: true})
-        .then(function(response){
-          that.setState({ loggingIn: false });
-          that.onLogin(response);
-          that.props.history.push('/food');
-        })
-        .catch(function(error){
-          that.setState({
-            loggingIn: false,
-            errors: ["Login failure. Try again."]
-          });
-        });
+    this.props.login(this.state.email, this.state.password);
   }
   handleFormChange(e) {
     var x = {}
@@ -156,6 +138,17 @@ class Login extends Component {
     this.setState(x);
   }
   render() {
+    if (this.props.uid) {
+      this.props.history.push('/');
+      return (
+        <div className='login-container'>
+        <h2>Login</h2>
+        <div>
+          Already logged in.
+        </div>
+        </div>
+      );
+    }
     return (
       <div className='login-container'>
       <h2>Login</h2>
@@ -163,9 +156,9 @@ class Login extends Component {
         {
           this.state.errors.map(function(error){
             return (
-              <Alert color="danger">
+              <div className="error">
                 {error}
-              </Alert>
+              </div>
             );
           })
         }
@@ -175,12 +168,36 @@ class Login extends Component {
         <div>
           <input type='password' name='password' placeholder='Password' onChange={this.handleFormChange}/>
         </div>
-        <input type='submit' value={this.state.loggingIn ? 'Logging in...' : 'Login'} />
+        <input type='submit' value={this.props.loggingIn ? 'Logging in...' : 'Login'} />
       </form>
       </div>
     );
   }
 }
+const LoginPrompt = connect(
+  function(state, ownProps) {
+    if (state.user.session.loggingIn) {
+      return {
+        loggingIn: true
+      };
+    }
+    if (state.user.session.error) {
+      return {
+        error: state.user.session.error
+      };
+    }
+    if (state.user.session.uid) {
+      return {
+        uid: state.user.session.uid
+      };
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      login: (email, password) => dispatch(login(email, password))
+    };
+  }
+)(ConnectedLoginPrompt);
 
 class Signup extends Component {
   constructor(props) {
@@ -297,7 +314,6 @@ class Modal extends Component {
     );
   }
 }
-
 class ModalHeader extends Component {
   render() {
     return (
@@ -307,7 +323,6 @@ class ModalHeader extends Component {
     );
   }
 }
-
 class ModalBody extends Component {
   render() {
     return (
@@ -317,7 +332,6 @@ class ModalBody extends Component {
     );
   }
 }
-
 class ModalFooter extends Component {
   render() {
     return (
