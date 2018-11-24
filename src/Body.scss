@@ -1,16 +1,27 @@
+.body-page-container {
+  text-align: center;
+}
+
 @media only screen and (max-width: 768px) {
   .bodyweight-table-container {
     display: block;
 
     table {
       width: 100%;
+      margin: 20px 5px;
+      padding: 20px 0;
+
+      tbody tr:nth-child(n+10) {
+        display: none;
+      }
     }
   }
 
   .bodyweight-plot-container {
-    display: block;
-    width: 100%;
-    margin: 5px;
+    display: inline-block;
+    width: 90%;
+    margin: 10px 5px;
+    padding: 0;
   }
 }
 

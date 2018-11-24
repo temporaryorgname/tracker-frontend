@@ -11,7 +11,7 @@ import './Body.scss';
 export class BodyStatsPage extends Component {
   render() {
     return (
-      <div>
+      <div className='body-page-container'>
         <h2>Body Stats</h2>
         <BodyWeightTable />
         <BodyWeightTimeSeries />
