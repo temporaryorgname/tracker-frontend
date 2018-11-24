@@ -220,10 +220,8 @@ class ConnectedBodyWeightScatterPlot extends Component {
       points: this.props.data
         .filter(datum => datum.time)
         .map(datum => [new Date('1900-01-01 '+datum.time), datum.bodyweight])
-        .sort((a,b) => (a[0]>b[0]))
+        .sort((a,b) => (a[0]-b[0]))
     };
-    console.log(this.props.data);
-    console.log(data);
     var series = new TimeSeries(data);
     return series;
   }
