@@ -34,13 +34,13 @@ export const loginStart = function() {
     type: 'LOGIN_START'
   };
 }
-export const login = function(email, password){
+export const login = function(email, password, remember){
   return function(dispatch) {
-    //console.log('Logging in.');
     dispatch(loginStart());
+    console.log(remember);
     axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/auth/login",
-      {email: email, password: password},
+      {email: email, password: password, permanent: remember},
       {withCredentials: true}
     ).then(function(response){
       dispatch(loginCompleted({id: response.data}));

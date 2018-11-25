@@ -123,21 +123,29 @@ class ConnectedLoginPrompt extends Component {
     this.state = {
       email: '',
       password: '',
-      loggingIn: false,
-      errors: []
+      rememberMe: false
     };
     this.onLogin = props['onLogin'];
     this.login = this.login.bind(this);
     this.handleFormChange = this.handleFormChange.bind(this);
+    this.toggleRememberMe = this.toggleRememberMe.bind(this);
   }
   login(e) {
     e.preventDefault(); // Prevent the form from routing the user elsewhere
-    this.props.login(this.state.email, this.state.password);
+    this.props.login(
+      this.state.email,
+      this.state.password,
+      this.state.rememberMe);
   }
   handleFormChange(e) {
     var x = {}
     x[e.target.name] = e.target.value;
     this.setState(x);
+  }
+  toggleRememberMe() {
+    this.setState({
+      rememberMe: !this.state.rememberMe
+    });
   }
   render() {
     if (this.props.uid) {
@@ -155,20 +163,17 @@ class ConnectedLoginPrompt extends Component {
       <div className='login-container'>
       <h2>Login</h2>
       <form onSubmit={this.login}>
-        {
-          this.state.errors.map(function(error){
-            return (
-              <div className="error">
-                {error}
-              </div>
-            );
-          })
-        }
-        <div>
-          <input type='text' name='email' placeholder='E-mail' onChange={this.handleFormChange}/>
+        <div className="error">
+          {this.props.error}
         </div>
         <div>
-          <input type='password' name='password' placeholder='Password' onChange={this.handleFormChange}/>
+          <input type='text' name='email' placeholder='E-mail' value={this.state.email} onChange={this.handleFormChange}/>
+        </div>
+        <div>
+          <input type='password' name='password' placeholder='Password' value={this.state.password} onChange={this.handleFormChange}/>
+        </div>
+        <div>
+          <input type='checkbox' name='rememberMe' checked={this.state.rememberMe} onChange={this.toggleRememberMe}/> Remember me
         </div>
         <input type='submit' value={this.props.loggingIn ? 'Logging in...' : 'Login'} />
       </form>
@@ -193,10 +198,11 @@ const LoginPrompt = connect(
         uid: state.user.session.uid
       };
     }
+    return {};
   },
   function(dispatch, ownProps) {
     return {
-      login: (email, password) => dispatch(login(email, password))
+      login: (email, password, remember) => dispatch(login(email, password, remember))
     };
   }
 )(ConnectedLoginPrompt);

@@ -40,13 +40,14 @@ function foodReducer(state = initialFoodState, action) {
         dirtyEntries: dirtyEntriesCopy
       };
     }
-    case 'UPDATE_FOOD_COMPLETED':
+    case 'UPDATE_FOOD_COMPLETED': {
       var id = action.payload.id;
       var dirtyEntriesCopy = new Set(state.dirtyEntries);
       dirtyEntriesCopy.delete(id);
       return {...state,
         dirtyEntries: dirtyEntriesCopy
       };
+    }
     default:
       return state;
   }
