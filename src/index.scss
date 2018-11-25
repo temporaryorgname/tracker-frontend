@@ -39,8 +39,8 @@ a {
 }
 
 input {
-  width: 100%;
   &[type=text], &[type=password] {
+    width: 100%;
     color: $primary-colour;
     background-color: $background-colour;
     width: 100%;
@@ -67,6 +67,9 @@ input {
       box-shadow: 0 0 5px 0 rgba($error-colour,.5);
       border-radius: 3px;
     }
+  }
+  &[type=button], &[type=submit] {
+    width: 100%;
   }
 }
 

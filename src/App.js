@@ -162,7 +162,7 @@ class ConnectedLoginPrompt extends Component {
       <div className='login-container'>
       <h2>Login</h2>
       <form onSubmit={this.login}>
-        <div className="error">
+        <div className="error-message">
           {this.props.error}
         </div>
         <div>
