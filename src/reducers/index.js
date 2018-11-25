@@ -15,11 +15,11 @@ const initialFoodState = {
 };
 function foodReducer(state = initialFoodState, action) {
   switch (action.type) {
-    case RECEIVE_FOOD:
-      var date = action.payload.date;
-      var data = action.payload.data;
-      var entryIds = [];
-      var entries = {};
+    case RECEIVE_FOOD: {
+      let date = action.payload.date;
+      let data = action.payload.data;
+      let entryIds = [];
+      let entries = {};
       data.forEach(function(x){
         entries[x.id] = x;
         entryIds.push(x.id);
@@ -28,16 +28,18 @@ function foodReducer(state = initialFoodState, action) {
         entriesByDate: {...state.entriesByDate, [date]: entryIds},
         entries: {...state.entries, ...entries}
       };
-    case 'UPDATE_FOOD':
+    }
+    case 'UPDATE_FOOD': {
       console.log('UPDATE_FOOD');
-      var id = action.payload.id;
-      var data = action.payload.data;
-      var dirtyEntriesCopy = new Set(state.dirtyEntries);
+      let id = action.payload.id;
+      let data = action.payload.data;
+      let dirtyEntriesCopy = new Set(state.dirtyEntries);
       dirtyEntriesCopy.add(id);
       return {...state,
         entries: {...state.entries, [id]: data},
         dirtyEntries: dirtyEntriesCopy
       };
+    }
     case 'UPDATE_FOOD_COMPLETED':
       var id = action.payload.id;
       var dirtyEntriesCopy = new Set(state.dirtyEntries);

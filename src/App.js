@@ -107,7 +107,9 @@ class ConnectedNavigation extends Component {
   }
 }
 const Navigation = connect(
-  function(state, ownProps) {},
+  function(state, ownProps) {
+    return {};
+  },
   function(dispatch, ownProps) {
     return {
       logout: () => dispatch(logout())

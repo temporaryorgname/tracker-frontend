@@ -1,7 +1,4 @@
-import React, { Component, Fragment } from 'react';
-import { Link } from "react-router-dom";
-
-import axios from 'axios';
+import React, { Component } from 'react';
 
 import { connect } from "react-redux";
 
@@ -10,9 +7,6 @@ import { parseQueryString } from './Utils.js';
 import { fetchUserProfile } from './actions/User.js';
 
 export class UserPage extends Component {
-  constructor(props) {
-    super(props)
-  }
   render() {
     var queryParams = parseQueryString(this.props.location.search);
     console.log(queryParams);

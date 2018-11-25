@@ -12,7 +12,7 @@ export const updateSessionStart = function() {
 }
 export const updateSession = function(email, password){
   return function(dispatch) {
-    console.log('Logging in.');
+    console.log('Updating session.');
     dispatch(loginStart());
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/auth/current_session",
@@ -36,7 +36,7 @@ export const loginStart = function() {
 }
 export const login = function(email, password){
   return function(dispatch) {
-    console.log('Logging in.');
+    //console.log('Logging in.');
     dispatch(loginStart());
     axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/auth/login",

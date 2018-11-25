@@ -114,7 +114,6 @@ class FileUploadDialog extends Component {
               }
             </div>
             <form>
-              <label for="file"></label>
               <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
               <span color="muted">
                 Select a photo to include with your entry.
@@ -484,28 +483,25 @@ class ConnectedFoodRowNewEntry extends Component {
         <td>
           <QuantityInput
               value={this.state.quantity}
-              placeholder={this.state.suggestion.quantity}
+              placeholder={this.state.suggestion.quantity || 'quantity'}
               onChange={this.onChange}
               onScale={this.handleQuantityScale}
-              placeholder='quantity'
               name='quantity' />
         </td>
         <td>
           <input
               type='text'
               value={this.state.calories}
-              placeholder={this.state.suggestion.calories}
+              placeholder={this.state.suggestion.calories || 'calories'}
               onChange={this.onChange}
-              placeholder='calories'
               name='calories' />
         </td>
         <td>
           <input 
               type='text'
               value={this.state.protein}
-              placeholder={this.state.suggestion.protein}
+              placeholder={this.state.suggestion.protein || 'protein'}
               onChange={this.onChange}
-              placeholder='protein'
               name='protein' />
         </td>
         <td className='actions'>
@@ -590,7 +586,6 @@ class ConnectedFoodRow extends Component {
     });
   }
   render() {
-    var that = this;
     var selected = this.props.selected.has(this.props.id);
     return (
       <Fragment>
