@@ -12,7 +12,6 @@ export const updateSessionStart = function() {
 }
 export const updateSession = function(email, password){
   return function(dispatch) {
-    console.log('Updating session.');
     dispatch(loginStart());
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/auth/current_session",
@@ -37,7 +36,6 @@ export const loginStart = function() {
 export const login = function(email, password, remember){
   return function(dispatch) {
     dispatch(loginStart());
-    console.log(remember);
     axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/auth/login",
       {email: email, password: password, permanent: remember},
@@ -63,7 +61,6 @@ export const logoutStart = function() {
 }
 export const logout = function(email, password){
   return function(dispatch) {
-    console.log('Logging out.');
     dispatch(logoutStart());
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/auth/logout",
@@ -87,14 +84,11 @@ export const requestUserProfile = function(userId){
 }
 export const fetchUserProfile = function(userId){
   return function(dispatch) {
-    console.log('Fetching user profile '+userId);
     dispatch(requestUserProfile(userId));
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/user/"+userId, 
       {withCredentials: true}
     ).then(function(response){
-      console.log('User profile received or UID '+userId);
-      console.log(response.data);
       dispatch(receiveUserProfile(response.data));
     }).catch(function(error){
       console.error('Unable to fetch user profile.');

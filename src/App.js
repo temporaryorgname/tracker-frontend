@@ -49,7 +49,6 @@ class ConnectedApp extends Component {
 }
 const App = connect(
   function(state, ownProps) {
-    console.log('App: '+state.user.session.uid);
     if (state.user.session.uid) {
       return {
         loggedIn: true
@@ -311,7 +310,6 @@ class Modal extends Component {
     if (this.props.isOpen) {
       className += ' visible';
     }
-    console.log(className);
     return (
       <div className={className} onClick={this.handleClickOutside} ref={(x)=>(this.ref=x)}>
         <div className='modal'>
