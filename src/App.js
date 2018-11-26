@@ -10,6 +10,7 @@ import { login, logout, updateSession } from './actions/User.js';
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 import { UserPage } from './User.js'
+import { DataPage } from './Data.js'
 
 class ConnectedApp extends Component {
   constructor(props) {
@@ -26,6 +27,7 @@ class ConnectedApp extends Component {
               <Route path="/food" component={DietPage} />
               <Route path="/body" component={BodyStatsPage} />
               <Route path="/user" component={UserPage} />
+              <Route path="/data" component={DataPage} />
               <Route render={() => <ErrorPage404 />}/>
             </Switch>
           </div>
@@ -348,6 +350,33 @@ class ModalFooter extends Component {
   }
 }
 
+class FoodPhotoThumbnail extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      data: ""
+    }
+  }
+  componentWillMount() {
+    var that = this;
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid+'?size=32',
+      {withCredentials: true}
+    ).then(function(response){
+      that.setState({data: response.data.data});
+    });
+  }
+  render() {
+    if (!this.state.data) {
+      return (<i className="material-icons">fastfood</i>);
+    } else {
+      return (
+        <img src={"data:image/png;base64,"+this.state.data} alt='Thumbnail'/>
+      );
+    }
+  }
+}
+
 export default App;
-export { Modal, ModalHeader, ModalBody, ModalFooter };
+export { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail };
 

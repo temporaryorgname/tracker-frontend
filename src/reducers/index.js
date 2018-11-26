@@ -143,10 +143,30 @@ function userReducer(state = initialUserState, action) {
   }
 }
 
+const initialDataState = {
+  photoIds: null
+};
+function dataReducer(state = initialDataState, action) {
+  switch (action.type) {
+    case 'FETCH_PHOTO_IDS_START': {
+      return state;
+    }
+    case 'FETCH_PHOTO_IDS_COMPLETED': {
+      return {
+        ...state,
+        photoIds: action.payload.data
+      };
+    }
+    default:
+      return state;
+  }
+}
+
 const rootReducer = combineReducers({
   food: foodReducer,
   bodyweight: bodyweightReducer,
-  user: userReducer
+  user: userReducer,
+  data: dataReducer
 });
 
 export default rootReducer;

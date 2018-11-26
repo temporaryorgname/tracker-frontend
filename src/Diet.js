@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 
 import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
 
-import { Modal, ModalHeader, ModalBody, ModalFooter } from './App.js';
+import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './App.js';
 import { formatDate } from './Utils.js';
 
 import './Diet.scss';
@@ -662,31 +662,6 @@ class FoodRowCell extends Component {
           ref={x=>this.ref=x}/>
       </td>
     );
-  }
-}
-
-class FoodPhotoThumbnail extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      data: ""
-    }
-  }
-  componentWillMount() {
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid, {withCredentials: true})
-        .then(function(response){
-          that.setState({data: response.data.data});
-        });
-  }
-  render() {
-    if (!this.state.data) {
-      return (<i className="material-icons">fastfood</i>);
-    } else {
-      return (
-        <img src={"data:image/png;base64,"+this.state.data} alt='Thumbnail'/>
-      );
-    }
   }
 }
 
