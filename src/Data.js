@@ -72,19 +72,27 @@ class FoodPhoto extends Component {
       dragging: false,
       clicks: []
     }
+    this.updateData = this.updateData.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleDragStart = this.handleDragStart.bind(this);
     this.handleDragEnd = this.handleDragEnd.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.updateData();
   }
-  componentWillMount() {
+  updateData() {
     var that = this;
+    this.setState({ data: '' });
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid+'?size=700',
       {withCredentials: true}
     ).then(function(response){
       that.setState({data: response.data.data});
     });
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.fileid !== this.props.fileid) {
+      this.updateData();
+    }
   }
   handleClick(event) {
     console.log('New point');

@@ -37,7 +37,7 @@ class ConnectedBodyWeightTable extends Component {
   render() {
     var that = this;
     return (
-      <div class='bodyweight-table-container'>
+      <div className='bodyweight-table-container'>
         <NewBodyWeightEntryForm onAddWeight={this.updateData}/>
         <table>
           <thead>
@@ -124,7 +124,7 @@ class ConnectedNewBodyWeightEntryForm extends Component {
     classNames = classNames.join(' ');
     return (
       <form action='#' onSubmit={this.addWeight}>
-        <label for='bodyweight'>Body Weight: </label>
+        <label htmlFor='bodyweight'>Body Weight: </label>
         <input type='text' name='bodyweight' className={classNames} value={this.state.bodyweight} onChange={this.handleFormChange} />
         <div className='success-message'>{this.state.successMessage}</div>
         <div className='error-message'>{this.state.errorMessage}</div>
