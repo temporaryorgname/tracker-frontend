@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
-import { Alert } from 'reactstrap';
 import axios from 'axios';
 import './App.scss';
 
@@ -257,9 +256,9 @@ class Signup extends Component {
         {
           this.state.errors.map(function(error){
             return (
-              <Alert color="danger">
+              <div className="error-message">
                 {error}
-              </Alert>
+              </div>
             );
           })
         }
