@@ -1,7 +1,13 @@
 import React, { Component } from 'react';
 import { Link } from "react-router-dom";
-import { Resizable, Charts, ChartContainer, ChartRow, YAxis, LineChart, ScatterChart } from "react-timeseries-charts";
-import { TimeSeries } from "pondjs";
+
+import { select } from "d3-selection";
+import { line } from "d3-shape";
+import { scaleTime, scaleLinear } from "d3-scale";
+import { extent } from "d3-array";
+import { axisBottom, axisLeft } from "d3-axis";
+import { easeLinear } from "d3-ease";
+import { } from "d3-transition"; // Needed for selection.transition
 
 import { connect } from "react-redux";
 import { fetchBodyweight, createBodyweight, deleteBodyweight } from './actions/Body.js'
@@ -146,49 +152,122 @@ const NewBodyWeightEntryForm = connect(
 class ConnectedBodyWeightTimeSeries extends Component {
   constructor(props) {
     super(props);
-    this.getTimeSeries = this.getTimeSeries.bind(this);
+    this.updateSVG = this.updateSVG.bind(this);
     if (this.props.data.length === 0) {
       this.props.updateData();
     }
   }
-  getTimeSeries() {
+  updateSVG(firstRender=false) {
     if (this.props.data.length === 0) {
       return null;
     }
-    var data = {
-      name: 'Body Weight',
-      columns: ['time', 'value'],
-      points: this.props.data.map(function(datum){
-        if (datum.time) {
-          return [new Date(datum.date+" "+datum.time), datum.bodyweight];
+    var data = this.props.data.map(function(datum){
+      if (datum.time) {
+        return {
+          date: new Date(datum.date+" "+datum.time),
+          value: datum.bodyweight
+        };
+      }
+      return {
+        date: new Date(datum.date), 
+        value: datum.bodyweight
+      };
+    });
+    if (!this.svg) {
+      return null;
+    }
+    var width = this.svg.width.baseVal.value;
+    var height = this.svg.height.baseVal.value;
+    var padding = 45;
+    var xScale = scaleTime()
+      .domain(extent(data, p => p.date))
+      .range([padding,width]);
+    var yScale = scaleLinear()
+      .domain(extent(data, p => p.value))
+      .range([height-padding,0]);
+    var xAxis = axisBottom(xScale);
+    var yAxis = axisLeft(yScale);
+    var lineGenerator = line()
+      .x(p => xScale(p.date))
+      .y(p => yScale(p.value));
+
+    if (firstRender) {
+      var path = select(this.svg)
+        .select('.curves')
+        .select('path')
+        .attr('d',lineGenerator(data));
+      var totalLength = path.node().getTotalLength();
+      path.attr("stroke-dasharray", totalLength + " " + totalLength)
+        .attr("stroke-dashoffset", -totalLength)
+      window.p = path;
+      path.transition()
+        .duration(2000)
+        .attr("stroke-dashoffset", 0);
+    } else {
+      select(this.svg)
+        .select('.curves')
+        .select('path')
+        .transition()
+        .duration(500)
+        .attr('d',lineGenerator(data));
+    }
+    select(this.svg)
+      .select('g.x-axis')
+      .attr('transform', 'translate(0,'+(height-padding)+')')
+      .transition()
+      .duration(1000)
+      .call(xAxis);
+    select(this.svg)
+      .select('g.y-axis')
+      .attr('transform', 'translate('+(padding)+',0)')
+      .transition()
+      .duration(1000)
+      .call(yAxis);
+    select(this.svg)
+      .select('text.x-axis')
+      .style("text-anchor", "middle")
+      .attr('transform', 'translate('+((width-padding)/2+padding)+','+(height)+')')
+      .text('Date');
+    select(this.svg)
+      .select('text.y-axis')
+      .style("text-anchor", "middle")
+      .attr('transform', 'translate(10,'+((height-padding)/2)+') rotate(-90)')
+      .text('Weight');
+  }
+  componentWillMount() {
+    this.updateSVG();
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    var dataChanged = false;
+    if (this.props.data.length !== prevProps.data.length) {
+      dataChanged = true;
+    } else {
+      dataChanged = this.props.data.every(function(p,i) {
+        for (var key in p) {
+          if (p[key] !== prevProps.data[i][key]) {
+            return true;
+          }
         }
-        return [new Date(datum.date), datum.bodyweight];
-      })
-    };
-    data.points.reverse();
-    var series = new TimeSeries(data);
-    return series;
+        return false;
+      });
+    }
+    if (dataChanged) {
+      this.updateSVG(prevProps.data.length === 0);
+    }
   }
   render() {
     // Convert the data to numerical form
-    var series = this.getTimeSeries();
-    if (series == null) {
-      return (
-        <div>No data available yet.</div>
-      );
-    }
     return (
-      <div className='bodyweight-plot-container hide-mobile'>
-      <Resizable>
-      <ChartContainer timeRange={series.timerange()}>
-        <ChartRow height="200">
-          <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
-          <Charts>
-            <LineChart axis="axis1" series={series} />
-          </Charts>
-        </ChartRow>
-      </ChartContainer>
-      </Resizable>
+      <div className='bodyweight-plot-container'>
+      <svg ref={x => this.svg = x}>
+        <g className='x-axis'></g>
+        <g className='y-axis'></g>
+        <text className='x-axis'></text>
+        <text className='y-axis'></text>
+        <g className='curves'>
+          <path d=""></path>
+        </g>
+      </svg>
       </div>
     );
   }
@@ -207,44 +286,112 @@ const BodyWeightTimeSeries = connect(
 class ConnectedBodyWeightScatterPlot extends Component {
   constructor(props) {
     super(props);
-    this.getTimeSeries = this.getTimeSeries.bind(this);
-    //this.props.updateData();
+    this.updateSVG = this.updateSVG.bind(this);
+    if (this.props.data.length === 0) {
+      this.props.updateData();
+    }
   }
-  getTimeSeries() {
+  updateSVG(firstRender=false) {
     if (this.props.data.length === 0) {
       return null;
     }
-    var data = {
-      name: 'Body Weight',
-      columns: ['time', 'value'],
-      points: this.props.data
-        .filter(datum => datum.time)
-        .map(datum => [new Date('1900-01-01 '+datum.time), datum.bodyweight])
-        .sort((a,b) => (a[0]-b[0]))
-    };
-    var series = new TimeSeries(data);
-    return series;
+    var data = this.props.data.map(function(datum){
+      if (datum.time) {
+        return {
+          date: new Date(datum.date+" "+datum.time),
+          value: datum.bodyweight
+        };
+      }
+      return {
+        date: new Date(datum.date), 
+        value: datum.bodyweight
+      };
+    });
+    if (!this.svg) {
+      return null;
+    }
+    var width = this.svg.width.baseVal.value;
+    var height = this.svg.height.baseVal.value;
+    var padding = 45;
+    var xScale = scaleTime()
+      .domain(extent(data, p => p.date))
+      .range([padding,width]);
+    var yScale = scaleLinear()
+      .domain(extent(data, p => p.value))
+      .range([height-padding,0]);
+    var xAxis = axisBottom(xScale);
+    var yAxis = axisLeft(yScale);
+    var lineGenerator = line()
+      .x(p => xScale(p.date))
+      .y(p => yScale(p.value));
+
+    var points = select(this.svg)
+      .select('.points')
+      .selectAll('circle')
+      .data(data)
+    points.exit()
+      .remove();
+    points.enter()
+      .append('circle')
+      .attr('cx', (p,i) => xScale(p.date))
+      .attr('cy', (p,i) => yScale(p.value))
+      .attr('r', '3');
+    select(this.svg)
+      .select('g.x-axis')
+      .attr('transform', 'translate(0,'+(height-padding)+')')
+      .transition()
+      .duration(1000)
+      .call(xAxis);
+    select(this.svg)
+      .select('g.y-axis')
+      .attr('transform', 'translate('+(padding)+',0)')
+      .transition()
+      .duration(1000)
+      .call(yAxis);
+    select(this.svg)
+      .select('text.x-axis')
+      .style("text-anchor", "middle")
+      .attr('transform', 'translate('+((width-padding)/2+padding)+','+(height)+')')
+      .text('Time');
+    select(this.svg)
+      .select('text.y-axis')
+      .style("text-anchor", "middle")
+      .attr('transform', 'translate(10,'+((height-padding)/2)+') rotate(-90)')
+      .text('Weight');
+  }
+  componentWillMount() {
+    this.updateSVG();
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    var dataChanged = false;
+    if (this.props.data.length !== prevProps.data.length) {
+      dataChanged = true;
+    } else {
+      dataChanged = this.props.data.every(function(p,i) {
+        for (var key in p) {
+          if (p[key] !== prevProps.data[i][key]) {
+            return true;
+          }
+        }
+        return false;
+      });
+    }
+    if (dataChanged) {
+      this.updateSVG(prevProps.data.length === 0);
+    }
   }
   render() {
     // Convert the data to numerical form
-    var series = this.getTimeSeries();
-    if (series == null) {
-      return (
-        <div>No data available yet.</div>
-      );
-    }
     return (
-      <div className='bodyweight-plot-container hide-mobile'>
-        <Resizable>
-        <ChartContainer timeRange={series.timerange()}>
-          <ChartRow height="200">
-            <YAxis id="axis1" label="weight" min={series.min()} max={series.max()} width="60" type="linear" format='.1f'/>
-            <Charts>
-              <ScatterChart axis="axis1" series={series} />
-            </Charts>
-          </ChartRow>
-        </ChartContainer>
-        </Resizable>
+      <div className='bodyweight-plot-container'>
+      <svg ref={x => this.svg = x}>
+        <g className='x-axis'></g>
+        <g className='y-axis'></g>
+        <text className='x-axis'></text>
+        <text className='y-axis'></text>
+        <g className='points'>
+        </g>
+      </svg>
       </div>
     );
   }
