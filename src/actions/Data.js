@@ -83,3 +83,22 @@ export const createTag = function(tag){
     );
   }
 }
+
+const createLabelStart = function(label){
+  return {
+    type: 'CREATE_LABEL_START',
+    payload: {
+      data: label
+    }
+  }
+}
+export const createLabel = function(label){
+  return function(dispatch) {
+    dispatch(createLabelStart(label));
+    return axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels',
+      label,
+      {withCredentials: true}
+    );
+  }
+}

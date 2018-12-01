@@ -7,7 +7,12 @@ import { connect } from "react-redux";
 import './Data.scss';
 import { FoodPhotoThumbnail, AutocompleteInput } from './Common.js';
 import { parseQueryString } from './Utils.js';
-import { fetchPhotoIds, fetchTags, createTag } from './actions/Data.js';
+import { 
+  fetchPhotoIds,
+  fetchTags,
+  createTag,
+  createLabel
+} from './actions/Data.js';
 
 export class DataPage extends Component {
   render() {
@@ -58,22 +63,36 @@ class ConnectedPhotoViewer extends Component {
     super(props);
     this.state = {
       selectedPhotoId: null,
-      tag: [],
+      tags: [],
       box: null,
       draggingBox: null, 
       polygon: [],
       mode: 'box'
     };
     props.updateData(props.uid);
-    this.handleSelect = this.handleSelect.bind(this);
+    this.handleTagChange = this.handleTagChange.bind(this);
     this.handlePhotoClick = this.handlePhotoClick.bind(this);
     this.handlePhotoDragging = this.handlePhotoDragging.bind(this);
     this.handlePhotoDragged = this.handlePhotoDragged.bind(this);
+    this.createLabel = this.createLabel.bind(this);
   }
-  handleSelect(tag) {
+  handleChangePhoto(photoId) {
+    if (photoId === this.state.selectedPhotoId) {
+      return;
+    }
     this.setState({
-      tagIds: this.state.tagIds.concat([tag.id]),
-      tagInputValue: ''
+      selectedPhotoId: photoId,
+      tags: [],
+      box: null,
+      draggingBox: null,
+      polygon: []
+    });
+  }
+  handleTagChange(tags) {
+    console.log('tag change');
+    console.log(tags);
+    this.setState({
+      tags: tags
     });
   }
   handlePhotoClick(coord) {
@@ -98,6 +117,34 @@ class ConnectedPhotoViewer extends Component {
       });
     }
   }
+  createLabel() {
+    var label = {}
+    if (this.state.selectedPhotoId === null) {
+      console.error('No photo selected');
+      return;
+    } else {
+      label['photo_id'] = this.state.selectedPhotoId;
+    }
+    if (this.state.tags.length < 1) {
+      console.error('No tag selected');
+      return;
+    } else {
+      label['tag_id'] = this.state.tags[0];
+    }
+    if (this.state.box !== null) {
+      label['bounding_box'] = JSON.stringify(this.state.box)
+        .split('[').join('(')
+        .split(']').join(')');
+    }
+    if (this.state.polygon.length > 0) {
+      label['bounding_polygon'] = JSON.stringify(this.state.polygon)
+        .split('[').join('(')
+        .split(']').join(')');
+    }
+    console.log('creating label');
+    console.log(label);
+    this.props.createLabel(label);
+  }
   render() {
     var that = this;
     return (
@@ -110,7 +157,7 @@ class ConnectedPhotoViewer extends Component {
             return (
               <div className='photo-viewer-thumbnail'
                   key={photoId}
-                  onClick={()=>that.setState({selectedPhotoId: photoId})}>
+                  onClick={()=>that.handleChangePhoto(photoId)}>
                 <FoodPhotoThumbnail fileid={photoId} /> </div>
             );
           })
@@ -133,7 +180,9 @@ class ConnectedPhotoViewer extends Component {
           <label>
             Add label:
             <TagSelector 
-              onChange={(v) => {}}/>
+              value={this.state.tags}
+              onChange={(v) => {this.handleTagChange(v)}}
+              limit={1}/>
           </label>
           <div>
             Mode:
@@ -150,6 +199,7 @@ class ConnectedPhotoViewer extends Component {
               Polygon
             </label>
           </div>
+          <input type='button' value='Create Label' onClick={this.createLabel} />
           <TagList tagIds={this.state.tagIds}/>
         </div>
       </div>
@@ -165,6 +215,7 @@ const PhotoViewer = connect(
   function(dispatch, ownProps) {
     return {
       updateData: (id) => dispatch(fetchPhotoIds(id)),
+      createLabel: (label) => dispatch(createLabel(label))
     };
   }
 )(ConnectedPhotoViewer);
@@ -256,7 +307,7 @@ class LabelledFoodPhoto extends Component {
           y={Math.min(box[0][1], box[1][1])}
           width={Math.abs(box[1][0]-box[0][0])}
           height={Math.abs(box[1][1]-box[0][1])}
-          key={index}/>
+          key={index} />
       });
       var svgPolygons = this.props.polygons.map(function(points, index){
         var pointString = points.map((p) => p.join(',')).join(' ');
@@ -340,7 +391,6 @@ class TagSelector extends Component {
     this.tagsById = {}
     this.handleSelect = this.handleSelect.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
-    this.handleChange = this.handleChange.bind(this);
   }
   handleSelect(selection) {
     // Can't add the same tag twice
@@ -349,21 +399,21 @@ class TagSelector extends Component {
       return;
     }
 
+    var newTagIds = this.state.tagIds.concat([selection.id]);
     this.setState({
-      tagIds: this.state.tagIds.concat([selection.id]),
+      tagIds: newTagIds,
       userInput: ''
     });
     this.tagsById[selection.id] = selection.tag;
+
+    if (this.props.onChange) {
+      this.props.onChange(newTagIds);
+    }
   }
   handleRemove(selectedId) {
     this.setState({
       tagIds: this.state.tagIds.filter(x => x !== selectedId)
     });
-  }
-  handleChange() {
-    if (this.props.onChange) {
-      this.props.onChange(this.state.tagIds);
-    }
   }
   render() {
     var that = this;
