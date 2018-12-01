@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 
 import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
 
-import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './App.js';
+import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './Common.js';
 import { formatDate } from './Utils.js';
 
 import './Diet.scss';

@@ -144,7 +144,11 @@ function userReducer(state = initialUserState, action) {
 }
 
 const initialDataState = {
-  photoIds: null
+  photoIds: null,
+  tagIds: [],
+  tagByIds: {},
+  labelsById: {},
+  labelIdsByPhotoId: {}
 };
 function dataReducer(state = initialDataState, action) {
   switch (action.type) {
@@ -155,6 +159,28 @@ function dataReducer(state = initialDataState, action) {
       return {
         ...state,
         photoIds: action.payload.data
+      };
+    }
+    case 'FETCH_TAGS_COMPLETED': {
+      var tags = action.payload.data;
+      console.log(tags);
+      return {
+        ...state,
+        tagIds: tags.map((t) => t.id),
+        tagsById: tags.reduce((acc,t) => {acc[t.id] = t; return acc}, {})
+      };
+    }
+    case 'CREATE_TAG_START': {
+      var tag = action.payload.data;
+      console.log(action.type);
+      console.log(tag);
+      return {
+        ...state,
+        tagIds: state.tagIds.concat([tag.id]),
+        tagsById: {
+          ...state.tagsById,
+          [tag.id]: tag
+        }
       };
     }
     default:

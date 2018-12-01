@@ -5,15 +5,50 @@ import axios from 'axios';
 import { connect } from "react-redux";
 
 import './Data.scss';
-import { FoodPhotoThumbnail } from './App.js';
+import { FoodPhotoThumbnail, AutocompleteInput } from './Common.js';
 import { parseQueryString } from './Utils.js';
-import { fetchPhotoIds } from './actions/Data.js';
+import { fetchPhotoIds, fetchTags, createTag } from './actions/Data.js';
 
 export class DataPage extends Component {
   render() {
     var queryParams = parseQueryString(this.props.location.search);
     return (
-      <PhotoViewer uid={queryParams['uid']} />
+      <div className='data-page-container'>
+        <PhotoViewer uid={queryParams['uid']} />
+      </div>
+    );
+  }
+}
+
+export class TagsPage extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selected: null
+    }
+    this.handleTagSelect = this.handleTagSelect.bind(this);
+  }
+  handleTagSelect(tag) {
+    this.setState({
+      selected: tag
+    });
+  }
+  render() {
+    var queryParams = parseQueryString(this.props.location.search);
+    return (
+      <div className='tag-page-container'>
+        <h2>Tags</h2>
+        <div>
+          <h3>New Tag</h3>
+          <NewTagForm />
+          <h3>Select Tag</h3>
+          <TagList onSelect={this.handleTagSelect}/>
+        </div>
+        <div>
+          <h3>Editor</h3>
+          {JSON.stringify(this.state.selected)}
+        </div>
+      </div>
     );
   }
 }
@@ -22,15 +57,53 @@ class ConnectedPhotoViewer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedPhotoId: 10
+      selectedPhotoId: null,
+      tag: [],
+      box: null,
+      draggingBox: null, 
+      polygon: [],
+      mode: 'box'
     };
     props.updateData(props.uid);
+    this.handleSelect = this.handleSelect.bind(this);
+    this.handlePhotoClick = this.handlePhotoClick.bind(this);
+    this.handlePhotoDragging = this.handlePhotoDragging.bind(this);
+    this.handlePhotoDragged = this.handlePhotoDragged.bind(this);
+  }
+  handleSelect(tag) {
+    this.setState({
+      tagIds: this.state.tagIds.concat([tag.id]),
+      tagInputValue: ''
+    });
+  }
+  handlePhotoClick(coord) {
+    if (this.state.mode === 'polygon') {
+      this.setState({
+        polygon: this.state.polygon.concat([coord])
+      });
+    }
+  }
+  handlePhotoDragging(startCoord, endCoord) {
+    if (this.state.mode === 'box') {
+      this.setState({
+        draggingBox: [startCoord, endCoord]
+      });
+    }
+  }
+  handlePhotoDragged(startCoord, endCoord) {
+    if (this.state.mode === 'box') {
+      this.setState({
+        box: [startCoord, endCoord],
+        draggingBox: null
+      });
+    }
   }
   render() {
     var that = this;
     return (
       <div>
         <h2>Data</h2>
+        <div>
         {
           this.props.ids &&
           this.props.ids.map(function(photoId){
@@ -38,15 +111,47 @@ class ConnectedPhotoViewer extends Component {
               <div className='photo-viewer-thumbnail'
                   key={photoId}
                   onClick={()=>that.setState({selectedPhotoId: photoId})}>
-                <FoodPhotoThumbnail fileid={photoId} />
-              </div>
+                <FoodPhotoThumbnail fileid={photoId} /> </div>
             );
           })
         }
+        </div>
         {
           this.state.selectedPhotoId &&
-          <div><FoodPhoto fileid={this.state.selectedPhotoId} /></div>
+          <div className='food-photo-container'>
+            <LabelledFoodPhoto 
+                fileid={this.state.selectedPhotoId} 
+                boxes={[this.state.box, this.state.draggingBox].filter((x)=>x)} 
+                polygons={[this.state.polygon]}
+                onClick={this.handlePhotoClick}
+                onDragging={this.handlePhotoDragging}
+                onDragged={this.handlePhotoDragged}/>
+          </div>
         }
+        <div className='labeller-controls-container'>
+          <h3>Photo Labels</h3>
+          <label>
+            Add label:
+            <TagSelector 
+              onChange={(v) => {}}/>
+          </label>
+          <div>
+            Mode:
+            <label>
+              <input type='radio' name='mode' value='box' 
+                checked={this.state.mode === 'box'}
+                onChange={(e) => this.setState({mode: e.target.value})}/>
+              Box
+            </label>
+            <label>
+              <input type='radio' name='mode' value='polygon'
+                checked={this.state.mode === 'polygon'}
+                onChange={(e) => this.setState({mode: e.target.value})}/>
+              Polygon
+            </label>
+          </div>
+          <TagList tagIds={this.state.tagIds}/>
+        </div>
       </div>
     );
   }
@@ -64,19 +169,24 @@ const PhotoViewer = connect(
   }
 )(ConnectedPhotoViewer);
 
-class FoodPhoto extends Component {
+class LabelledFoodPhoto extends Component {
   constructor(props) {
     super(props);
     this.state = {
       data: "",
-      dragging: false,
-      clicks: []
+      width: 0,
+      height: 0
     }
+    this.dragging = false;
+    this.startCoords = null;
+    this.startPageCoords = null;
+
     this.updateData = this.updateData.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleDragStart = this.handleDragStart.bind(this);
     this.handleDragEnd = this.handleDragEnd.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleImageLoad = this.handleImageLoad.bind(this);
     this.updateData();
   }
   updateData() {
@@ -95,59 +205,368 @@ class FoodPhoto extends Component {
     }
   }
   handleClick(event) {
-    console.log('New point');
-    this.setState({
-      clicks: this.state.clicks.concat(
-        [[event.nativeEvent.offsetX, event.nativeEvent.offsetY]])
-    });
+    if (this.props.onClick) {
+      this.props.onClick(
+        [event.nativeEvent.offsetX, event.nativeEvent.offsetY]
+      );
+    }
   }
   handleDragStart(event) {
-    event.preventDefault();
-    this.setState({
-      dragging: true,
-      clicks: this.state.clicks.concat(
-        [[event.nativeEvent.offsetX, event.nativeEvent.offsetY]])
-    });
+    if (this.dragging) {
+      return;
+    }
+    this.dragging = true;
+    this.startCoords = [event.nativeEvent.offsetX, event.nativeEvent.offsetY];
+    this.startPageCoords = [event.nativeEvent.pageX, event.nativeEvent.pageY];
   }
   handleMouseMove(event) {
-    if (this.state.dragging) {
-      event.preventDefault();
-      var clicks = this.state.clicks.slice(0); //Clone array
-      clicks[clicks.length-1] = [event.nativeEvent.offsetX, event.nativeEvent.offsetY];
-      this.setState({
-        dragging: true,
-        clicks: clicks
-      });
+    if (this.dragging) {
+      var coords = [
+        this.startCoords[0]+(event.nativeEvent.pageX-this.startPageCoords[0]),
+        this.startCoords[1]+(event.nativeEvent.pageY-this.startPageCoords[1]),
+      ];
+      if (this.props.onDragging) {
+        this.props.onDragging(this.startCoords, coords);
+      }
     }
   }
   handleDragEnd(event) {
-    event.preventDefault();
-    this.setState({dragging: false});
-    console.log('New point');
+    this.dragging = false;
+    var coords = [
+      this.startCoords[0]+(event.nativeEvent.pageX-this.startPageCoords[0]),
+      this.startCoords[1]+(event.nativeEvent.pageY-this.startPageCoords[1]),
+    ];
+    if (this.props.onDragged) {
+      this.props.onDragged(this.startCoords, coords);
+    }
+  }
+  handleImageLoad(img) {
+    this.setState({
+      width: this.img.offsetWidth,
+      height: this.img.offsetHeight
+    })
   }
   render() {
     if (!this.state.data) {
       return (<i className="material-icons">fastfood</i>);
     } else {
+      var svgBoxes = this.props.boxes.map(function(box, index){
+        return <rect 
+          x={Math.min(box[0][0], box[1][0])}
+          y={Math.min(box[0][1], box[1][1])}
+          width={Math.abs(box[1][0]-box[0][0])}
+          height={Math.abs(box[1][1]-box[0][1])}
+          key={index}/>
+      });
+      var svgPolygons = this.props.polygons.map(function(points, index){
+        var pointString = points.map((p) => p.join(',')).join(' ');
+        return <polygon 
+          points={pointString} 
+          key={index}/>
+      });
+      var svgPoints = this.props.polygons.map(function(points, index){
+        return points.map(function(point, index2){
+          return <circle 
+            className='control'
+            cx={point[0]}
+            cy={point[1]}
+            r='3'
+            fill='red'
+            key={[index,index2].join(',')} />
+        });
+      });
       return (
-        <svg width='700' height='700' 
-            onClick={this.handleClick} 
-            onDragStart={this.handleDragStart}
-            onMouseMove={this.handleMouseMove}
-            onMouseUp={this.handleDragEnd}
-            ref={x=>{this.ref=x}}
-            draggable='false'>
-          <image xlinkHref={"data:image/png;base64,"+this.state.data}
-              alt='Thumbnail'
-              width='700'
-              height='700' />
-          {
-            this.state.clicks.map(function(coords,index){
-              return <circle cx={coords[0]} cy={coords[1]} r='3' fill='red' key={index} />
-            })
-          }
-        </svg>
+        <div className='labelled-food-photo'>
+          <img src={"data:image/png;base64,"+this.state.data}
+              onLoad={this.handleImageLoad}
+              ref={(x) => this.img = x}/>
+          <svg className='food-photo'
+              width={this.state.width}
+              height={this.state.height}
+              onClick={this.handleClick} 
+              onDragStart={this.handleDragStart}
+              onMouseMove={this.handleMouseMove}
+              onMouseUp={this.handleDragEnd}
+              onMouseDown={this.handleDragStart}
+              ref={x=>{this.ref=x}}
+              draggable='false'>
+            {svgBoxes}
+            {svgPolygons}
+            {svgPoints}
+          </svg>
+        </div>
       );
     }
+  }
+}
+
+class Tag extends Component {
+  constructor(props) {
+    super(props);
+    this.handleRemove = this.handleRemove.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+  }
+  handleClick() {
+    if (this.props.onClick) {
+      this.props.onClick();
+    }
+  }
+  handleRemove() {
+    if (this.props.onRemove) {
+      this.props.onRemove();
+    }
+  }
+  render() {
+    return (
+      <div className='tag'>
+        <div className='label' onClick={this.handleClick}>
+          {this.props.children}
+        </div>
+        <div className='close' onClick={this.handleRemove}>
+          x
+        </div>
+      </div>
+    );
+  }
+}
+
+class TagSelector extends Component { 
+  constructor(props) {
+    super(props);
+    this.state = {
+      tagIds: [], // Use arrays instead of sets to preserve order
+      userInput: ''
+    }
+    this.tagsById = {}
+    this.handleSelect = this.handleSelect.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+  }
+  handleSelect(selection) {
+    // Can't add the same tag twice
+    if (this.state.tagIds.find((x) => x === selection.id)) {
+      console.error('Already selected');
+      return;
+    }
+
+    this.setState({
+      tagIds: this.state.tagIds.concat([selection.id]),
+      userInput: ''
+    });
+    this.tagsById[selection.id] = selection.tag;
+  }
+  handleRemove(selectedId) {
+    this.setState({
+      tagIds: this.state.tagIds.filter(x => x !== selectedId)
+    });
+  }
+  handleChange() {
+    if (this.props.onChange) {
+      this.props.onChange(this.state.tagIds);
+    }
+  }
+  render() {
+    var that = this;
+    return (
+      <div className='tag-selector'>
+        {
+          this.state.tagIds.map(function(id,index){
+            return (
+              <Tag key={id} onRemove={()=>{that.handleRemove(id)}}>
+                {that.tagsById[id]}
+              </Tag>
+            );
+          })
+        }
+        {
+         (!this.props.limit || this.state.tagIds.length < this.props.limit) &&
+          <TagInput 
+            value={this.state.userInput}
+            onChange={(e)=>{this.setState({userInput: e.target.value})}}
+            onSelect={this.handleSelect} />
+        }
+      </div>
+    );
+  }
+}
+
+class ConnectedNewTagForm extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      label: '',
+      parent: []
+    }
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+  handleSubmit(e) {
+    e.preventDefault();
+    var that = this;
+    var newTag = {
+      tag: this.state.label,
+      parent_id: this.state.parent.length == 1 ? this.state.parent[0] : null,
+      description: ''
+    }
+    this.props.createTag(
+      newTag
+    ).then(function(response){
+      console.log('Tag created');
+      that.setState({
+        label: '',
+        parent: []
+      });
+    });
+  }
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit} className='new-tag-form'>
+        <label>
+          Label
+          <input type='text' 
+            name='label' 
+            value={this.state.label}
+            onChange={(e)=>{this.setState({label: e.target.value})}}/>
+        </label>
+        <label>
+          Parent label
+          <TagSelector limit={1} />
+        </label>
+        <button>Create Tag</button>
+      </form>
+    );
+  }
+}
+const NewTagForm = connect(
+  function(state, ownProps) {
+    return {}
+  },
+  function(dispatch, ownProps) {
+    return {
+      createTag: (tag) => dispatch(createTag(tag)),
+    };
+  }
+)(ConnectedNewTagForm);
+
+class TagInput extends AutocompleteInput {
+  constructor(props) {
+    super(props);
+    this.ref = React.createRef();
+    this.loadSuggestions = this.loadSuggestions.bind(this);
+    this.renderSuggestions = this.renderSuggestions.bind(this);
+  }
+  loadSuggestions() {
+    if (this.props.value.length === 0) {
+      this.setState({
+        suggestions: [],
+        loading: true
+      });
+      return;
+    }
+    var that = this;
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/tags/search?q="+encodeURI(this.props.value), {withCredentials: true})
+        .then(function(response){
+          console.log('Search results:');
+          console.log(response.data);
+          window.result = response;
+          that.setState({
+            suggestions: response.data,
+            loading: false
+          });
+        })
+        .catch(function(error){
+          console.error(error);
+        });
+  }
+  renderSuggestions() {
+    var that = this;
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>Tag</th>
+            <th>Description</th>
+            <th>Parent</th>
+          </tr>
+        </thead>
+        <tbody onMouseDown={this.handleSelect}>
+          {
+            this.state.suggestions.map(function(tag,index){
+              var className = that.state.selected === index ? 'selected' : '';
+              return (
+                <tr className={className} key={tag.id} onMouseEnter={that.getMouseEnterHandler(index)}>
+                  <td>{tag.tag}</td>
+                  <td>{tag.description}</td>
+                  <td>{tag.parent_id}</td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    );
+  }
+}
+
+class ConnectedTagList extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      filter: '',
+      selected: null
+    };
+    this.getClickHandler = this.getClickHandler.bind(this);
+    this.props.updateData();
+  }
+  getClickHandler(tag) {
+    var that = this;
+    return function() {
+      if (that.props.onSelect) {
+        that.props.onSelect(tag)
+      }
+    }
+  }
+  render() {
+    var that = this;
+    return (
+      <div>
+        <label>
+          Filter:
+          <input type='text' value={this.state.filter} />
+        </label>
+        {
+          this.props.data
+            .filter((t) => t !== null)
+            .map(function(tag, index){
+              return (
+                <Tag key={tag.id} onClick={that.getClickHandler(tag)}>
+                  {tag.tag}
+                </Tag>
+              );
+            })
+        }
+      </div>
+    );
+  }
+}
+const TagList = connect(
+  function(state, ownProps) {
+    var tagIds = ownProps.tagIds || state.data.tagIds;
+    return {
+      data: tagIds.map((id) => state.data.tagsById[id] || null)
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchTags()),
+    };
+  }
+)(ConnectedTagList);
+
+class TagEditor extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return <div></div>;
   }
 }

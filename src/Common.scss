@@ -1,0 +1,36 @@
+@import 'variables';
+
+div.autocomplete-input {
+  position: relative;
+
+  table {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    background-color: rgba(255,255,255,.8);
+    box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
+
+    tbody {
+      white-space: nowrap;
+      text-overflow: clip;
+    }
+    td, th {
+      width: 100%;
+      text-align: left;
+
+      &.loading {
+        text-align: center;
+      }
+    }
+    tr {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      cursor: pointer;
+
+      &.selected {
+        background-color: $background-colour;
+      }
+    }
+  }
+}

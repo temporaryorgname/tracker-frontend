@@ -9,7 +9,7 @@ import { login, logout, updateSession } from './actions/User.js';
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 import { UserPage } from './User.js'
-import { DataPage } from './Data.js'
+import { DataPage, TagsPage } from './Data.js'
 
 class ConnectedApp extends Component {
   constructor(props) {
@@ -27,6 +27,7 @@ class ConnectedApp extends Component {
               <Route path="/body" component={BodyStatsPage} />
               <Route path="/user" component={UserPage} />
               <Route path="/data" component={DataPage} />
+              <Route path="/tags" component={TagsPage} />
               <Route render={() => <ErrorPage404 />}/>
             </Switch>
           </div>
@@ -295,87 +296,5 @@ class ErrorPage404 extends Component {
   }
 }
 
-class Modal extends Component {
-  constructor(props) {
-    super(props);
-    this.handleClickOutside = this.handleClickOutside.bind(this);
-  }
-  handleClickOutside(event) {
-    if (event.target !== this.ref) {
-      return;
-    }
-    this.props.toggle();
-  }
-  render() {
-    var className = 'modal-background';
-    if (this.props.isOpen) {
-      className += ' visible';
-    }
-    return (
-      <div className={className} onClick={this.handleClickOutside} ref={(x)=>(this.ref=x)}>
-        <div className='modal'>
-          <div className='close' onClick={this.props.toggle}><i className='material-icons'>close</i></div>
-          {this.props.children}
-        </div>
-      </div>
-    );
-  }
-}
-class ModalHeader extends Component {
-  render() {
-    return (
-      <div className='modal-header'>
-        {this.props.children}
-      </div>
-    );
-  }
-}
-class ModalBody extends Component {
-  render() {
-    return (
-      <div className='modal-body'>
-        {this.props.children}
-      </div>
-    );
-  }
-}
-class ModalFooter extends Component {
-  render() {
-    return (
-      <div className='modal-footer'>
-        {this.props.children}
-      </div>
-    );
-  }
-}
-
-class FoodPhotoThumbnail extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      data: ""
-    }
-  }
-  componentWillMount() {
-    var that = this;
-    axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid+'?size=32',
-      {withCredentials: true}
-    ).then(function(response){
-      that.setState({data: response.data.data});
-    });
-  }
-  render() {
-    if (!this.state.data) {
-      return (<i className="material-icons">fastfood</i>);
-    } else {
-      return (
-        <img src={"data:image/png;base64,"+this.state.data} alt='Thumbnail'/>
-      );
-    }
-  }
-}
-
 export default App;
-export { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail };
 

@@ -34,3 +34,52 @@ export const fetchPhotoIdsCompleted = function(data){
     }
   };
 }
+
+const fetchTagsStart = function(userId){
+  return {
+    type: 'FETCH_TAGS_START',
+    payload: {userId: userId}
+  }
+}
+export const fetchTags = function(userId){
+  return function(dispatch) {
+    dispatch(fetchTagsStart(userId));
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/tags", 
+      {withCredentials: true}
+    ).then(function(response){
+      console.log(response.data);
+      dispatch(fetchTagsCompleted(response.data));
+    }).catch(function(error){
+      console.error('Unable to fetch tags');
+      console.error(error);
+    });
+  }
+}
+const fetchTagsCompleted = function(data){
+  return { 
+    type: 'FETCH_TAGS_COMPLETED',
+    payload: {
+      data: data
+    }
+  };
+}
+
+const createTagStart = function(tag){
+  return {
+    type: 'CREATE_TAG_START',
+    payload: {
+      data: tag
+    }
+  }
+}
+export const createTag = function(tag){
+  return function(dispatch) {
+    dispatch(createTagStart(tag));
+    return axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/tags",
+      tag,
+      {withCredentials: true}
+    );
+  }
+}
