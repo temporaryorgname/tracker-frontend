@@ -213,11 +213,16 @@ class ConnectedLabelEditor extends Component {
   }
   getLabel() {
     var label = {}
-    if (this.state.selectedPhotoId === null) {
+    if (isFinite(this.props.photoId)) {
+      label['photo_id'] = this.props.photoId;
+      console.log('Photo ID');
+      console.log(label['photo_id']);
+    } else {
       console.error('No photo selected');
       return null;
-    } else {
-      label['photo_id'] = this.state.selectedPhotoId;
+    }
+    if (this.state.selectedLabelId) {
+      label['id'] = this.state.selectedLabelId;
     }
     if (this.state.selectedTagId.length !== 1) {
       console.error('No tag selected');
@@ -523,7 +528,6 @@ class ConnectedTagSelector extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tagIds: [], // Use arrays instead of sets to preserve order
       userInput: ''
     }
     this.handleSelect = this.handleSelect.bind(this);
@@ -540,10 +544,11 @@ class ConnectedTagSelector extends Component {
     this.setState({
       userInput: ''
     });
-    this.tagsById[selection.id] = selection.tag;
 
     if (this.props.onChange) {
       this.props.onChange(newTagIds);
+    } else {
+      console.error('TagSelector is a controlled element and requires an onChange attribute');
     }
   }
   handleRemove(selectedId) {

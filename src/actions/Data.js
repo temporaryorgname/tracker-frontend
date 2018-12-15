@@ -146,6 +146,16 @@ export const updateLabel = function(label){
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels/'+label['id'],
       label,
       {withCredentials: true}
-    );
+    ).then(function(response){
+      dispatch(updateLabelCompleted(label));
+    });
   }
+}
+const updateLabelCompleted = function(label){
+  return {
+    type: 'UPDATE_LABEL_COMPLETED',
+    payload: {
+      data: label
+    }
+  };
 }

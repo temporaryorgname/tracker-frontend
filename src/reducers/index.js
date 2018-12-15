@@ -179,8 +179,9 @@ function dataReducer(state = initialDataState, action) {
         }
         if (label['bounding_polygon'] !== null) {
           label['bounding_polygon'] = JSON.parse(
-            '['+label['bounding_polygon'].split('(').join('[').split(')').join(']')+']'
+            label['bounding_polygon'].split('(').join('[').split(')').join(']')
           );
+          console.log(label['bounding_polygon']);
         } else {
           label['bounding_polygon'] = [];
         }
@@ -208,6 +209,18 @@ function dataReducer(state = initialDataState, action) {
         tagsById: {
           ...state.tagsById,
           [tag.id]: tag
+        }
+      };
+    }
+    case 'UPDATE_LABEL_COMPLETED': {
+      var label = action.payload.data;
+      console.log(action.type);
+      console.log(label);
+      return {
+        ...state,
+        labelsByIds: {
+          ...state.labelsByIds,
+          [label.id]: label,
         }
       };
     }
