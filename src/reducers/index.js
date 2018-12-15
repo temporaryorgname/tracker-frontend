@@ -212,6 +212,21 @@ function dataReducer(state = initialDataState, action) {
         }
       };
     }
+    case 'CREATE_LABEL_COMPLETED': {
+      var label = action.payload.data;
+      return {
+        ...state,
+        labelsById: {
+          ...state.labelsById,
+          [label.id]: label,
+        },
+        labelIdsByPhotoId: {
+          ...state.labelIdsByPhotoId,
+          [label.photo_id]: state.labelIdsByPhotoId[label.photo_id]
+              .concat([label.id])
+        }
+      };
+    }
     case 'UPDATE_LABEL_COMPLETED': {
       var label = action.payload.data;
       console.log(action.type);

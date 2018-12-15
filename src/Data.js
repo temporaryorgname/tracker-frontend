@@ -215,8 +215,6 @@ class ConnectedLabelEditor extends Component {
     var label = {}
     if (isFinite(this.props.photoId)) {
       label['photo_id'] = this.props.photoId;
-      console.log('Photo ID');
-      console.log(label['photo_id']);
     } else {
       console.error('No photo selected');
       return null;
@@ -327,7 +325,7 @@ class ConnectedLabelEditor extends Component {
             </label>
           </div>
           {button}
-          <TagList tagIds={this.props.labels.map(foo => 11)}
+          <TagList tagIds={this.props.labels.map(l => l['tag_id'])}
               onSelect={this.handleSelectLabel}/>
         </div>
       </div>

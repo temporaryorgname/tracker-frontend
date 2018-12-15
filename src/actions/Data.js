@@ -127,7 +127,18 @@ export const createLabel = function(label){
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels',
       label,
       {withCredentials: true}
-    );
+    ).then(function(response){
+      label['id'] = response.data['id'];
+      dispatch(createLabelCompleted(label));
+    });
+  }
+}
+const createLabelCompleted = function(label){
+  return {
+    type: 'CREATE_LABEL_COMPLETED',
+    payload: {
+      data: label
+    }
   }
 }
 
