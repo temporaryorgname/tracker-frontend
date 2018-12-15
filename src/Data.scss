@@ -28,12 +28,19 @@
   display: inline-block;
   vertical-align: top;
   padding: 10px 50px;
+
+  div.buttons-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
 }
 
 .labelled-food-photo {
   text-align: left;
   max-width: 700px;
   position: relative;
+  display: inline-block;
   img {
     display: inline-block;
   }

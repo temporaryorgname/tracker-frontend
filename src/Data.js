@@ -11,7 +11,9 @@ import {
   fetchPhotoIds,
   fetchTags,
   createTag,
-  createLabel
+  fetchLabels,
+  createLabel,
+  updateLabel
 } from './actions/Data.js';
 
 export class DataPage extends Component {
@@ -62,37 +64,120 @@ class ConnectedPhotoViewer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedPhotoId: null,
-      tags: [],
-      box: null,
-      draggingBox: null, 
-      polygon: [],
-      mode: 'box'
+      selectedPhotoId: null
     };
     props.updateData(props.uid);
-    this.handleTagChange = this.handleTagChange.bind(this);
-    this.handlePhotoClick = this.handlePhotoClick.bind(this);
-    this.handlePhotoDragging = this.handlePhotoDragging.bind(this);
-    this.handlePhotoDragged = this.handlePhotoDragged.bind(this);
-    this.createLabel = this.createLabel.bind(this);
+    this.handleChangePhoto = this.handleChangePhoto.bind(this);
   }
   handleChangePhoto(photoId) {
     if (photoId === this.state.selectedPhotoId) {
       return;
     }
     this.setState({
-      selectedPhotoId: photoId,
-      tags: [],
-      box: null,
-      draggingBox: null,
-      polygon: []
+      selectedPhotoId: photoId
     });
   }
-  handleTagChange(tags) {
-    console.log('tag change');
-    console.log(tags);
+  render() {
+    return (
+      <div>
+        <h2>Data</h2>
+        <ThumbnailsList selectedId={this.state.selectedPhotoId}
+          onChange={this.handleChangePhoto}/>
+        {
+          this.state.selectedPhotoId &&
+          <LabelEditor photoId={this.state.selectedPhotoId} />
+        }
+      </div>
+    );
+  }
+}
+const PhotoViewer = connect(
+  function(state, ownProps) {
+    return {
+      ids: state.data.photoIds
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (id) => dispatch(fetchPhotoIds(id)),
+      createLabel: (label) => dispatch(createLabel(label))
+    };
+  }
+)(ConnectedPhotoViewer);
+
+class ConnectedThumbnailsList extends Component {
+  constructor(props) {
+    super(props);
+    props.updateData(props.uid);
+    this.handleChangePhoto = this.handleChangePhoto.bind(this);
+  }
+  handleChangePhoto(photoId) {
+    if (photoId === this.props.selectedId) {
+      return;
+    }
+    if (this.props.onChange) {
+      this.props.onChange(photoId);
+    }
+  }
+  render() {
+    var that = this;
+    return (
+      <div className='thumbnails-list'>
+      {
+        this.props.ids &&
+        this.props.ids.map(function(photoId){
+          return (
+            <div className='photo-viewer-thumbnail'
+                key={photoId}
+                onClick={()=>that.handleChangePhoto(photoId)}>
+              <FoodPhotoThumbnail fileid={photoId} />
+            </div>
+          );
+        })
+      }
+      </div>
+    );
+  }
+}
+const ThumbnailsList = connect(
+  function(state, ownProps) {
+    return {
+      ids: state.data.photoIds
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (id) => dispatch(fetchPhotoIds(id))
+    };
+  }
+)(ConnectedThumbnailsList);
+
+class ConnectedLabelEditor extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedLabelId: null,
+      selectedTagId: [],
+      box: null,
+      draggingBox: null, 
+      polygon: [],
+      mode: 'box'
+    };
+    props.updateData(props.photoId);
+
+    this.handleTagChange = this.handleTagChange.bind(this);
+    this.handlePhotoClick = this.handlePhotoClick.bind(this);
+    this.handlePhotoDragging = this.handlePhotoDragging.bind(this);
+    this.handlePhotoDragged = this.handlePhotoDragged.bind(this);
+    this.handleSelectLabel = this.handleSelectLabel.bind(this);
+    this.getLabel = this.getLabel.bind(this);
+    this.createLabel = this.createLabel.bind(this);
+    this.updateLabel = this.updateLabel.bind(this);
+    this.discardChanges = this.discardChanges.bind(this);
+  }
+  handleTagChange(tagIds) {
     this.setState({
-      tags: tags
+      selectedTagId: tagIds
     });
   }
   handlePhotoClick(coord) {
@@ -117,19 +202,28 @@ class ConnectedPhotoViewer extends Component {
       });
     }
   }
-  createLabel() {
+  handleSelectLabel(tag,index) {
+    var label = this.props.labels[index]
+    this.setState({
+      selectedLabelId: label['id'],
+      selectedTagId: [label['tag_id']],
+      box: label['bounding_box'],
+      polygon: label['bounding_polygon']
+    });
+  }
+  getLabel() {
     var label = {}
     if (this.state.selectedPhotoId === null) {
       console.error('No photo selected');
-      return;
+      return null;
     } else {
       label['photo_id'] = this.state.selectedPhotoId;
     }
-    if (this.state.tags.length < 1) {
+    if (this.state.selectedTagId.length !== 1) {
       console.error('No tag selected');
-      return;
+      return null;
     } else {
-      label['tag_id'] = this.state.tags[0];
+      label['tag_id'] = this.state.selectedTagId[0];
     }
     if (this.state.box !== null) {
       label['bounding_box'] = JSON.stringify(this.state.box)
@@ -141,46 +235,74 @@ class ConnectedPhotoViewer extends Component {
         .split('[').join('(')
         .split(']').join(')');
     }
-    console.log('creating label');
-    console.log(label);
+    return label;
+  }
+  createLabel() {
+    var label = this.getLabel();
+    if (label === null) {
+      return;
+    }
     this.props.createLabel(label);
+    this.setState({
+      selectedTagId: [],
+      box: null,
+      polygon: []
+    });
+  }
+  updateLabel() {
+    var label = this.getLabel();
+    if (label === null) {
+      return;
+    }
+    this.props.updateLabel(label);
+    this.setState({
+      selectedTagId: [],
+      box: null,
+      polygon: []
+    });
+  }
+  discardChanges() {
+    this.setState({
+      selectedLabelId: null,
+      selectedTagId: [],
+      box: null,
+      polygon: []
+    });
   }
   render() {
-    var that = this;
+    var button = null;
+    if (this.state.selectedLabelId) {
+      button = (
+        <div className='buttons-container'>
+          <input type='button' value='Save Changes' onClick={this.updateLabel} />
+          <input type='button' value='Discard Changes' onClick={this.discardChanges} />
+        </div>
+      );
+    } else {
+      button = (
+        <div className='buttons-container'>
+          <input type='button' value='Create Label' onClick={this.createLabel} />
+        </div>
+      );
+    }
     return (
       <div>
-        <h2>Data</h2>
-        <div>
         {
-          this.props.ids &&
-          this.props.ids.map(function(photoId){
-            return (
-              <div className='photo-viewer-thumbnail'
-                  key={photoId}
-                  onClick={()=>that.handleChangePhoto(photoId)}>
-                <FoodPhotoThumbnail fileid={photoId} /> </div>
-            );
-          })
-        }
-        </div>
-        {
-          this.state.selectedPhotoId &&
-          <div className='food-photo-container'>
-            <LabelledFoodPhoto 
-                fileid={this.state.selectedPhotoId} 
-                boxes={[this.state.box, this.state.draggingBox].filter((x)=>x)} 
-                polygons={[this.state.polygon]}
-                onClick={this.handlePhotoClick}
-                onDragging={this.handlePhotoDragging}
-                onDragged={this.handlePhotoDragged}/>
-          </div>
+          this.props.photoId &&
+          <LabelledFoodPhoto 
+              fileid={this.props.photoId} 
+              boxes={[this.state.box, this.state.draggingBox].filter((x)=>x)} 
+              polygons={[this.state.polygon]}
+              onClick={this.handlePhotoClick}
+              onDragging={this.handlePhotoDragging}
+              onDragged={this.handlePhotoDragged}/>
         }
         <div className='labeller-controls-container'>
           <h3>Photo Labels</h3>
           <label>
             Add label:
             <TagSelector 
-              value={this.state.tags}
+              value={this.state.selectedTagId}
               onChange={(v) => {this.handleTagChange(v)}}
               limit={1}/>
           </label>
@@ -199,26 +321,41 @@ class ConnectedPhotoViewer extends Component {
               Polygon
             </label>
           </div>
-          <input type='button' value='Create Label' onClick={this.createLabel} />
-          <TagList tagIds={this.state.tagIds}/>
+          {button}
+          <TagList tagIds={this.props.labels.map(foo => 11)}
+              onSelect={this.handleSelectLabel}/>
         </div>
       </div>
     );
   }
 }
-const PhotoViewer = connect(
+const LabelEditor = connect(
   function(state, ownProps) {
-    return {
-      ids: state.data.photoIds
-    };
+    if (ownProps.photoId) {
+      var labelIds = state.data
+          .labelIdsByPhotoId[ownProps.photoId];
+      if (typeof labelIds === 'undefined') {
+        return {
+          labels: []
+        };
+      } else {
+        return {
+          labels: labelIds.map((id) => state.data.labelsById[id])
+              .filter(x => typeof x !== 'undefined')
+        };
+      }
+    } else {
+      return {};
+    }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (id) => dispatch(fetchPhotoIds(id)),
-      createLabel: (label) => dispatch(createLabel(label))
+      updateData: (photoId) => dispatch(fetchLabels(photoId)),
+      createLabel: (label) => dispatch(createLabel(label)),
+      updateLabel: (label) => dispatch(updateLabel(label))
     };
   }
-)(ConnectedPhotoViewer);
+)(ConnectedLabelEditor);
 
 class LabelledFoodPhoto extends Component {
   constructor(props) {
@@ -330,7 +467,8 @@ class LabelledFoodPhoto extends Component {
         <div className='labelled-food-photo'>
           <img src={"data:image/png;base64,"+this.state.data}
               onLoad={this.handleImageLoad}
-              ref={(x) => this.img = x}/>
+              ref={(x) => this.img = x}
+              alt={'Food'}/>
           <svg className='food-photo'
               width={this.state.width}
               height={this.state.height}
@@ -381,27 +519,25 @@ class Tag extends Component {
   }
 }
 
-class TagSelector extends Component { 
+class ConnectedTagSelector extends Component { 
   constructor(props) {
     super(props);
     this.state = {
       tagIds: [], // Use arrays instead of sets to preserve order
       userInput: ''
     }
-    this.tagsById = {}
     this.handleSelect = this.handleSelect.bind(this);
     this.handleRemove = this.handleRemove.bind(this);
   }
   handleSelect(selection) {
     // Can't add the same tag twice
-    if (this.state.tagIds.find((x) => x === selection.id)) {
+    if (this.props.value.find((x) => x === selection.id)) {
       console.error('Already selected');
       return;
     }
 
-    var newTagIds = this.state.tagIds.concat([selection.id]);
+    var newTagIds = this.props.value.concat([selection.id]);
     this.setState({
-      tagIds: newTagIds,
       userInput: ''
     });
     this.tagsById[selection.id] = selection.tag;
@@ -411,25 +547,25 @@ class TagSelector extends Component {
     }
   }
   handleRemove(selectedId) {
-    this.setState({
-      tagIds: this.state.tagIds.filter(x => x !== selectedId)
-    });
+    this.props.onChange(
+      this.props.value.filter(x => x !== selectedId)
+    );
   }
   render() {
     var that = this;
     return (
       <div className='tag-selector'>
         {
-          this.state.tagIds.map(function(id,index){
+          this.props.value.map(function(id,index){
             return (
               <Tag key={id} onRemove={()=>{that.handleRemove(id)}}>
-                {that.tagsById[id]}
+                {that.props.data[id]['tag']}
               </Tag>
             );
           })
         }
         {
-         (!this.props.limit || this.state.tagIds.length < this.props.limit) &&
+         (!this.props.limit || this.props.value.length < this.props.limit) &&
           <TagInput 
             value={this.state.userInput}
             onChange={(e)=>{this.setState({userInput: e.target.value})}}
@@ -439,6 +575,18 @@ class TagSelector extends Component {
     );
   }
 }
+const TagSelector = connect(
+  function(state, ownProps) {
+    return {
+      data: state.data.tagsById
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchTags()),
+    };
+  }
+)(ConnectedTagSelector);
 
 class ConnectedNewTagForm extends Component {
   constructor(props) {
@@ -454,13 +602,12 @@ class ConnectedNewTagForm extends Component {
     var that = this;
     var newTag = {
       tag: this.state.label,
-      parent_id: this.state.parent.length == 1 ? this.state.parent[0] : null,
+      parent_id: this.state.parent.length === 1 ? this.state.parent[0] : null,
       description: ''
     }
     this.props.createTag(
       newTag
     ).then(function(response){
-      console.log('Tag created');
       that.setState({
         label: '',
         parent: []
@@ -497,14 +644,24 @@ const NewTagForm = connect(
   }
 )(ConnectedNewTagForm);
 
-class TagInput extends AutocompleteInput {
+class ConnectedTagInput extends AutocompleteInput {
   constructor(props) {
     super(props);
+    this.state = {
+      suggestions: [],
+      loading: true
+    };
+    var that = this;
+    props.updateData().then(function() {
+      that.setState({loading: false});
+    });
+
     this.ref = React.createRef();
     this.loadSuggestions = this.loadSuggestions.bind(this);
     this.renderSuggestions = this.renderSuggestions.bind(this);
   }
   loadSuggestions() {
+    var that = this;
     if (this.props.value.length === 0) {
       this.setState({
         suggestions: [],
@@ -512,20 +669,17 @@ class TagInput extends AutocompleteInput {
       });
       return;
     }
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/tags/search?q="+encodeURI(this.props.value), {withCredentials: true})
-        .then(function(response){
-          console.log('Search results:');
-          console.log(response.data);
-          window.result = response;
-          that.setState({
-            suggestions: response.data,
-            loading: false
-          });
-        })
-        .catch(function(error){
-          console.error(error);
-        });
+    this.setState({
+      suggestions: this.props.data.filter(function(tag){
+        if (tag.tag.toLowerCase().includes(that.props.value.toLowerCase())) {
+          return true;
+        }
+        if (tag.description.toLowerCase().includes(that.props.value.toLowerCase())) {
+          return true;
+        }
+      }).slice(0,5),
+      loading: false
+    });
   }
   renderSuggestions() {
     var that = this;
@@ -556,6 +710,19 @@ class TagInput extends AutocompleteInput {
     );
   }
 }
+const TagInput = connect(
+  function(state, ownProps) {
+    var tagIds = ownProps.tagIds || state.data.tagIds;
+    return {
+      data: tagIds.map((id) => state.data.tagsById[id] || null)
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchTags()),
+    };
+  }
+)(ConnectedTagInput);
 
 class ConnectedTagList extends Component {
   constructor(props) {
@@ -564,14 +731,22 @@ class ConnectedTagList extends Component {
       filter: '',
       selected: null
     };
+    if (this.props.data.filter(x => x === null).length > 0) {
+      this.props.updateData();
+    }
+    this.handleFilterChange = this.handleFilterChange.bind(this);
     this.getClickHandler = this.getClickHandler.bind(this);
-    this.props.updateData();
   }
-  getClickHandler(tag) {
+  handleFilterChange(e) {
+    this.setState({
+      filter: e.target.value
+    });
+  }
+  getClickHandler(tag,index) {
     var that = this;
     return function() {
       if (that.props.onSelect) {
-        that.props.onSelect(tag)
+        that.props.onSelect(tag,index);
       }
     }
   }
@@ -581,14 +756,15 @@ class ConnectedTagList extends Component {
       <div>
         <label>
           Filter:
-          <input type='text' value={this.state.filter} />
+          <input type='text' value={this.state.filter}
+              onChange={this.handleFilterChange} />
         </label>
         {
           this.props.data
             .filter((t) => t !== null)
             .map(function(tag, index){
               return (
-                <Tag key={tag.id} onClick={that.getClickHandler(tag)}>
+                <Tag key={index} onClick={that.getClickHandler(tag,index)}>
                   {tag.tag}
                 </Tag>
               );
@@ -612,11 +788,3 @@ const TagList = connect(
   }
 )(ConnectedTagList);
 
-class TagEditor extends Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    return <div></div>;
-  }
-}

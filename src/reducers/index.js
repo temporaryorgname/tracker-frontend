@@ -146,7 +146,7 @@ function userReducer(state = initialUserState, action) {
 const initialDataState = {
   photoIds: null,
   tagIds: [],
-  tagByIds: {},
+  tagsById: {},
   labelsById: {},
   labelIdsByPhotoId: {}
 };
@@ -163,11 +163,39 @@ function dataReducer(state = initialDataState, action) {
     }
     case 'FETCH_TAGS_COMPLETED': {
       var tags = action.payload.data;
-      console.log(tags);
       return {
         ...state,
         tagIds: tags.map((t) => t.id),
         tagsById: tags.reduce((acc,t) => {acc[t.id] = t; return acc}, {})
+      };
+    }
+    case 'FETCH_LABELS_COMPLETED': {
+      var labels = action.payload.data;
+      labels = labels.map(function(label){
+        if (label['bounding_box'] !== null) {
+          label['bounding_box'] = JSON.parse(
+            '['+label['bounding_box'].split('(').join('[').split(')').join(']')+']'
+          );
+        }
+        if (label['bounding_polygon'] !== null) {
+          label['bounding_polygon'] = JSON.parse(
+            '['+label['bounding_polygon'].split('(').join('[').split(')').join(']')+']'
+          );
+        } else {
+          label['bounding_polygon'] = [];
+        }
+        return label;
+      })
+      return {
+        ...state,
+        labelsById: {
+          ...state.labelsById,
+          ...labels.reduce((acc,l) => {acc[l.id] = l; return acc}, {})
+        },
+        labelIdsByPhotoId: {
+          ...state.labelIdsByPhotoId,
+          [action.payload.photoId]: labels.map((l) => l.id)
+        }
       };
     }
     case 'CREATE_TAG_START': {

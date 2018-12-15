@@ -18,7 +18,6 @@ export const fetchPhotoIds = function(userId){
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/by_user/"+userId, 
       {withCredentials: true}
     ).then(function(response){
-      console.log(response.data);
       dispatch(fetchPhotoIdsCompleted(response.data));
     }).catch(function(error){
       console.error('Unable to fetch user\'s photo IDs.');
@@ -41,14 +40,13 @@ const fetchTagsStart = function(userId){
     payload: {userId: userId}
   }
 }
-export const fetchTags = function(userId){
+export const fetchTags = function(){
   return function(dispatch) {
-    dispatch(fetchTagsStart(userId));
-    axios.get(
+    dispatch(fetchTagsStart());
+    return axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/tags", 
       {withCredentials: true}
     ).then(function(response){
-      console.log(response.data);
       dispatch(fetchTagsCompleted(response.data));
     }).catch(function(error){
       console.error('Unable to fetch tags');
@@ -84,6 +82,36 @@ export const createTag = function(tag){
   }
 }
 
+const fetchLabelsStart = function(photoId){
+  return {
+    type: 'FETCH_LABELS_START',
+    payload: {photoId: photoId}
+  }
+}
+export const fetchLabels = function(photoId){
+  return function(dispatch) {
+    dispatch(fetchLabelsStart(photoId));
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+photoId+"/labels", 
+      {withCredentials: true}
+    ).then(function(response){
+      dispatch(fetchLabelsCompleted(photoId, response.data));
+    }).catch(function(error){
+      console.error('Unable to fetch labels');
+      console.error(error);
+    });
+  }
+}
+const fetchLabelsCompleted = function(photoId, data){
+  return { 
+    type: 'FETCH_LABELS_COMPLETED',
+    payload: {
+      photoId: photoId,
+      data: data
+    }
+  };
+}
+
 const createLabelStart = function(label){
   return {
     type: 'CREATE_LABEL_START',
@@ -97,6 +125,25 @@ export const createLabel = function(label){
     dispatch(createLabelStart(label));
     return axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels',
+      label,
+      {withCredentials: true}
+    );
+  }
+}
+
+const updateLabelStart = function(label){
+  return {
+    type: 'UPDATE_LABEL_START',
+    payload: {
+      data: label
+    }
+  }
+}
+export const updateLabel = function(label){
+  return function(dispatch) {
+    dispatch(updateLabelStart(label));
+    return axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels/'+label['id'],
       label,
       {withCredentials: true}
     );

@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import axios from 'axios';
 import './Common.scss';
-
-import { connect } from "react-redux";
 
 class Modal extends Component {
   constructor(props) {
@@ -200,7 +197,6 @@ class AutocompleteInput extends Component {
     this.ref.current.focus();
   }
   render() {
-    var that = this;
     var inputField = (<input
               autocomplate='off'
               type='text'
