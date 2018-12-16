@@ -30,7 +30,6 @@ function foodReducer(state = initialFoodState, action) {
       };
     }
     case 'UPDATE_FOOD': {
-      console.log('UPDATE_FOOD');
       let id = action.payload.id;
       let data = action.payload.data;
       let dirtyEntriesCopy = new Set(state.dirtyEntries);
@@ -185,8 +184,6 @@ function dataReducer(state = initialDataState, action) {
     }
     case 'CREATE_TAG_START': {
       var tag = action.payload.data;
-      console.log(action.type);
-      console.log(tag);
       return {
         ...state,
         tagIds: state.tagIds.concat([tag.id]),
@@ -198,7 +195,6 @@ function dataReducer(state = initialDataState, action) {
     }
     case 'CREATE_LABEL_COMPLETED': {
       var label = action.payload.data;
-      console.log(label);
       return {
         ...state,
         labelsById: {
@@ -214,8 +210,6 @@ function dataReducer(state = initialDataState, action) {
     }
     case 'UPDATE_LABEL_COMPLETED': {
       var label = action.payload.label;
-      console.log(action.type);
-      console.log(label);
       return {
         ...state,
         labelsById: {

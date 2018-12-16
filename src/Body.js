@@ -304,14 +304,12 @@ class ConnectedBodyWeightScatterPlot extends Component {
       }
     }).reduce(function(acc, datum){
       acc[datum['hour']].push(datum['bodyweight']);
-      console.log(acc);
       return acc;
     },[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
     ).map(function(datum){
       if (datum.length === 0) {
         return null;
       }
-      console.log(datum);
       return mean(datum)
     }).map((x,i) => {return {hour: i, value: x}})
     .filter(x => x['value'] !== null);
