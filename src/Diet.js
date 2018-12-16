@@ -21,17 +21,37 @@ export class DietPage extends Component {
       date: formatDate(new Date())
     }
     this.handleDateChange = this.handleDateChange.bind(this);
+    this.prevDate = this.prevDate.bind(this);
+    this.nextDate = this.nextDate.bind(this);
   }
   handleDateChange(date) {
     this.setState({
       date: formatDate(date)
     });
   }
+  prevDate() {
+    var newDate = new Date(this.state.date);
+    newDate.setDate(newDate.getDate());
+    this.setState({
+      date: formatDate(newDate)
+    });
+  }
+  nextDate() {
+    var newDate = new Date(this.state.date);
+    newDate.setDate(newDate.getDate()+2);
+    this.setState({
+      date: formatDate(newDate)
+    });
+  }
   render() {
     return (
-      <div>
+      <div className='diet-page-container'>
         <h2>Diet Log</h2>
-        <h3>{this.state.date}</h3>
+        <h3 className='date'>
+          <i className='material-icons' onClick={this.prevDate}>navigate_before</i>
+          {this.state.date}
+          <i className='material-icons' onClick={this.nextDate}>navigate_next</i>
+        </h3>
         <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
       </div>
     );
