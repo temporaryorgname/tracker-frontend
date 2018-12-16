@@ -170,24 +170,7 @@ function dataReducer(state = initialDataState, action) {
       };
     }
     case 'FETCH_LABELS_COMPLETED': {
-      var labels = action.payload.data;
-      labels = labels.map(function(label){
-        if (label['bounding_box'] !== null) {
-          label['bounding_box'] = JSON.parse(
-            '['+label['bounding_box'].split('(').join('[').split(')').join(']')+']'
-          );
-        }
-        if (label['bounding_polygon'] !== null) {
-          label['bounding_polygon'] = JSON.parse(
-            label['bounding_polygon'].split('(').join('[').split(')').join(']')
-          );
-          console.log(label['bounding_polygon']);
-        } else {
-          label['bounding_polygon'] = [];
-        }
-        label['photo_id'] = action.payload.photoId;
-        return label;
-      })
+      var labels = action.payload.labels;
       return {
         ...state,
         labelsById: {
@@ -215,6 +198,7 @@ function dataReducer(state = initialDataState, action) {
     }
     case 'CREATE_LABEL_COMPLETED': {
       var label = action.payload.data;
+      console.log(label);
       return {
         ...state,
         labelsById: {
@@ -229,13 +213,13 @@ function dataReducer(state = initialDataState, action) {
       };
     }
     case 'UPDATE_LABEL_COMPLETED': {
-      var label = action.payload.data;
+      var label = action.payload.label;
       console.log(action.type);
       console.log(label);
       return {
         ...state,
-        labelsByIds: {
-          ...state.labelsByIds,
+        labelsById: {
+          ...state.labelsById,
           [label.id]: label,
         }
       };

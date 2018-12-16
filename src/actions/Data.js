@@ -1,5 +1,12 @@
 import axios from 'axios';
 
+import {
+  stringifyPolygon,
+  parsePolygon,
+  stringifyBox,
+  parseBox
+} from '../Utils.js';
+
 import { 
   REQUEST_USER_PROFILE,
   RECEIVE_USER_PROFILE
@@ -95,19 +102,27 @@ export const fetchLabels = function(photoId){
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+photoId+"/labels", 
       {withCredentials: true}
     ).then(function(response){
-      dispatch(fetchLabelsCompleted(photoId, response.data));
+      var labels = response.data;
+      labels = labels.map(function(label){
+        return {...label, 
+          'bounding_box': parseBox(label['bounding_box']),
+          'bounding_polygon': parsePolygon(label['bounding_polygon']),
+          'photo_id': photoId
+        }
+      });
+      dispatch(fetchLabelsCompleted(photoId, labels));
     }).catch(function(error){
       console.error('Unable to fetch labels');
       console.error(error);
     });
   }
 }
-const fetchLabelsCompleted = function(photoId, data){
+const fetchLabelsCompleted = function(photoId, labels){
   return { 
     type: 'FETCH_LABELS_COMPLETED',
     payload: {
       photoId: photoId,
-      data: data
+      labels: labels
     }
   };
 }
@@ -123,9 +138,12 @@ const createLabelStart = function(label){
 export const createLabel = function(label){
   return function(dispatch) {
     dispatch(createLabelStart(label));
+    var parsedLabel = {...label};
+    parsedLabel['bounding_box'] = stringifyBox(label['bounding_box']);
+    parsedLabel['bounding_polygon'] = stringifyPolygon(label['bounding_polygon']);
     return axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels',
-      label,
+      parsedLabel,
       {withCredentials: true}
     ).then(function(response){
       label['id'] = response.data['id'];
@@ -153,9 +171,12 @@ const updateLabelStart = function(label){
 export const updateLabel = function(label){
   return function(dispatch) {
     dispatch(updateLabelStart(label));
+    var parsedLabel = {...label};
+    parsedLabel['bounding_box'] = stringifyBox(label['bounding_box']);
+    parsedLabel['bounding_polygon'] = stringifyPolygon(label['bounding_polygon']);
     return axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels/'+label['id'],
-      label,
+      parsedLabel,
       {withCredentials: true}
     ).then(function(response){
       dispatch(updateLabelCompleted(label));
@@ -166,7 +187,7 @@ const updateLabelCompleted = function(label){
   return {
     type: 'UPDATE_LABEL_COMPLETED',
     payload: {
-      data: label
+      label: label
     }
   };
 }

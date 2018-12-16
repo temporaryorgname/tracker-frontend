@@ -22,3 +22,44 @@ export const parseQueryString = function(query) {
       return acc;
     }, {});
 }
+
+export const stringifyPolygon = function(polygon) {
+  console.log('Stringifying');
+  console.log(polygon);
+  if (typeof polygon === 'undefined' || polygon === null) {
+    return null;
+  }
+  return JSON.stringify(polygon)
+          .split('[').join('(')
+          .split(']').join(')');
+}
+
+export const parsePolygon = function(polygon) {
+  if (typeof polygon !== 'string') {
+    return [];
+  }
+  return JSON.parse(
+    polygon.split('(').join('[')
+           .split(')').join(']')
+  );
+}
+
+export const stringifyBox = function(box) {
+  if (typeof box === 'undefined' || box === null) {
+    return null;
+  }
+  return JSON.stringify(box)
+          .split('[').join('(')
+          .split(']').join(')');
+}
+
+export const parseBox = function(box) {
+  if (typeof box !== 'string') {
+    return null;
+  }
+  // Boxes are formatted as '(x,y),(x,y)', so we need to add brakets around that
+  return JSON.parse(
+    '['+box.split('(').join('[')
+           .split(')').join(']')+']'
+  );
+}

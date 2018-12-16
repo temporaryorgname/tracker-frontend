@@ -210,7 +210,7 @@ class ConnectedLabelEditor extends Component {
       selectedLabelId: label['id'],
       selectedTagId: [label['tag_id']],
       box: label['bounding_box'],
-      polygon: label['bounding_polygon']
+      polygon: label['bounding_polygon'] || []
     });
   }
   handleRemoveLabel(tag,index) {
@@ -238,14 +238,10 @@ class ConnectedLabelEditor extends Component {
       label['tag_id'] = this.state.selectedTagId[0];
     }
     if (this.state.box !== null) {
-      label['bounding_box'] = JSON.stringify(this.state.box)
-        .split('[').join('(')
-        .split(']').join(')');
+      label['bounding_box'] = this.state.box;
     }
     if (this.state.polygon.length > 0) {
-      label['bounding_polygon'] = JSON.stringify(this.state.polygon)
-        .split('[').join('(')
-        .split(']').join(')');
+      label['bounding_polygon'] = this.state.polygon;
     }
     return label;
   }
