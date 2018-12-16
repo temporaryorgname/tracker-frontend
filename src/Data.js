@@ -652,7 +652,8 @@ class ConnectedNewTagForm extends Component {
         </label>
         <label>
           Parent label
-          <TagSelector limit={1} />
+          <TagSelector limit={1} value={this.state.parent}
+            onChange={(v) => this.setState({parent: v})}/>
         </label>
         <button>Create Tag</button>
       </form>
@@ -787,6 +788,16 @@ class ConnectedTagList extends Component {
   }
   render() {
     var that = this;
+    var data = this.props.data
+      .map((x,i) => {return {'value': x, 'index': i}})
+      .filter(x => x['value'] !== null)
+    if (this.state.filter.length > 0) {
+      var filteredData = data.filter(
+        x => x['value']['tag'].includes(this.state.filter)
+      );
+    } else {
+      var filteredData = data;
+    }
     return (
       <div>
         <label>
@@ -795,9 +806,10 @@ class ConnectedTagList extends Component {
               onChange={this.handleFilterChange} />
         </label>
         {
-          this.props.data
-            .filter((t) => t !== null)
-            .map(function(tag, index){
+          filteredData
+            .map(function(x){
+              var tag = x['value'];
+              var index = x['index'];
               return (
                 <Tag key={index}
                      onClick={that.getClickHandler(tag,index)}
@@ -806,6 +818,11 @@ class ConnectedTagList extends Component {
                 </Tag>
               );
             })
+            .filter((x) => x !== null)
+        }
+        {
+          filteredData.length !== data.length && 
+          <div>Showing {filteredData.length} of {data.length} tags.</div>
         }
       </div>
     );
