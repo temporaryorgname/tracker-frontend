@@ -185,6 +185,7 @@ function dataReducer(state = initialDataState, action) {
         } else {
           label['bounding_polygon'] = [];
         }
+        label['photo_id'] = action.payload.photoId;
         return label;
       })
       return {
@@ -236,6 +237,19 @@ function dataReducer(state = initialDataState, action) {
         labelsByIds: {
           ...state.labelsByIds,
           [label.id]: label,
+        }
+      };
+    }
+    case 'DELETE_LABEL_COMPLETED': {
+      var label = action.payload.data;
+      var {[label.id]: removedLabel, ...newLabelsById} = state.labelsById; // FIXME: This isn't working in removing the label.
+      return {
+        ...state,
+        labelsById: newLabelsById,
+        labelIdsByPhotoId: {
+          ...state.labelIdsByPhotoId,
+          [label.photo_id]: state.labelIdsByPhotoId[label.photo_id]
+                .filter(id => id !== label.id)
         }
       };
     }

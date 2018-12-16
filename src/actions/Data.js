@@ -170,3 +170,31 @@ const updateLabelCompleted = function(label){
     }
   };
 }
+
+const deleteLabelStart = function(label){
+  return {
+    type: 'DELETE_LABEL_START',
+    payload: {
+      data: label
+    }
+  }
+}
+export const deleteLabel = function(label){
+  return function(dispatch) {
+    dispatch(deleteLabelStart(label));
+    return axios.delete(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+label.photo_id+'/labels/'+label['id'],
+      {withCredentials: true}
+    ).then(function(response){
+      dispatch(deleteLabelCompleted(label));
+    });
+  }
+}
+const deleteLabelCompleted = function(label){
+  return {
+    type: 'DELETE_LABEL_COMPLETED',
+    payload: {
+      data: label
+    }
+  }
+}

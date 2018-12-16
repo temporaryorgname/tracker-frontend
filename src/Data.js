@@ -13,7 +13,8 @@ import {
   createTag,
   fetchLabels,
   createLabel,
-  updateLabel
+  updateLabel,
+  deleteLabel
 } from './actions/Data.js';
 
 export class DataPage extends Component {
@@ -170,6 +171,7 @@ class ConnectedLabelEditor extends Component {
     this.handlePhotoDragging = this.handlePhotoDragging.bind(this);
     this.handlePhotoDragged = this.handlePhotoDragged.bind(this);
     this.handleSelectLabel = this.handleSelectLabel.bind(this);
+    this.handleRemoveLabel = this.handleRemoveLabel.bind(this);
     this.getLabel = this.getLabel.bind(this);
     this.createLabel = this.createLabel.bind(this);
     this.updateLabel = this.updateLabel.bind(this);
@@ -210,6 +212,13 @@ class ConnectedLabelEditor extends Component {
       box: label['bounding_box'],
       polygon: label['bounding_polygon']
     });
+  }
+  handleRemoveLabel(tag,index) {
+    var label = this.props.labels[index]
+    this.props.deleteLabel(label);
+    if (this.selectedLabelId === label['id']) {
+      this.discardChanges();
+    }
   }
   getLabel() {
     var label = {}
@@ -326,7 +335,8 @@ class ConnectedLabelEditor extends Component {
           </div>
           {button}
           <TagList tagIds={this.props.labels.map(l => l['tag_id'])}
-              onSelect={this.handleSelectLabel}/>
+              onSelect={this.handleSelectLabel}
+              onRemove={this.handleRemoveLabel}/>
         </div>
       </div>
     );
@@ -355,7 +365,8 @@ const LabelEditor = connect(
     return {
       updateData: (photoId) => dispatch(fetchLabels(photoId)),
       createLabel: (label) => dispatch(createLabel(label)),
-      updateLabel: (label) => dispatch(updateLabel(label))
+      updateLabel: (label) => dispatch(updateLabel(label)),
+      deleteLabel: (label) => dispatch(deleteLabel(label))
     };
   }
 )(ConnectedLabelEditor);
@@ -739,6 +750,7 @@ class ConnectedTagList extends Component {
     }
     this.handleFilterChange = this.handleFilterChange.bind(this);
     this.getClickHandler = this.getClickHandler.bind(this);
+    this.getRemoveHandler = this.getRemoveHandler.bind(this);
   }
   handleFilterChange(e) {
     this.setState({
@@ -750,6 +762,14 @@ class ConnectedTagList extends Component {
     return function() {
       if (that.props.onSelect) {
         that.props.onSelect(tag,index);
+      }
+    }
+  }
+  getRemoveHandler(tag,index) {
+    var that = this;
+    return function() {
+      if (that.props.onRemove) {
+        that.props.onRemove(tag,index);
       }
     }
   }
@@ -767,7 +787,9 @@ class ConnectedTagList extends Component {
             .filter((t) => t !== null)
             .map(function(tag, index){
               return (
-                <Tag key={index} onClick={that.getClickHandler(tag,index)}>
+                <Tag key={index}
+                     onClick={that.getClickHandler(tag,index)}
+                     onRemove={that.getRemoveHandler(tag,index)}>
                   {tag.tag}
                 </Tag>
               );
