@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { select } from "d3-selection";
 import { line } from "d3-shape";
 import { scaleTime, scaleLinear } from "d3-scale";
-import { extent } from "d3-array";
+import { mean, extent } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
 import { easeLinear } from "d3-ease";
 import { } from "d3-transition"; // Needed for selection.transition
@@ -290,31 +290,62 @@ class ConnectedBodyWeightScatterPlot extends Component {
     if (this.props.data.length === 0) {
       this.props.updateData();
     }
+
+    this.computeMean = this.computeMean.bind(this);
+  }
+  computeMean() {
+    return this.props.data.filter(function(datum){
+      return datum['time'] !== null;
+    }).map(function(datum){
+      var date = new Date('0000-01-01 '+datum['time']);
+      return {
+        hour: date.getHours(),
+        bodyweight: datum['bodyweight']
+      }
+    }).reduce(function(acc, datum){
+      acc[datum['hour']].push(datum['bodyweight']);
+      console.log(acc);
+      return acc;
+    },[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
+    ).map(function(datum){
+      if (datum.length === 0) {
+        return null;
+      }
+      console.log(datum);
+      return mean(datum)
+    }).map((x,i) => {return {hour: i, value: x}})
+    .filter(x => x['value'] !== null);
   }
   updateSVG(firstRender=false) {
+    // Check if we have data
     if (this.props.data.length === 0) {
       return null;
     }
-    var data = this.props.data.map(function(datum){
-      if (datum.time) {
+    // Convert time to a usable format
+    var data = this.props.data
+      .filter(datum => datum['time'])
+      .map(function(datum){
         return {
-          date: new Date(datum.date+" "+datum.time),
+          date: new Date("0000-01-01 "+datum.time),
           value: datum.bodyweight
         };
-      }
-      return {
-        date: new Date(datum.date), 
-        value: datum.bodyweight
-      };
-    });
+      });
+    // Check if there's an svg dom element to draw to
     if (!this.svg) {
       return null;
     }
+    // Compute means
+    var bodyweightMeans = this.computeMean()
+      .map((x) => { return {
+        date: new Date('0000-01-01 '+x['hour']+':00'),
+        value: x['value']
+      }})
+    // Compute points
     var width = this.svg.width.baseVal.value;
     var height = this.svg.height.baseVal.value;
     var padding = 45;
     var xScale = scaleTime()
-      .domain(extent(data, p => p.date))
+      .domain([new Date('0000-01-01 0:00:01'),new Date('0000-01-01 23:59')])
       .range([padding,width]);
     var yScale = scaleLinear()
       .domain(extent(data, p => p.value))
@@ -336,6 +367,10 @@ class ConnectedBodyWeightScatterPlot extends Component {
       .attr('cx', (p,i) => xScale(p.date))
       .attr('cy', (p,i) => yScale(p.value))
       .attr('r', '3');
+    var path = select(this.svg)
+      .select('.means')
+      .select('path')
+      .attr('d',lineGenerator(bodyweightMeans));
     select(this.svg)
       .select('g.x-axis')
       .attr('transform', 'translate(0,'+(height-padding)+')')
@@ -389,8 +424,8 @@ class ConnectedBodyWeightScatterPlot extends Component {
         <g className='y-axis'></g>
         <text className='x-axis'></text>
         <text className='y-axis'></text>
-        <g className='points'>
-        </g>
+        <g className='means'><path/></g>
+        <g className='points'></g>
       </svg>
       </div>
     );
