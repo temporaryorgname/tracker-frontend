@@ -175,6 +175,8 @@ class ConnectedLabelEditor extends Component {
     this.getLabel = this.getLabel.bind(this);
     this.createLabel = this.createLabel.bind(this);
     this.updateLabel = this.updateLabel.bind(this);
+    this.clearBox = this.clearBox.bind(this);
+    this.clearPolygon = this.clearPolygon.bind(this);
     this.discardChanges = this.discardChanges.bind(this);
   }
   handleTagChange(tagIds) {
@@ -269,6 +271,16 @@ class ConnectedLabelEditor extends Component {
       polygon: []
     });
   }
+  clearBox() {
+    this.setState({
+      box: null
+    });
+  }
+  clearPolygon() {
+    this.setState({
+      polygon: []
+    });
+  }
   discardChanges() {
     this.setState({
       selectedLabelId: null,
@@ -328,6 +340,10 @@ class ConnectedLabelEditor extends Component {
                 onChange={(e) => this.setState({mode: e.target.value})}/>
               Polygon
             </label>
+            <div className='buttons-container'>
+              <input type='button' value='Clear Box' onClick={this.clearBox} />
+              <input type='button' value='Clear Polygon' onClick={this.clearPolygon} />
+            </div>
           </div>
           {button}
           <TagList tagIds={this.props.labels.map(l => l['tag_id'])}
