@@ -10,19 +10,28 @@ import { connect } from "react-redux";
 import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
 
 import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './Common.js';
-import { formatDate } from './Utils.js';
+import { parseQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
 
 export class DietPage extends Component {
   constructor(props) {
     super(props)
+    var queryParams = parseQueryString(this.props.location.search);
     this.state = {
-      date: formatDate(new Date())
+      date: queryParams['date'] || formatDate(new Date())
     }
     this.handleDateChange = this.handleDateChange.bind(this);
     this.prevDate = this.prevDate.bind(this);
     this.nextDate = this.nextDate.bind(this);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.location.search !== this.props.location.search) {
+      var queryParams = parseQueryString(this.props.location.search);
+      this.setState({
+        date: queryParams['date']
+      });
+    }
   }
   handleDateChange(date) {
     this.setState({
@@ -32,16 +41,18 @@ export class DietPage extends Component {
   prevDate() {
     var newDate = new Date(this.state.date);
     newDate.setDate(newDate.getDate());
-    this.setState({
-      date: formatDate(newDate)
-    });
+    this.props.history.push({search: '?date='+formatDate(newDate)});
+    //this.setState({
+    //  date: formatDate(newDate)
+    //});
   }
   nextDate() {
     var newDate = new Date(this.state.date);
     newDate.setDate(newDate.getDate()+2);
-    this.setState({
-      date: formatDate(newDate)
-    });
+    this.props.history.push({search: '?date='+formatDate(newDate)});
+    //this.setState({
+    //  date: formatDate(newDate)
+    //});
   }
   render() {
     return (
