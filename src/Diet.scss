@@ -11,6 +11,7 @@
 .food-table {
   text-align: center;
   display: inline-block;
+  width: 1000px;
 
   .controls{
     padding: 5px 20px;
@@ -88,7 +89,13 @@
   }
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 1366px) {
+  .food-table {
+    width: 750px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
   .food-table {
     width: 100%;
   }
