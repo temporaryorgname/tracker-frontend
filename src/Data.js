@@ -9,6 +9,7 @@ import { ThumbnailsList, AutocompleteInput } from './Common.js';
 import { parseQueryString } from './Utils.js';
 import { 
   fetchPhotos,
+  fetchPhotoData,
   fetchTags,
   createTag,
   fetchLabels,
@@ -132,6 +133,11 @@ class ConnectedLabelEditor extends Component {
     this.clearBox = this.clearBox.bind(this);
     this.clearPolygon = this.clearPolygon.bind(this);
     this.discardChanges = this.discardChanges.bind(this);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.photoId !== this.props.photoId) {
+      this.props.updateData(this.props.photoId);
+    }
   }
   handleTagChange(tagIds) {
     this.setState({
@@ -337,11 +343,10 @@ const LabelEditor = connect(
   }
 )(ConnectedLabelEditor);
 
-class LabelledFoodPhoto extends Component {
+class ConnectedLabelledFoodPhoto extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      data: "",
       width: 0,
       height: 0
     }
@@ -358,14 +363,10 @@ class LabelledFoodPhoto extends Component {
     this.updateData();
   }
   updateData() {
-    var that = this;
-    this.setState({ data: '' });
-    axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid+'?size=700',
-      {withCredentials: true}
-    ).then(function(response){
-      that.setState({data: response.data.data});
-    });
+    if (this.props.data) {
+      return;
+    }
+    this.props.updateData(this.props.fileid);
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.fileid !== this.props.fileid) {
@@ -415,7 +416,7 @@ class LabelledFoodPhoto extends Component {
     })
   }
   render() {
-    if (!this.state.data) {
+    if (!this.props.data) {
       return (<i className="material-icons">fastfood</i>);
     } else {
       var svgBoxes = this.props.boxes.map(function(box, index){
@@ -445,7 +446,7 @@ class LabelledFoodPhoto extends Component {
       });
       return (
         <div className='labelled-food-photo'>
-          <img src={"data:image/png;base64,"+this.state.data}
+          <img src={this.props.data}
               onLoad={this.handleImageLoad}
               ref={(x) => this.img = x}
               alt={'Food'}/>
@@ -468,6 +469,18 @@ class LabelledFoodPhoto extends Component {
     }
   }
 }
+const LabelledFoodPhoto = connect(
+  function(state, ownProps) {
+    return {
+      data: state.data.photoData[ownProps.fileid]
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (id) => dispatch(fetchPhotoData(id))
+    };
+  }
+)(ConnectedLabelledFoodPhoto);
 
 class Tag extends Component {
   constructor(props) {
