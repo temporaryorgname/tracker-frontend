@@ -13,6 +13,7 @@ body {
 nav {
   text-align: left;
   white-space: nowrap;
+  border-bottom: 1px solid;
   ul {
     display: inline-block;
   }
@@ -137,6 +138,15 @@ div.error-message {
 
 div.react-datepicker-wrapper {
   cursor: pointer;
+}
+
+div.loading {
+  background-color: rgba($primary-colour, 0.2);
+  color: rgba($primary-colour, 0.5);
+  border: 0px;
+  * {
+    color: rgba($primary-colour, 0.5);
+  }
 }
 
 .loader {

@@ -12,31 +12,90 @@ import {
   RECEIVE_USER_PROFILE
 } from "../constants/action-types";
 
-export const fetchPhotoIdsStart = function(userId){
+export const fetchPhotoStart = function(userId){
   return {
-    type: 'FETCH_PHOTO_IDS_START',
+    type: 'FETCH_PHOTO_START',
     payload: {userId: userId}
   }
 }
-export const fetchPhotoIds = function(userId){
+export const fetchPhotos = function(userId){
   return function(dispatch) {
-    dispatch(fetchPhotoIdsStart(userId));
+    dispatch(fetchPhotoStart(userId));
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/by_user/"+userId, 
       {withCredentials: true}
     ).then(function(response){
-      dispatch(fetchPhotoIdsCompleted(response.data));
+      dispatch(fetchPhotoCompleted(response.data));
     }).catch(function(error){
       console.error('Unable to fetch user\'s photo IDs.');
       console.error(error);
     });
   }
 }
-export const fetchPhotoIdsCompleted = function(data){
+export const fetchPhotoCompleted = function(data){
   return { 
-    type: 'FETCH_PHOTO_IDS_COMPLETED',
+    type: 'FETCH_PHOTO_COMPLETED',
     payload: {
       data: data
+    }
+  };
+}
+
+export const fetchPhotoData = function(photoId){
+  return function(dispatch) {
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+photoId+'?size=700',
+      {withCredentials: true}
+    ).then(function(response){
+      var data = "data:image/png;base64,"+response.data.data;
+      dispatch(fetchPhotoDataCompleted(photoId, data));
+    });
+  }
+}
+const fetchPhotoDataCompleted = function(photoId, data){
+  return { 
+    type: 'FETCH_PHOTO_DATA_COMPLETED',
+    payload: {
+      id: photoId,
+      data: data
+    }
+  };
+}
+
+export const createPhotos = function(files, date=null){
+  return function(dispatch) {
+    var formData = new FormData();
+    formData.append("file", files[0]);
+    if (date) {
+      formData.append("date", date);
+    }
+    axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo",
+      formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true
+      }
+    ).then(function(response){
+      console.log('Uploaded photo successfully');
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        dispatch(
+          createPhotoCompleted(response.data.id, e.target.result, date)
+        );
+      };
+      reader.readAsDataURL(files[0]);
+    });
+  }
+}
+const createPhotoCompleted = function(photoId, fileData, date){
+  return { 
+    type: 'CREATE_PHOTO_COMPLETED',
+    payload: {
+      id: photoId,
+      fileData: fileData,
+      date: date
     }
   };
 }

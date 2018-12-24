@@ -144,6 +144,9 @@ function userReducer(state = initialUserState, action) {
 
 const initialDataState = {
   photoIds: null,
+  photoIdsByDate: {},
+  photoIdsByFoodId: {},
+  photoData: {},
   tagIds: [],
   tagsById: {},
   labelsById: {},
@@ -151,13 +154,57 @@ const initialDataState = {
 };
 function dataReducer(state = initialDataState, action) {
   switch (action.type) {
-    case 'FETCH_PHOTO_IDS_START': {
-      return state;
-    }
-    case 'FETCH_PHOTO_IDS_COMPLETED': {
+    case 'FETCH_PHOTO_COMPLETED': {
+      var data = action.payload.data;
       return {
         ...state,
-        photoIds: action.payload.data
+        photoIds: data.map(p => p.id),
+        photoIdsByDate: {
+          ...state.photoIdsByDate,
+          ...data.reduce(function(acc, photo) {
+            console.log(acc);
+            if (!photo['date']) {
+              return acc;
+            }
+            if (! (photo['date'] in acc)) {
+              acc[photo['date']] = [photo.id];
+            } else {
+              acc[photo['date']].push(photo.id);
+            }
+            return acc;
+          }, {})
+        }
+      };
+    }
+    case 'FETCH_PHOTO_DATA_COMPLETED': {
+      var id = action.payload.id;
+      var data = action.payload.data;
+      return {
+        ...state,
+        photoData: {
+          ...state.photoData,
+          [id]: data
+        }
+      };
+    }
+    case 'CREATE_PHOTO_COMPLETED': {
+      var files = action.payload.files;
+      var fileData = action.payload.fileData;
+      var date = action.payload.date;
+      var photoId = action.payload.id;
+      console.log(action.type);
+      console.log(action.payload);
+      var byDate = {...state.photoIdsByDate};
+      if (date) {
+        if (date in byDate) {
+          byDate[date] = [...byDate[date], photoId];
+        }
+      }
+      return {
+        ...state,
+        photoIds: [...state.photoIds, photoId],
+        photoIdsByDate: byDate,
+        photoData: {...state.photoData, [photoId]: fileData}
       };
     }
     case 'FETCH_TAGS_COMPLETED': {

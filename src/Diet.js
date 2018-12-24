@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { Link } from "react-router-dom";
+import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -7,20 +7,35 @@ import axios from 'axios';
 
 import { connect } from "react-redux";
 
-import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js'
+import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js';
+import { 
+  fetchPhotos,
+  createPhotos
+} from './actions/Data.js';
 
-import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './Common.js';
-import { parseQueryString, formatDate } from './Utils.js';
+import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
+import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
 
-export class DietPage extends Component {
+class ConnectedDietPage extends Component {
   constructor(props) {
-    super(props)
+    super(props);
+
+    // If no date is provided, then set it to the current date
     var queryParams = parseQueryString(this.props.location.search);
-    this.state = {
-      date: queryParams['date'] || formatDate(new Date())
+    if (!queryParams['date']) {
+      queryParams['date'] = formatDate(new Date());
+      this.props.history.push(dictToQueryString(queryParams));
     }
+    if (!queryParams['uid']) {
+      queryParams['uid'] = this.props.uid;
+      this.props.history.push(dictToQueryString(queryParams));
+    }
+    this.state = {
+      params: queryParams
+    }
+
     this.handleDateChange = this.handleDateChange.bind(this);
     this.prevDate = this.prevDate.bind(this);
     this.nextDate = this.nextDate.bind(this);
@@ -28,46 +43,136 @@ export class DietPage extends Component {
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.location.search !== this.props.location.search) {
       var queryParams = parseQueryString(this.props.location.search);
+      if (!queryParams['date']) {
+        queryParams['date'] = formatDate(new Date());
+        this.props.history.push(dictToQueryString(queryParams));
+      }
       this.setState({
-        date: queryParams['date']
+        params: queryParams
       });
     }
   }
   handleDateChange(date) {
-    this.setState({
-      date: formatDate(date)
-    });
+    var params = this.state.params;
+    params.date = formatDate(date);
+    this.props.history.push(dictToQueryString(params));
   }
   prevDate() {
-    var newDate = new Date(this.state.date);
+    var newDate = new Date(this.state.params.date);
     newDate.setDate(newDate.getDate());
-    this.props.history.push({search: '?date='+formatDate(newDate)});
-    //this.setState({
-    //  date: formatDate(newDate)
-    //});
+    this.handleDateChange(newDate);
   }
   nextDate() {
-    var newDate = new Date(this.state.date);
+    var newDate = new Date(this.state.params.date);
     newDate.setDate(newDate.getDate()+2);
-    this.props.history.push({search: '?date='+formatDate(newDate)});
-    //this.setState({
-    //  date: formatDate(newDate)
-    //});
+    this.handleDateChange(newDate);
   }
   render() {
+    if (!this.state.params.date || !this.state.params.uid) {
+      return null;
+    }
     return (
       <div className='diet-page-container'>
         <h2>Diet Log</h2>
         <h3 className='date'>
           <i className='material-icons' onClick={this.prevDate}>navigate_before</i>
-          {this.state.date}
+          {this.state.params.date}
           <i className='material-icons' onClick={this.nextDate}>navigate_next</i>
         </h3>
-        <FoodTable date={this.state.date} onDateChange={this.handleDateChange}/>
+        <Switch>
+          <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
+          <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid}/>} />
+        </Switch>
       </div>
     );
   }
 }
+export const DietPage = connect(
+  function(state, ownProps) {
+    return {
+      uid: state.user.session.uid
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (uid) => dispatch(fetchPhotos(uid))
+    };
+  }
+)(ConnectedDietPage);
+
+class ConnectedGallery extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      groups: [],
+      file: null
+    };
+    this.props.updateData(this.props.uid);
+    this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
+    this.uploadFile = this.uploadFile.bind(this);
+  }
+  handleSelectPhoto(photoId) {
+    console.log(photoId);
+  }
+  uploadFile(event) {
+    this.props.uploadPhoto(event.target.files);
+  }
+  render() {
+    var that = this;
+    if (this.props.ids) {
+      return (
+        <div>
+          {
+            this.props.ids.map(function(photoId){
+              return (
+                <div className='photo-viewer-thumbnail'
+                    key={photoId}
+                    onClick={()=>that.handleSelectPhoto(photoId)}>
+                  <FoodPhotoThumbnail fileid={photoId} />
+                </div>
+              );
+            })
+          }
+          <div className='thumbnail new-thumbnail'>
+            <label>
+              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+              <i className='material-icons'>add_a_photo</i>
+            </label>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <div className='thumbnail loading'></div>
+          <div className='thumbnail loading'></div>
+          <div className='thumbnail loading'></div>
+          <div className='thumbnail new-thumbnail loading'>
+            <FileUploadDialog date={this.props.date} files={[]}/>
+          </div>
+        </div>
+      );
+    }
+  }
+}
+const Gallery = connect(
+  function(state, ownProps) {
+    if (ownProps.date) {
+      return {
+        ids: state.data.photoIdsByDate[ownProps.date]
+      };
+    }
+    return {
+      ids: []
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (uid) => dispatch(fetchPhotos(uid)),
+      uploadPhoto: (files) => dispatch(createPhotos(files, ownProps.date))
+    };
+  }
+)(ConnectedGallery);
 
 class FileUploadDialog extends Component {
   constructor(props) {
@@ -88,6 +193,9 @@ class FileUploadDialog extends Component {
     var formData = new FormData();
     var that = this;
     formData.append("file", target.files[0]);
+    if (this.props.date) {
+      formData.append("date", this.props.date);
+    }
     axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo", formData, {
             headers: {
               'Content-Type': 'multipart/form-data'
@@ -123,10 +231,8 @@ class FileUploadDialog extends Component {
   render() {
     var that = this;
     return (
-      <div>
-        <Link to='#' onClick={this.toggle}>
-          <i className="material-icons">add_a_photo</i>
-        </Link>
+      <div className='file-upload-dialog'>
+        <i className="material-icons" onClick={this.toggle}>add_a_photo</i>
         <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-sm">
           <ModalHeader toggle={this.toggle}>Upload Photo</ModalHeader>
           <ModalBody>
@@ -482,8 +588,6 @@ class ConnectedFoodRowNewEntry extends Component {
   }
   handleQuantityScale(scale) {
     var cals = this.state.calories;
-    console.log('cals length '+cals.length);
-    console.log(cals);
     if (isFinite(cals) && cals.length > 0) {
       cals = parseFloat(cals)*scale;
     }
@@ -586,7 +690,6 @@ class DropdownCheckbox extends Component {
 class ConnectedFoodRow extends Component {
   constructor(props) {
     super(props);
-    console.log(props);
     this.state = { // Keep a copy of the data
       data: {
         ...props.data
@@ -637,7 +740,10 @@ class ConnectedFoodRow extends Component {
           <td className='actions'>
             <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.data.photos}/>
           </td>
-          <td className='select' onClick={()=>this.props.onToggleSelected(this.props.id)}><input type='checkbox' checked={selected}/></td>
+          <td className='select'>
+            <input type='checkbox' checked={selected}
+              onChange={()=>this.props.onToggleSelected(this.props.id)} />
+          </td>
         </tr>
       </Fragment>
     );

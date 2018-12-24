@@ -5,10 +5,10 @@ import axios from 'axios';
 import { connect } from "react-redux";
 
 import './Data.scss';
-import { FoodPhotoThumbnail, AutocompleteInput } from './Common.js';
+import { ThumbnailsList, AutocompleteInput } from './Common.js';
 import { parseQueryString } from './Utils.js';
 import { 
-  fetchPhotoIds,
+  fetchPhotos,
   fetchTags,
   createTag,
   fetchLabels,
@@ -83,7 +83,8 @@ class ConnectedPhotoViewer extends Component {
       <div>
         <h2>Data</h2>
         <ThumbnailsList selectedId={this.state.selectedPhotoId}
-          onChange={this.handleChangePhoto}/>
+          onChange={this.handleChangePhoto}
+          uid={this.props.uid}/>
         {
           this.state.selectedPhotoId &&
           <LabelEditor photoId={this.state.selectedPhotoId} />
@@ -100,58 +101,11 @@ const PhotoViewer = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (id) => dispatch(fetchPhotoIds(id)),
+      updateData: (id) => dispatch(fetchPhotos(id)),
       createLabel: (label) => dispatch(createLabel(label))
     };
   }
 )(ConnectedPhotoViewer);
-
-class ConnectedThumbnailsList extends Component {
-  constructor(props) {
-    super(props);
-    props.updateData(props.uid);
-    this.handleChangePhoto = this.handleChangePhoto.bind(this);
-  }
-  handleChangePhoto(photoId) {
-    if (photoId === this.props.selectedId) {
-      return;
-    }
-    if (this.props.onChange) {
-      this.props.onChange(photoId);
-    }
-  }
-  render() {
-    var that = this;
-    return (
-      <div className='thumbnails-list'>
-      {
-        this.props.ids &&
-        this.props.ids.map(function(photoId){
-          return (
-            <div className='photo-viewer-thumbnail'
-                key={photoId}
-                onClick={()=>that.handleChangePhoto(photoId)}>
-              <FoodPhotoThumbnail fileid={photoId} />
-            </div>
-          );
-        })
-      }
-      </div>
-    );
-  }
-}
-const ThumbnailsList = connect(
-  function(state, ownProps) {
-    return {
-      ids: state.data.photoIds
-    };
-  },
-  function(dispatch, ownProps) {
-    return {
-      updateData: (id) => dispatch(fetchPhotoIds(id))
-    };
-  }
-)(ConnectedThumbnailsList);
 
 class ConnectedLabelEditor extends Component {
   constructor(props) {

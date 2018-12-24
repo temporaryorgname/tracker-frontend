@@ -23,6 +23,16 @@ export const parseQueryString = function(query) {
     }, {});
 }
 
+export const dictToQueryString = function(query) {
+  var output = [];
+  for (var k in query) {
+    if (query.hasOwnProperty(k)) {
+      output.push([k,query[k]].join('='))
+    }
+  }
+  return '?'+output.join('&');
+}
+
 export const stringifyPolygon = function(polygon) {
   console.log('Stringifying');
   console.log(polygon);

@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import { connect } from "react-redux";
+import { 
+  fetchPhotos,
+  fetchPhotoData
+} from './actions/Data.js';
 import './Common.scss';
 
 class Modal extends Component {
@@ -56,32 +61,96 @@ class ModalFooter extends Component {
   }
 }
 
-class FoodPhotoThumbnail extends Component {
+class ConnectedFoodPhotoThumbnail extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      data: ""
+    if (!this.props.data) {
+      this.props.updateData(this.props.fileid);
     }
   }
-  componentWillMount() {
-    var that = this;
-    axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+this.props.fileid+'?size=32',
-      {withCredentials: true}
-    ).then(function(response){
-      that.setState({data: response.data.data});
-    });
-  }
   render() {
-    if (!this.state.data) {
-      return (<i className="material-icons">fastfood</i>);
+    if (!this.props.data) {
+      return (
+        <div className='thumbnail'>
+          <i className="material-icons">fastfood</i>
+        </div>
+      );
     } else {
       return (
-        <img src={"data:image/png;base64,"+this.state.data} alt='Thumbnail'/>
+        <div className='thumbnail'>
+          <img src={this.props.data} alt='Thumbnail'/>
+        </div>
       );
     }
   }
 }
+const FoodPhotoThumbnail = connect(
+  function(state, ownProps) {
+    return {
+      data: state.data.photoData[ownProps.fileid]
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (id) => dispatch(fetchPhotoData(id))
+    };
+  }
+)(ConnectedFoodPhotoThumbnail);
+
+class ConnectedThumbnailsList extends Component {
+  constructor(props) {
+    super(props);
+    props.updateData(props.uid);
+    this.handleChangePhoto = this.handleChangePhoto.bind(this);
+  }
+  handleChangePhoto(photoId) {
+    if (photoId === this.props.selectedId) {
+      return;
+    }
+    if (this.props.onChange) {
+      this.props.onChange(photoId);
+    }
+  }
+  render() {
+    var that = this;
+    return (
+      <div className='thumbnails-list'>
+      {
+        this.props.ids &&
+        this.props.ids.map(function(photoId){
+          return (
+            <div className='photo-viewer-thumbnail'
+                key={photoId}
+                onClick={()=>that.handleChangePhoto(photoId)}>
+              <FoodPhotoThumbnail fileid={photoId} />
+            </div>
+          );
+        })
+      }
+      </div>
+    );
+  }
+}
+const ThumbnailsList = connect(
+  function(state, ownProps) {
+    if (ownProps.ids) {
+      return {};
+    }
+    if (ownProps.date) {
+      return {
+        ids: state.data.photoIdsByDate[ownProps.date]
+      };
+    }
+    return {
+      ids: state.data.photoIds
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: (id) => dispatch(fetchPhotos(id))
+    };
+  }
+)(ConnectedThumbnailsList);
 
 class AutocompleteInput extends Component {
   constructor(props) {
@@ -236,5 +305,5 @@ class AutocompleteInput extends Component {
   }
 }
 
-export { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, AutocompleteInput };
+export { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput };
 

@@ -74,20 +74,20 @@ class ConnectedNavigation extends Component {
         <nav>
           <ul className="nav">
             <li>
-              <Link to="food">Diet</Link>
+              <Link to={"/food/table?uid="+this.props.uid}>Diet</Link>
             </li>
             <li>
-              <Link to="workout">Workouts</Link>
+              <Link to="/workout">Workouts</Link>
             </li>
             <li>
-              <Link to="body">Body Stats</Link>
+              <Link to={"/body?uid="+this.props.uid}>Body Stats</Link>
             </li>
             <li>
               <Link to="#" onClick={(e) => {e.preventDefault(); this.props.logout();}}>Logout</Link>
             </li>
           </ul>
           <div className='user'>
-            <Link to="user"><i className='material-icons'>account_circle</i></Link>
+            <Link to="/user"><i className='material-icons'>account_circle</i></Link>
           </div>
         </nav>
       );
@@ -109,7 +109,9 @@ class ConnectedNavigation extends Component {
 }
 const Navigation = connect(
   function(state, ownProps) {
-    return {};
+    return {
+      uid: state.user.session.uid
+    };
   },
   function(dispatch, ownProps) {
     return {
