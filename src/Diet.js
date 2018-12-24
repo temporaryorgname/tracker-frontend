@@ -105,14 +105,19 @@ class ConnectedGallery extends Component {
     super(props);
     this.state = {
       groups: [],
-      file: null
+      selectedPhotoId: null
     };
     this.props.updateData(this.props.uid);
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
   }
   handleSelectPhoto(photoId) {
-    console.log(photoId);
+    if (this.state.selectedPhotoId === photoId) {
+      return;
+    }
+    this.setState({
+      selectedPhotoId: photoId
+    });
   }
   uploadFile(event) {
     this.props.uploadPhoto(event.target.files);
@@ -128,7 +133,8 @@ class ConnectedGallery extends Component {
                 <div className='photo-viewer-thumbnail'
                     key={photoId}
                     onClick={()=>that.handleSelectPhoto(photoId)}>
-                  <FoodPhotoThumbnail fileid={photoId} />
+                  <FoodPhotoThumbnail fileid={photoId}
+                      selected={that.state.selectedPhotoId === photoId}/>
                 </div>
               );
             })

@@ -69,15 +69,20 @@ class ConnectedFoodPhotoThumbnail extends Component {
     }
   }
   render() {
+    var classNames = ['thumbnail'];
+    if (this.props.selected) {
+      classNames.push('selected');
+    }
+    classNames = classNames.join(' ');
     if (!this.props.data) {
       return (
-        <div className='thumbnail'>
+        <div className={classNames}>
           <i className="material-icons">fastfood</i>
         </div>
       );
     } else {
       return (
-        <div className='thumbnail'>
+        <div className={classNames}>
           <img src={this.props.data} alt='Thumbnail'/>
         </div>
       );

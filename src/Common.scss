@@ -44,6 +44,11 @@ div.autocomplete-input {
   width: 128px;
   height: 128px;
 
+  &.selected {
+    border-width: 2px;
+    margin: 4px;
+  }
+
   img {
     height: 100%;
     padding: 0;
