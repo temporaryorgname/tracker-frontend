@@ -69,24 +69,22 @@ class ConnectedFoodPhotoThumbnail extends Component {
     }
   }
   render() {
+    // Set the appropriate class names if the thumbnail is selected
     var classNames = ['thumbnail'];
     if (this.props.selected) {
       classNames.push('selected');
     }
     classNames = classNames.join(' ');
-    if (!this.props.data) {
-      return (
-        <div className={classNames}>
-          <i className="material-icons">fastfood</i>
-        </div>
-      );
-    } else {
-      return (
-        <div className={classNames}>
-          <img src={this.props.data} alt='Thumbnail'/>
-        </div>
-      );
-    }
+    // Show image if it's loaded. If not, show a placeholder icon
+    var image = this.props.data 
+      ? <img src={this.props.data} alt='Thumbnail'/> 
+      : <i className="material-icons">fastfood</i>;
+
+    return (
+      <div className={classNames}>
+        {image}
+      </div>
+    );
   }
 }
 const FoodPhotoThumbnail = connect(

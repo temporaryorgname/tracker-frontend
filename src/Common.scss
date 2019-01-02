@@ -55,13 +55,14 @@ div.autocomplete-input {
     margin-left: -50%;
     margin-right: -50%;
   }
+
+  i.material-icons {
+    padding: 52px;
+  }
 }
 
 .new-thumbnail {
   border-style: dotted;
-  i.material-icons {
-    padding: 3px;
-  }
   label {
     display: block;
     width: 100%;
@@ -70,8 +71,17 @@ div.autocomplete-input {
     input[type='file'] {
       display: none;
     }
-    i.material-icons {
-      padding: 52px;
-    }
+  }
+}
+
+.thumbnail.group {
+  padding: 0;
+  display: inline-flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  div {
+    margin: 1px;
+    width: 60px;
+    height: 60px;
   }
 }

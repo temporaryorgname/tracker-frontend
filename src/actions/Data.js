@@ -41,6 +41,90 @@ export const fetchPhotoCompleted = function(data){
   };
 }
 
+export const updatePhoto = function(id,data){
+  return function(dispatch) {
+    console.log('Updating photo '+id);
+    console.log(data);
+    dispatch({
+      type: 'UPDATE_PHOTO_START',
+      payload: {
+        photoId: id,
+        data: data
+      }
+    });
+    dispatch({
+      type: 'UPDATE_PHOTO_COMPLETED',
+      payload: {
+        photoId: id,
+        data: data
+      }
+    });
+    //axios.post(
+    //  process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/by_user/"+userId, 
+    //  {withCredentials: true}
+    //).then(function(response){
+    //  dispatch(fetchPhotoCompleted(response.data));
+    //}).catch(function(error){
+    //  console.error('Unable to fetch user\'s photo IDs.');
+    //  console.error(error);
+    //});
+  }
+}
+
+export const fetchPhotoGroupsStart = function(userId){
+  return {
+    type: 'FETCH_PHOTO_GROUPS_START',
+    payload: {userId: userId}
+  }
+}
+export const fetchPhotoGroups = function(){
+  return function(dispatch) {
+    dispatch(fetchPhotoGroupsStart());
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/groups", 
+      {withCredentials: true}
+    ).then(function(response){
+      dispatch(fetchPhotoGroupsCompleted(response.data));
+    }).catch(function(error){
+      console.error('Unable to fetch user\'s photo IDs.');
+      console.error(error);
+    });
+  }
+}
+export const fetchPhotoGroupsCompleted = function(data){
+  return { 
+    type: 'FETCH_PHOTO_GROUPS_COMPLETED',
+    payload: {
+      data: data
+    }
+  };
+}
+
+export const createPhotoGroup = function(date){
+  return function(dispatch) {
+    console.log('Create photo group');
+    dispatch({
+      type: 'CREATE_PHOTO_GROUP_START',
+      payload: {date: date}
+    });
+    axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/groups", 
+      {date: date},
+      {withCredentials: true}
+    ).then(function(response){
+      dispatch({
+        type: 'CREATE_PHOTO_GROUP_COMPLETED',
+        payload: {
+          data: response.data
+        }
+      })
+    }).catch(function(error){
+      console.error('Unable to create photo group.');
+      console.error(error);
+    });
+  }
+}
+
 export const fetchPhotoData = function(photoId){
   return function(dispatch) {
     axios.get(

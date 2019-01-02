@@ -10,7 +10,10 @@ import { connect } from "react-redux";
 import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js';
 import { 
   fetchPhotos,
-  createPhotos
+  createPhotos,
+  updatePhoto,
+  fetchPhotoGroups,
+  createPhotoGroup
 } from './actions/Data.js';
 
 import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
@@ -108,54 +111,148 @@ class ConnectedGallery extends Component {
       selectedPhotoId: null
     };
     this.props.updateData(this.props.uid);
+    this.props.updateGroups();
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
+    this.createGroup = this.createGroup.bind(this);
+    this.handleDragOver = this.handleDragOver.bind(this);
+    this.handleDrop = this.handleDrop.bind(this);
+    this.handleDragStart = this.handleDragStart.bind(this);
   }
   handleSelectPhoto(photoId) {
     if (this.state.selectedPhotoId === photoId) {
       return;
     }
     this.setState({
-      selectedPhotoId: photoId
+      selectedPhotoId: photoId,
+      selectedGroupId: null
+    });
+  }
+  handleSelectGroup(groupId) {
+    if (this.state.selectedGroupId === groupId) {
+      return;
+    }
+    this.setState({
+      selectedPhotoId: null,
+      selectedGroupId: groupId
     });
   }
   uploadFile(event) {
     this.props.uploadPhoto(event.target.files);
   }
+  createGroup() {
+    this.props.createGroup();
+    this.setState({
+      groups: [...this.state.groups, []]
+    });
+  }
+  handleDragOver(event) {
+    event.preventDefault();
+    console.log('drag over');
+  }
+  handleDrop(event, groupId) {
+    var photoId = event.dataTransfer.getData('photoId');
+    this.props.updatePhoto(photoId, {group_id: groupId})
+    console.log('drop '+photoId);
+  }
+  handleDragStart(event, photoId) {
+    console.log('drag start');
+    event.dataTransfer.setData('photoId', photoId);
+  }
   render() {
     var that = this;
-    if (this.props.ids) {
+    if (this.props.groups) {
+      var thumbnails = {};
+      for (var k in this.props.groups) {
+        if (k === 'null') {
+          thumbnails[k] = this.props.groups[k].map(function(photoId){
+            return (
+              <div className='photo-viewer-thumbnail'
+                  key={photoId}
+                  onClick={()=>that.handleSelectPhoto(photoId)}
+                  onDragStart={(e) => that.handleDragStart(e,photoId)}
+                  draggable>
+                <FoodPhotoThumbnail fileid={photoId}
+                    selected={that.state.selectedPhotoId === photoId}/>
+              </div>
+            );
+          });
+        } else {
+          thumbnails[k] = this.props.groups[k].map(function(photoId){
+            return (
+              <div className='photo-viewer-thumbnail'
+                  key={photoId}
+                  onDragStart={(e) => that.handleDragStart(e,photoId)}
+                  draggable>
+                <FoodPhotoThumbnail fileid={photoId} />
+              </div>
+            );
+          });
+        }
+      }
+      var groups = this.props.groups && Object.keys(this.props.groups).map(
+        function(groupId){
+          if (groupId === 'null') { // Object.keys() converts the null key to a string
+            return null;
+          }
+          var classNames = ['thumbnail', 'group'];
+          if (that.state.selectedGroupId === groupId) {
+            classNames.push('selected');
+          }
+          classNames = classNames.join(' ');
+          return (
+            <div className={classNames}
+                onClick={()=>that.handleSelectGroup(groupId)}
+                onDragOver={that.handleDragOver}
+                onDrop={(e)=>that.handleDrop(e,groupId)}>
+              {thumbnails[groupId]}
+            </div>
+          );
+        }
+      );
       return (
         <div>
-          {
-            this.props.ids.map(function(photoId){
-              return (
-                <div className='photo-viewer-thumbnail'
-                    key={photoId}
-                    onClick={()=>that.handleSelectPhoto(photoId)}>
-                  <FoodPhotoThumbnail fileid={photoId}
-                      selected={that.state.selectedPhotoId === photoId}/>
-                </div>
-              );
-            })
-          }
+          {thumbnails[null]}
+          {groups}
           <div className='thumbnail new-thumbnail'>
             <label>
               <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
               <i className='material-icons'>add_a_photo</i>
             </label>
           </div>
+          <div className='thumbnail new-thumbnail' onClick={this.createGroup}>
+            <label>
+              <i className='material-icons'>create_new_folder</i>
+            </label>
+          </div>
+          {
+            this.state.selectedPhotoId && 
+            <GalleryNutritionTable date={this.props.date} photoId={this.state.selectedPhotoId}/>
+          }
+          {
+            this.state.selectedGroupId && 
+            <GalleryNutritionTable date={this.props.date} groupId={this.state.selectedGroupId}/>
+          }
         </div>
       );
     } else {
       return (
         <div>
           <div className='thumbnail loading'></div>
+          <div className='thumbnail group loading'>
+            <div className='thumbnail loading'></div>
+            <div className='thumbnail loading'></div>
+            <div className='thumbnail loading'></div>
+          </div>
           <div className='thumbnail loading'></div>
           <div className='thumbnail loading'></div>
           <div className='thumbnail new-thumbnail loading'>
-            <FileUploadDialog date={this.props.date} files={[]}/>
+            <label>
+              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+              <i className='material-icons'>add_a_photo</i>
+            </label>
           </div>
+          <GalleryNutritionTable date={this.props.date} photoId={null}/>
         </div>
       );
     }
@@ -164,21 +261,192 @@ class ConnectedGallery extends Component {
 const Gallery = connect(
   function(state, ownProps) {
     if (ownProps.date) {
+      var groupIds = state.data.photoGroupIdsByDate[ownProps.date];
+      if (groupIds) {
+        var photoIdsByGroup = groupIds.reduce(function(acc,id) {
+          acc[id] = [];
+          return acc;
+        }, {null: []});
+        if (state.data.photoIdsByDate[ownProps.date]) {
+          state.data.photoIdsByDate[ownProps.date].map(function(photoId){
+            var photo = state.data.photos[photoId];
+            photoIdsByGroup[photo.group_id].push(photoId);
+          });
+        }
+      } else {
+        var photoIdsByGroup = null;
+      }
       return {
-        ids: state.data.photoIdsByDate[ownProps.date]
+        groups: photoIdsByGroup
       };
     }
     return {
-      ids: []
+      groups: {}
     }
   },
   function(dispatch, ownProps) {
     return {
       updateData: (uid) => dispatch(fetchPhotos(uid)),
-      uploadPhoto: (files) => dispatch(createPhotos(files, ownProps.date))
+      updateGroups: () => dispatch(fetchPhotoGroups()),
+      updatePhoto: (id,data) => dispatch(updatePhoto(id,data)), //TODO: Rename other update functions to "load" instead.
+      uploadPhoto: (files) => dispatch(createPhotos(files, ownProps.date)),
+      createGroup: () => dispatch(createPhotoGroup(ownProps.date))
     };
   }
 )(ConnectedGallery);
+
+class ConnectedGalleryNutritionTable extends Component {
+  constructor(props) {
+    super(props);
+    // TODO: Check if data is already loaded
+    this.props.updateData();
+
+    this.newEntry = this.newEntry.bind(this);
+    this.renderLoading = this.renderLoading.bind(this);
+    this.renderData = this.renderData.bind(this);
+  }
+  newEntry() {
+    if (this.props.photoId) {
+      this.props.createFood({
+        name: 'Food',
+        date: this.props.date,
+        photo_id: this.props.photoId
+      });
+    } else if (this.props.groupId) {
+      this.props.createFood({
+        name: 'Food 2',
+        date: this.props.date,
+        photo_group_id: this.props.groupId
+      });
+    }
+  }
+  render() {
+    if (this.props.entries) {
+      return this.renderData();
+    } else {
+      return this.renderLoading();
+    }
+  }
+  renderData() {
+    var entries = this.props.entries.map(function(entry){
+      return (
+        <div className='entry' key={entry.id}>
+          <div className='values'>
+            <div>{entry.name}</div>
+            <div><span>QTY:</span> {entry.quantity}</div>
+            <div><span>CALS:</span> {entry.calories}</div>
+            <div><span>PROT:</span> {entry.protein}</div>
+          </div>
+        </div>
+      );
+    })
+    return (
+      <div className='gallery-nutrition-table-container'>
+        <div className='table'>
+          {entries}
+          <div className='new-entry' onClick={this.newEntry}>
+            New Entry
+          </div>
+        </div>
+      </div>
+    );
+  }
+  renderLoading() {
+    return (
+      <div className='gallery-nutrition-table-container'>
+        {this.props.entries}
+        <div className='table loading'>
+          <div className='entry'>
+            <div className='values'>
+              <div>Example item</div>
+              <div><span>QTY:</span> 100g</div>
+              <div><span>CALS:</span> 500</div>
+              <div><span>PROT:</span> 15</div>
+            </div>
+          </div>
+          <div className='entry'>
+            <div className='values'>
+              <div>Another example</div>
+              <div><span>QTY:</span> 1 cup</div>
+              <div><span>CALS:</span> 150</div>
+              <div><span>PROT:</span> 0</div>
+            </div>
+          </div>
+          <div className='entry'>
+            <div className='values'>
+              <div>Parent entry</div>
+              <div><span>QTY:</span> -</div>
+              <div><span>CALS:</span> 500</div>
+              <div><span>PROT:</span> 15</div>
+            </div>
+            <div className='entry'>
+              <div className='values'>
+              <div>Child entry</div>
+              <div><span>QTY:</span> 2</div>
+              <div><span>CALS:</span> 50</div>
+              <div><span>PROT:</span> 1</div>
+              </div>
+            </div>
+            <div className='entry'>
+              <div className='values'>
+              <div>Child entry</div>
+              <div><span>QTY:</span> 2</div>
+              <div><span>CALS:</span> 50</div>
+              <div><span>PROT:</span> 1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+}
+const GalleryNutritionTable = connect(
+  function(state, ownProps) {
+    var photoId = ownProps.photoId;
+    var groupId = ownProps.groupId;
+    var date = ownProps.date;
+    var entriesByDate = state.food.entriesByDate[date];
+    console.log('entriesByDate');
+    console.log(entriesByDate);
+    console.log(state.food.entries);
+    if (!entriesByDate) {
+      return {
+        entries: null
+      };
+    }
+
+    if (photoId) {
+      var entries = entriesByDate
+        .filter(id => state.food.entries[id].photo_id === photoId)
+        .map(id => state.food.entries[id]);
+    } else if (groupId) {
+      var entries = entriesByDate
+        .filter(function(id) {
+          // Check if the entry is associated with the current group
+          if (state.food.entries[id].photo_group_id === groupId) {
+            return true;
+          }
+          // Check if the entry is associated with a photo in the current group
+          var photo = state.data.photos[state.food.entries[id].photo_id];
+          if (photo && photo.group_id === groupId) {
+            return true;
+          }
+          return false;
+        })
+        .map(id => state.food.entries[id]);
+    }
+    return {
+      entries: entries
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      updateData: () => dispatch(fetchFood(ownProps.date)),
+      createFood: (data) => dispatch(createFood(data))
+    };
+  }
+)(ConnectedGalleryNutritionTable);
 
 class FileUploadDialog extends Component {
   constructor(props) {

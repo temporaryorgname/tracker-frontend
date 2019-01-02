@@ -143,12 +143,17 @@ function userReducer(state = initialUserState, action) {
 }
 
 const initialDataState = {
+  photos: {},
   photoIds: null,
   photoIdsByDate: {},
-  photoIdsByFoodId: {},
   photoData: {},
+
+  photoGroups: {},
+  photoGroupIdsByDate: {},
+
   tagIds: [],
   tagsById: {},
+
   labelsById: {},
   labelIdsByPhotoId: {}
 };
@@ -158,11 +163,17 @@ function dataReducer(state = initialDataState, action) {
       var data = action.payload.data;
       return {
         ...state,
+        photos: {
+          ...state.photos,
+          ...data.reduce(function(acc,photo){
+            acc[photo.id] = photo;
+            return acc;
+          }, {})
+        },
         photoIds: data.map(p => p.id),
         photoIdsByDate: {
           ...state.photoIdsByDate,
           ...data.reduce(function(acc, photo) {
-            console.log(acc);
             if (!photo['date']) {
               return acc;
             }
@@ -170,6 +181,58 @@ function dataReducer(state = initialDataState, action) {
               acc[photo['date']] = [photo.id];
             } else {
               acc[photo['date']].push(photo.id);
+            }
+            return acc;
+          }, {})
+        }
+      };
+    }
+    case 'UPDATE_PHOTO_COMPLETED': {
+      var id = action.payload.photoId;
+      var data = action.payload.data;
+      console.log('Updating photo entry');
+      console.log(id);
+      console.log(data);
+      var oldEntry = state.photos[id];
+      var newEntry = {
+        ...oldEntry,
+        ...data
+      };
+      if (oldEntry.date === newEntry.date) {
+        var byDate = state.photoIdsByDate;
+      } else {
+        var byDate = {
+          ...state.photoIdsByDate,
+          [newEntry.date]: [...state.photoIdsByDate[newEntry.date], id]
+        }
+        byDate[oldEntry.date] = byDate[oldEntry.date].filter(x => x !== id)
+      }
+      return {
+        ...state,
+        photos: {
+          ...state.photos,
+          [id]: newEntry
+        },
+        photoIdsByDate: byDate
+      };
+    }
+    case 'FETCH_PHOTO_GROUPS_COMPLETED': {
+      var data = action.payload.data;
+      return {
+        ...state,
+        photoGroups: data.reduce(function(acc,group){
+          acc[group.id] = group;
+          return acc;
+        }, {}),
+        photoGroupIdsByDate: {
+          ...data.reduce(function(acc, group) {
+            if (!group['date']) {
+              return acc;
+            }
+            if (! (group['date'] in acc)) {
+              acc[group['date']] = [group.id]
+            } else {
+              acc[group['date']].push(group.id);
             }
             return acc;
           }, {})
@@ -192,8 +255,6 @@ function dataReducer(state = initialDataState, action) {
       var fileData = action.payload.fileData;
       var date = action.payload.date;
       var photoId = action.payload.id;
-      console.log(action.type);
-      console.log(action.payload);
       var byDate = {...state.photoIdsByDate};
       if (date) {
         if (date in byDate) {

@@ -13,7 +13,9 @@ export const requestFood = function(date){
 }
 
 export const fetchFood = function(date){
-  return function(dispatch) {
+  return function(dispatch, getState) {
+    console.log('fetchFood getState');
+    console.log(getState());
     dispatch(requestFood(date));
     return axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food",
