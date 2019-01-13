@@ -237,14 +237,20 @@ class Signup extends Component {
       return;
     }
     var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/users", this.state, {withCredentials: true})
-        .then(function(response){
-          that.setState({ signingUp: false, errors: [] });
-          that.onSignup(response);
-        })
-        .catch(function(error){
-          that.setState({ signingUp: false, errors: ["Signup failure. Try again."] });
-        });
+    axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/users",
+      this.state,
+      {withCredentials: true}
+    ).then(function(response){
+      that.setState({ signingUp: false, errors: [] });
+      that.props.history.push('/food');
+    }).catch(function(error){
+      console.log(error);
+      that.setState({
+        signingUp: false,
+        errors: ["Signup failure. Try again."]
+      });
+    });
   }
   handleFormChange(e) {
     var x = {}
