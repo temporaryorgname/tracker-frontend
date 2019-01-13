@@ -237,7 +237,7 @@ class Signup extends Component {
       return;
     }
     var that = this;
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/auth/signup", this.state, {withCredentials: true})
+    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/users", this.state, {withCredentials: true})
         .then(function(response){
           that.setState({ signingUp: false, errors: [] });
           that.onSignup(response);
