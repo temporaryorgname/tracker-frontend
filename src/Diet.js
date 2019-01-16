@@ -7,14 +7,11 @@ import axios from 'axios';
 
 import { connect } from "react-redux";
 
-import { foodActions } from './actions/Actions.js';
 import { 
-  fetchPhotos,
-  createPhotos,
-  updatePhoto,
-  fetchPhotoGroups,
-  createPhotoGroup
-} from './actions/Data.js';
+  foodActions,
+  photoActions,
+  photoGroupActions
+} from './actions/Actions.js';
 
 import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
@@ -98,7 +95,7 @@ export const DietPage = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (uid) => dispatch(fetchPhotos(uid))
+      updateData: (uid) => dispatch(photoActions['fetch']({user_id: uid}))
     };
   }
 )(ConnectedDietPage);
@@ -110,8 +107,8 @@ class ConnectedGallery extends Component {
       groups: [],
       selectedPhotoId: null
     };
-    this.props.updateData(this.props.uid);
-    this.props.updateGroups();
+    this.props.fetchPhotos(this.props.uid);
+    this.props.fetchGroups();
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.createGroup = this.createGroup.bind(this);
@@ -152,7 +149,10 @@ class ConnectedGallery extends Component {
   }
   handleDrop(event, groupId) {
     var photoId = event.dataTransfer.getData('photoId');
-    this.props.updatePhoto(photoId, {group_id: groupId})
+    this.props.updatePhoto({
+      ...this.props.photos[photoId],
+      group_id: groupId
+    });
     console.log('drop '+photoId);
   }
   handleDragStart(event, photoId) {
@@ -261,36 +261,51 @@ class ConnectedGallery extends Component {
 const Gallery = connect(
   function(state, ownProps) {
     if (ownProps.date) {
-      var groupIds = state.data.photoGroupIdsByDate[ownProps.date];
+      var groupIds = Object.keys(state.photoGroups.entities)
+        .filter(function(id) {
+          return state.photoGroups.entities[id].date === ownProps.date;
+        });
       if (groupIds) {
+        // Init photo IDs by photo group
         var photoIdsByGroup = groupIds.reduce(function(acc,id) {
           acc[id] = [];
           return acc;
         }, {null: []});
-        if (state.data.photoIdsByDate[ownProps.date]) {
-          state.data.photoIdsByDate[ownProps.date].map(function(photoId){
-            var photo = state.data.photos[photoId];
-            photoIdsByGroup[photo.group_id].push(photoId);
+        // Populate with photo IDs
+        var photoIds = Object.keys(state.photos.entities)
+          .filter(function(id) {
+            return state.photos.entities[id].date === ownProps.date;
           });
-        }
+        var photos = {};
+        photoIds.map(function(photoId){
+          // Add photo ID to the appropriate group
+          var photo = state.photos.entities[photoId];
+          photoIdsByGroup[photo.group_id].push(photoId);
+          // Add photo to the dictionary of photos
+          photos[photoId] = state.photos.entities[photoId];
+        });
       } else {
         var photoIdsByGroup = null;
       }
       return {
-        groups: photoIdsByGroup
+        groups: photoIdsByGroup,
+        photos: photos
       };
     }
     return {
-      groups: {}
+      groups: {},
+      photos: {}
     }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (uid) => dispatch(fetchPhotos(uid)),
-      updateGroups: () => dispatch(fetchPhotoGroups()),
-      updatePhoto: (id,data) => dispatch(updatePhoto(id,data)), //TODO: Rename other update functions to "load" instead.
-      uploadPhoto: (files) => dispatch(createPhotos(files, ownProps.date)),
-      createGroup: () => dispatch(createPhotoGroup(ownProps.date))
+      fetchPhotos: (uid) => dispatch(
+        photoActions['fetch']({user_id: uid, date: ownProps.date})
+      ),
+      fetchGroups: () => dispatch(photoGroupActions['fetch']({date: ownProps.date})),
+      updatePhoto: (data) => dispatch(photoActions['update'](data)), //TODO: Rename other update functions to "load" instead.
+      uploadPhoto: (files) => dispatch(photoActions['create'](files, ownProps.date)),
+      createGroup: () => dispatch(photoGroupActions['create']({date: ownProps.date}))
     };
   }
 )(ConnectedGallery);
@@ -406,35 +421,35 @@ const GalleryNutritionTable = connect(
     var photoId = ownProps.photoId;
     var groupId = ownProps.groupId;
     var date = ownProps.date;
-    var entriesByDate = state.food.entriesByDate[date];
-    console.log('entriesByDate');
-    console.log(entriesByDate);
-    console.log(state.food.entries);
+    var entriesByDate = state.food.by.date || {};
+    entriesByDate = entriesByDate[date];
     if (!entriesByDate) {
       return {
         entries: null
       };
     }
 
+    console.log(state.photos);
     if (photoId) {
       var entries = entriesByDate
-        .filter(id => state.food.entries[id].photo_id === photoId)
-        .map(id => state.food.entries[id]);
+        .filter(id => state.food.entities[id].photo_id == photoId) // FIXME: Doesn't work with ===
+        .map(id => state.food.entities[id]);
     } else if (groupId) {
       var entries = entriesByDate
         .filter(function(id) {
+          let food = state.food.entities[id];
           // Check if the entry is associated with the current group
-          if (state.food.entries[id].photo_group_id === groupId) {
+          if (food.photo_group_id == groupId) {
             return true;
           }
           // Check if the entry is associated with a photo in the current group
-          var photo = state.data.photos[state.food.entries[id].photo_id];
-          if (photo && photo.group_id === groupId) {
+          var photo = state.photos.entities[food.photo_id];
+          if (photo && photo.group_id == groupId) {
             return true;
           }
           return false;
         })
-        .map(id => state.food.entries[id]);
+        .map(id => state.food.entities[id]);
     }
     return {
       entries: entries

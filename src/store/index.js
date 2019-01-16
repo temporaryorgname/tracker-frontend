@@ -54,5 +54,6 @@ function initDirtyEntityWatcher(entityName, path, debounceTime) {
 
 let debounceTime = 5000;
 initDirtyEntityWatcher('food', '/data/foods/', debounceTime);
+initDirtyEntityWatcher('photos', '/data/photos/', debounceTime);
 
 export default store;

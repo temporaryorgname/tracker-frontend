@@ -107,6 +107,110 @@ function createReducer(entityName) {
   }
 }
 
+function getLoadingStatus(tree, filters, keysToCheck) {
+  if (typeof tree === 'string') {
+    return tree;
+  }
+  if (typeof tree === 'undefined' || keysToCheck.size === 0) {
+    return null;
+  }
+
+  if (!keysToCheck.has(tree.key)) {
+    return getLoadingStatus(tree.children[null], filters, keysToCheck);
+  } else {
+    keysToCheck = new Set(keysToCheck);
+    keysToCheck.delete(tree.key);
+    return getLoadingStatus(tree.children[filters[tree.key]], filters, keysToCheck) || getLoadingStatus(tree.children[null], filters, keysToCheck);
+  }
+}
+function updateLoadingStatus(tree, filters, keysToCheck, status) {
+  if (keysToCheck.size === 0) {
+    return status;
+  }
+  if (typeof tree === 'string') {
+    return tree;
+  }
+  if (!tree) { // null or undefined tree
+    let key = keysToCheck.values().next().value;
+    keysToCheck = new Set(keysToCheck);
+    keysToCheck.delete(key);
+    return {
+      key: key,
+      children: {
+        [filters[key]]: updateLoadingStatus(
+          null, filters, keysToCheck, status
+        )
+      }
+    }
+  }
+  if (!keysToCheck.has(tree.key)) {
+    return {
+      key: tree.key,
+      children: {
+        ...tree.children,
+        [null]: updateLoadingStatus(tree[null], filters, keysToCheck, status)
+      }
+    }
+  } else {
+    keysToCheck = new Set(keysToCheck);
+    keysToCheck.delete(tree.key);
+    if (tree.children[filters[tree.key]]) {
+      return updateLoadingStatus(
+        tree[filters[tree.key]], filters, keysToCheck, status
+      );
+    } else {
+      return {
+        key: tree.key,
+        children: {
+          ...tree.children,
+          [filters[tree.key]]: updateLoadingStatus(
+            null, filters, keysToCheck, status
+          )
+        }
+      };
+    }
+  }
+}
+function loadingStatusReducer(state = {}, action) {
+  switch (action.type) {
+    case 'LOADING_START': {
+      let entityName = action.payload.entityName;
+      let filters = action.payload.filters;
+      let filterKeys = new Set(Object.keys(filters));
+      let statusTree = state[entityName];
+      let newStatus = updateLoadingStatus(statusTree, filters, filterKeys, 'loading');
+      return {
+        ...state,
+        newStatus
+      }
+    }
+    case 'LOADING_SUCCESS': {
+      let entityName = action.payload.entityName;
+      let filters = action.payload.filters;
+      let filterKeys = new Set(Object.keys(filters));
+      let statusTree = state[entityName];
+      let newStatus = updateLoadingStatus(statusTree, filters, filterKeys, 'loaded');
+      return {
+        ...state,
+        newStatus
+      }
+    }
+    case 'LOADING_FAILURE': {
+      let entityName = action.payload.entityName;
+      let filters = action.payload.filters;
+      let filterKeys = new Set(Object.keys(filters));
+      let statusTree = state[entityName];
+      let newStatus = updateLoadingStatus(statusTree, filters, filterKeys, null);
+      return {
+        ...state,
+        newStatus
+      }
+    }
+    default:
+      return state;
+  }
+}
+
 const initialFoodState = {
   entities: {},
   by: {},
@@ -463,8 +567,11 @@ function dataReducer(state = initialDataState, action) {
 
 const rootReducer = combineReducers({
   food: createReducer('FOOD'),
+  photos: createReducer('PHOTOS'),
+  photoGroups: createReducer('PHOTO_GROUPS'),
   tags: createReducer('TAGS'),
   labels: createReducer('LABELS'),
+  loadingStatus: loadingStatusReducer,
   bodyweight: bodyweightReducer,
   user: userReducer,
   data: dataReducer

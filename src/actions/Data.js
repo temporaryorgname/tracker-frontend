@@ -128,7 +128,7 @@ export const createPhotoGroup = function(date){
 export const fetchPhotoData = function(photoId){
   return function(dispatch) {
     axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/"+photoId+'?size=700',
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/photos/"+photoId+'/data?size=700',
       {withCredentials: true}
     ).then(function(response){
       var data = "data:image/png;base64,"+response.data.data;
@@ -155,7 +155,8 @@ export const createPhotos = function(files, date=null){
     }
     axios.post(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo",
-      formData, {
+      formData,
+      {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
