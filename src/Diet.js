@@ -148,12 +148,13 @@ class ConnectedGallery extends Component {
     console.log('drag over');
   }
   handleDrop(event, groupId) {
+    event.stopPropagation();
     var photoId = event.dataTransfer.getData('photoId');
     this.props.updatePhoto({
       ...this.props.photos[photoId],
       group_id: groupId
     });
-    console.log('drop '+photoId);
+    console.log('drop '+photoId+' '+groupId);
   }
   handleDragStart(event, photoId) {
     console.log('drag start');
@@ -211,7 +212,7 @@ class ConnectedGallery extends Component {
         }
       );
       return (
-        <div>
+        <div onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
           {thumbnails[null]}
           {groups}
           <div className='thumbnail new-thumbnail'>
@@ -314,7 +315,7 @@ class ConnectedGalleryNutritionTable extends Component {
   constructor(props) {
     super(props);
     // TODO: Check if data is already loaded
-    this.props.updateData();
+    this.props.fetchFood();
 
     this.newEntry = this.newEntry.bind(this);
     this.renderLoading = this.renderLoading.bind(this);
@@ -429,7 +430,6 @@ const GalleryNutritionTable = connect(
       };
     }
 
-    console.log(state.photos);
     if (photoId) {
       var entries = entriesByDate
         .filter(id => state.food.entities[id].photo_id == photoId) // FIXME: Doesn't work with ===
@@ -457,7 +457,7 @@ const GalleryNutritionTable = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(foodActions['fetch']({date: ownProps.date})),
+      fetchFood: () => dispatch(foodActions['fetch']({date: ownProps.date})),
       createFood: (data) => dispatch(foodActions['create'](data))
     };
   }
