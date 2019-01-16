@@ -8,26 +8,143 @@ import {
   RECEIVE_USER_PROFILE
 } from "../constants/action-types";
 
+function createReducer(entityName) {
+  let initialState = {
+    entities: {},
+    by: {},
+    dirtyEntities: new Set() // IDs of entries that were modified
+  }
+  return function(state = initialState, action) {
+    switch (action.type) {
+      case 'FETCH_'+entityName+'_SUCCESS': {
+        let filters = action.payload.filters;
+        let data = action.payload.data;
+        let ids = [];
+        let entities = {};
+        data.forEach(function(x){
+          entities[x.id] = x;
+          ids.push(x.id);
+        });
+
+        let filterKeys = Object.keys(filters);
+        if (filterKeys.length == 1) {
+          // If we filtered by one criterion, then update the 'by' object
+          let filterKey = filterKeys[0];
+          let filterValue = filters[filterKey];
+          return {...state,
+            by: {
+              ...state.by,
+              [filterKey]: {
+                ...state.by[filterValue],
+                [filterValue]: ids
+              }
+            },
+            entities: {...state.entities, ...entities}
+          };
+        } else {
+          // If there's moe than one filter, then only update the individual entities
+          return {...state,
+            entities: {...state.entities, ...entities}
+          };
+        }
+      }
+      case 'CREATE_'+entityName+'_SUCCESS': {
+        let newEntity = action.payload.data;
+        let by = {...state.by};
+        for (let props in by) {
+          let key = newEntity[props];
+          if (key in by[props]) {
+            by[props] = {
+              ...by[props],
+              [key]: [...by[props][key], newEntity.id]
+            };
+          }
+        }
+        return {
+          ...state,
+          entities: {...state.entities, [newEntity.id]: newEntity},
+          by: by
+        };
+      }
+      case 'UPDATE_'+entityName+'_START': {
+        let newEntity = action.payload.data;
+        let id = newEntity.id;
+        // Add to set of dirty entries
+        let dirtyEntities = new Set(state.dirtyEntities);
+        dirtyEntities.add(id);
+        // Look for changed properties
+        let oldEntity = state.entities[id];
+        let changedProps = [];
+        for (let key in oldEntity) {
+          if (oldEntity[key] !== newEntity[key]) {
+            changedProps.push(key);
+          }
+        }
+        // Update 'by'
+        let by = {...state.by};
+        changedProps.map(function(key){
+          //TODO: Remove only by[key][oldEntity[key]] and by[key][newEntity[key]]
+          by[key] = {};
+        });
+        // Create new state
+        return {...state,
+          entities: {...state.entities, [id]: newEntity},
+          by: by,
+          dirtyEntities: dirtyEntities
+        };
+      }
+      case 'UPDATE_'+entityName+'_SUCCESS': {
+        var id = action.payload.id;
+        var dirtyEntities = new Set(state.dirtyEntities);
+        dirtyEntities.delete(id);
+        return {...state,
+          dirtyEntities: dirtyEntities
+        };
+      }
+      default:
+        return state;
+    }
+  }
+}
+
 const initialFoodState = {
-  entriesByDate: {}, // Key: date, data: array of food IDs
-  entries: {}, // Key: id, data: array of entries
-  dirtyEntries: new Set() // IDs of entries that were modified
+  entities: {},
+  by: {},
+  dirtyEntities: new Set() // IDs of entries that were modified
 };
 function foodReducer(state = initialFoodState, action) {
   switch (action.type) {
-    case RECEIVE_FOOD: {
-      let date = action.payload.date;
+    case 'FETCH_FOOD_SUCCESS': {
+      let filters = action.payload.filters;
       let data = action.payload.data;
-      let entryIds = [];
-      let entries = {};
+      let ids = [];
+      let entities = {};
       data.forEach(function(x){
-        entries[x.id] = x;
-        entryIds.push(x.id);
+        entities[x.id] = x;
+        ids.push(x.id);
       });
-      return {...state,
-        entriesByDate: {...state.entriesByDate, [date]: entryIds},
-        entries: {...state.entries, ...entries}
-      };
+
+      let filterKeys = Object.keys(filters);
+      if (filterKeys.length == 1) {
+        // If we filtered by one criterion, then update the 'by' object
+        let filterKey = filterKeys[0];
+        let filterValue = filters[filterKey];
+        return {...state,
+          by: {
+            ...state.by,
+            [filterKey]: {
+              ...state.by[filterValue],
+              [filterValue]: ids
+            }
+          },
+          entities: {...state.entities, ...entities}
+        };
+      } else {
+        // If there's moe than one filter, then only update the individual entities
+        return {...state,
+          entities: {...state.entities, ...entities}
+        };
+      }
     }
     case 'UPDATE_FOOD': {
       let id = action.payload.id;
@@ -345,7 +462,9 @@ function dataReducer(state = initialDataState, action) {
 }
 
 const rootReducer = combineReducers({
-  food: foodReducer,
+  food: createReducer('FOOD'),
+  tags: createReducer('TAGS'),
+  labels: createReducer('LABELS'),
   bodyweight: bodyweightReducer,
   user: userReducer,
   data: dataReducer

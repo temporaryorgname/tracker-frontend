@@ -12,41 +12,47 @@ const store = createStore(
   )
 );
 
-var updateTimeout = null;
-var lastDirtyEntries = new Set();
-store.subscribe(function(){
-  var currentDirtyEntries = store.getState().food.dirtyEntries;
-  if (lastDirtyEntries.size === currentDirtyEntries.size) {
-    var same = Array.from(lastDirtyEntries)
-      .map((x) => currentDirtyEntries.has(x))
-      .reduce((a,b) => a && b, true);
-    if (same) {
+function initDirtyEntityWatcher(entityName, path, debounceTime) {
+  var updateTimeout = null;
+  var lastDirtyEntities = new Set();
+  store.subscribe(function(){
+    var currentDirtyEntities = store.getState()[entityName].dirtyEntities;
+    if (lastDirtyEntities.size === currentDirtyEntities.size) {
+      var same = Array.from(lastDirtyEntities)
+        .map((x) => currentDirtyEntities.has(x))
+        .reduce((a,b) => a && b, true);
+      if (same) {
+        return;
+      }
+    }
+    clearTimeout(updateTimeout);
+    lastDirtyEntities = new Set(currentDirtyEntities);
+    if (currentDirtyEntities.size === 0) {
       return;
     }
-  }
-  clearTimeout(updateTimeout);
-  lastDirtyEntries = new Set(currentDirtyEntries);
-  if (currentDirtyEntries.size === 0) {
-    return;
-  }
-  updateTimeout = setTimeout(
-    function() { // Update one at a time
-      var id = lastDirtyEntries.values().next().value;
-      var data = store.getState().food.entries[id];
-      axios.post(
-        process.env.REACT_APP_SERVER_ADDRESS+"/data/food/"+id,
-        data,
-        {withCredentials: true}
-      ).then(function(response){
-        store.dispatch({
-          type: 'UPDATE_FOOD_COMPLETED',
-          payload: {
-            id: id
-          }
+    updateTimeout = setTimeout(
+      function() { // Update one at a time
+        var id = lastDirtyEntities.values().next().value;
+        console.log(lastDirtyEntities);
+        var data = store.getState().food.entities[id];
+        axios.put(
+          process.env.REACT_APP_SERVER_ADDRESS+path+id,
+          data,
+          {withCredentials: true}
+        ).then(function(response){
+          store.dispatch({
+            type: 'UPDATE_FOOD_SUCCESS',
+            payload: {
+              id: id
+            }
+          });
         });
-      });
-    }, 500
-  );
-});
+      }, debounceTime
+    );
+  });
+}
+
+let debounceTime = 5000;
+initDirtyEntityWatcher('food', '/data/foods/', debounceTime);
 
 export default store;

@@ -7,7 +7,7 @@ import axios from 'axios';
 
 import { connect } from "react-redux";
 
-import { fetchFood, createFood, updateFood, deleteFood } from './actions/Diet.js';
+import { foodActions } from './actions/Actions.js';
 import { 
   fetchPhotos,
   createPhotos,
@@ -442,8 +442,8 @@ const GalleryNutritionTable = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(fetchFood(ownProps.date)),
-      createFood: (data) => dispatch(createFood(data))
+      updateData: () => dispatch(foodActions['fetch']({date: ownProps.date})),
+      createFood: (data) => dispatch(foodActions['create'](data))
     };
   }
 )(ConnectedGalleryNutritionTable);
@@ -927,7 +927,7 @@ const FoodRowNewEntry = connect(
   },
   function(dispatch, ownProps) {
     return {
-      onSubmit: data => dispatch(createFood(data))
+      onSubmit: data => dispatch(foodActions['create'](data))
     };
   }
 )(ConnectedFoodRowNewEntry);
@@ -1025,9 +1025,10 @@ class ConnectedFoodRow extends Component {
 }
 const FoodRow = connect(
   function(state, ownProps) {
-    var entry = state.food.entries[ownProps.id];
+    var entry = state.food.entities[ownProps.id];
     return {
       data: {
+        id: entry.id,
         date: entry.date || '',
         name: entry.name || '',
         quantity: entry.quantity || '',
@@ -1040,7 +1041,7 @@ const FoodRow = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateEntry: (id, data) => dispatch(updateFood(id, data))
+      updateEntry: (id, data) => dispatch(foodActions['update'](data))
     };
   }
 )(ConnectedFoodRow);
@@ -1114,7 +1115,7 @@ class ConnectedFoodTable extends Component {
   deleteSelectedEntries(event) {
     event.preventDefault();
     var that = this;
-    this.props.deleteEntry(Array.from(this.state.selected))
+    this.props.deleteEntry(Array.from(this.state.selected).map(id => {return {id: id}}))
       .then(function(response) {
         that.setState({
           selected: new Set()
@@ -1186,32 +1187,34 @@ class ConnectedFoodTable extends Component {
 }
 const FoodTable = connect(
   function(state, ownProps) {
-    var ids = state.food.entriesByDate[ownProps.date] || [];
+    let byDate = state.food.by['date'] || {};
+    console.log(byDate);
+    let ids = byDate[ownProps.date] || [];
     return {
       ids: ids,
       total: {
         calories: ids.map(
-            id => state.food.entries[id].calories
+            id => state.food.entities[id].calories
           ).filter(
             val => val && isFinite(val)
           ).reduce(
             (acc, val) => acc+parseFloat(val), 0
           ),
         protein: ids.map(
-            id => state.food.entries[id].protein
+            id => state.food.entities[id].protein
           ).filter(
             val => val && isFinite(val)
           ).reduce(
             (acc, val) => acc+parseFloat(val), 0
           )
       },
-      dirty: state.food.dirtyEntries.size > 0
+      dirty: state.food.dirtyEntities.size > 0
     }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: date => dispatch(fetchFood(date)),
-      deleteEntry: ids => dispatch(deleteFood(ids))
+      updateData: date => dispatch(foodActions['fetch']({date: date})),
+      deleteEntry: ids => dispatch(foodActions['delete'](ids))
     };
   }
 )(ConnectedFoodTable);
