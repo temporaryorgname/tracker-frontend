@@ -3,6 +3,9 @@
 .diet-page-container {
   text-align: center;
   display: inline-block;
+  position: relative;
+  overflow: hidden;
+
   .date .material-icons {
     vertical-align: top;
     cursor: pointer;
@@ -111,12 +114,12 @@
 
 .gallery-nutrition-table-container {
   div.table {
-    margin-left: -5px;
+    padding: 5px;
     .entry {
       border: 1px solid;
       border-radius: 5px;
-      margin: 9px 3px 3px 10px;
       padding: 5px 0;
+      margin-top: 5px;
       .values {
         display: flex;
         width: 100%;
@@ -137,7 +140,7 @@
       }
     }
     .new-entry {
-      margin-top: 3px;
+      margin-top: 10px;
       cursor: pointer;
       border: 1px solid;
       border-radius: 10px;

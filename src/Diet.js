@@ -73,6 +73,8 @@ class ConnectedDietPage extends Component {
     }
     return (
       <div className='diet-page-container'>
+        <div className='background'>
+        </div>
         <h2>Diet Log</h2>
         <h3 className='date'>
           <i className='material-icons' onClick={this.prevDate}>navigate_before</i>
