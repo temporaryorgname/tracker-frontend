@@ -5,6 +5,8 @@
   display: inline-block;
   position: relative;
   overflow: hidden;
+  width: 1000px;
+  margin-bottom: 100px;
 
   .date .material-icons {
     vertical-align: top;
@@ -34,7 +36,7 @@
 .food-table {
   text-align: center;
   display: inline-block;
-  width: 1000px;
+  width: 990px;
 
   .controls{
     padding: 5px 20px;
