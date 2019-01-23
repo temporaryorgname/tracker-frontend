@@ -1,8 +1,17 @@
-export const formatDate = function(date) {
-  if (typeof(date) === 'string') {
-    return date;
+export const formatDate = function(inputDate) {
+  if (typeof(inputDate) === 'string') {
+    return inputDate;
   }
-  var dateString = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate(); // Need to rebuild it to get rid of time zone funniness
+	let year = inputDate.getFullYear();
+	let month = inputDate.getMonth()+1;
+	if (month < 10) {
+		month = '0'+month;
+	}
+	let date = inputDate.getDate();
+	if (date < 10) {
+		date = '0'+date;
+	}
+  var dateString = year+"-"+month+"-"+date; // Need to rebuild it to get rid of time zone funniness
   return dateString;
 }
 
