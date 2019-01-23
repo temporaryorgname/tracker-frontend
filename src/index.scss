@@ -16,17 +16,17 @@ body {
 }
 
 .background {
-  position:fixed;
-  width: 1000px;
-  top:0px;
-  bottom:0px;
-  background:inherit;
+  position: fixed;
+  width: inherit;
+  top: 0px;
+  bottom: 0px;
+  background: inherit;
   background-color: #cbbdb0;
   background-image: url('images/background.jpeg');
   background-attachment: fixed;
   background-size: cover;
-  z-index:-1;
-  overflow:hidden;
+  z-index: -1;
+  overflow: hidden;
 
   &::before {
     content:'';
@@ -78,6 +78,10 @@ nav {
       text-decoration: underline;
     }
   }
+}
+
+main {
+  min-height: 100vh;
 }
 
 h2 {

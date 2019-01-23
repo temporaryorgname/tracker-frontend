@@ -72,7 +72,7 @@ class ConnectedDietPage extends Component {
       return null;
     }
     return (
-      <div className='diet-page-container'>
+      <main className='diet-page-container'>
         <div className='background'>
         </div>
         <h2>Diet Log</h2>
@@ -85,7 +85,7 @@ class ConnectedDietPage extends Component {
           <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
           <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid}/>} />
         </Switch>
-      </div>
+      </main>
     );
   }
 }
