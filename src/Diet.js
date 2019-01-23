@@ -655,7 +655,7 @@ class FoodNameInput extends Component {
       return;
     }
     var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.props.value), {withCredentials: true})
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.props.value), {withCredentials: true})
         .then(function(response){
           window.result = response;
           that.setState({
