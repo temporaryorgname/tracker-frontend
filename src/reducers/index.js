@@ -17,7 +17,7 @@ function createReducer(entityName) {
   return function(state = initialState, action) {
     switch (action.type) {
       case 'FETCH_'+entityName+'_SUCCESS': {
-        let filters = action.payload.filters;
+        let filters = action.payload.filters || {};
         let data = action.payload.data;
         let ids = [];
         let entities = {};
@@ -99,6 +99,29 @@ function createReducer(entityName) {
         dirtyEntities.delete(id);
         return {...state,
           dirtyEntities: dirtyEntities
+        };
+      }
+      case 'DELETE_'+entityName+'_SUCCESS': {
+        let filters = action.payload.filters;
+        // Remove matching entities from `entities`
+        let filteredKeys = Object.keys(state.entities).filter(function(key){
+          let entity = state.entities[key];
+          for (let props in filters) {
+            if (entity[props] !== filters[props]) {
+              return true;
+            }
+          }
+          return false;
+        });
+        let entities = {};
+        filteredKeys.map(function(key){
+          entities[key] = state.entities[key];
+        });
+        // Remove matching entity IDs from `by`
+        // TODO
+        return {
+          ...state,
+          entities: entities
         };
       }
       default:
@@ -571,8 +594,8 @@ const rootReducer = combineReducers({
   photoGroups: createReducer('PHOTO_GROUPS'),
   tags: createReducer('TAGS'),
   labels: createReducer('LABELS'),
+  bodyweight: createReducer('BODYWEIGHT'),
   loadingStatus: loadingStatusReducer,
-  bodyweight: bodyweightReducer,
   user: userReducer,
   data: dataReducer
 });

@@ -72,6 +72,9 @@ class ConnectedNavigation extends Component {
     if (this.props.loggedIn) {
       return (
         <nav>
+          <div className='home'>
+            <Link to="/"><i className='material-icons'>home</i></Link>
+          </div>
           <ul className="nav">
             <li>
               <Link to={"/food/table?uid="+this.props.uid}>Diet</Link>

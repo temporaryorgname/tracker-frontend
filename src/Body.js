@@ -10,7 +10,7 @@ import { easeLinear } from "d3-ease";
 import { } from "d3-transition"; // Needed for selection.transition
 
 import { connect } from "react-redux";
-import { fetchBodyweight, createBodyweight, deleteBodyweight } from './actions/Body.js'
+import { bodyweightActions } from './actions/Actions.js';
 
 import './Body.scss';
 
@@ -18,12 +18,14 @@ export class BodyStatsPage extends Component {
   render() {
     return (
       <div className='body-page-container'>
+        <div className='background'>
+        </div>
         <h2>Body Stats</h2>
         <BodyWeightTable />
-        <BodyWeightTimeSeries />
-        <BodyWeightScatterPlot />
       </div>
     );
+    //<BodyWeightTimeSeries />
+    //<BodyWeightScatterPlot />
   }
 }
 
@@ -75,12 +77,13 @@ class ConnectedBodyWeightTable extends Component {
 }
 const BodyWeightTable = connect(
   function(state, ownProps) {
-    return {data: state.bodyweight}
+    console.log(state.bodyweight.entities);
+    return {data: Object.values(state.bodyweight.entities)}
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(fetchBodyweight()),
-      deleteEntry: (id) => dispatch(deleteBodyweight(id))
+      updateData: () => dispatch(bodyweightActions['fetch']()),
+      deleteEntry: (id) => dispatch(bodyweightActions['delete']({id:id}))
     };
   }
 )(ConnectedBodyWeightTable);
@@ -99,7 +102,15 @@ class ConnectedNewBodyWeightEntryForm extends Component {
   addWeight(event) {
     event.preventDefault();
     var that = this;
-    this.props.onSubmit(this.state.bodyweight)
+
+    var now = new Date();
+    var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
+    var payload = {
+      date: nowString,
+      time: now.toLocaleTimeString(),
+      bodyweight: this.state.bodyweight
+    }
+    this.props.createWeight(payload)
       .then(function(response){
         that.setState({
           bodyweight: '',
@@ -144,7 +155,7 @@ const NewBodyWeightEntryForm = connect(
   },
   function(dispatch, ownProps) {
     return {
-      onSubmit: weight => dispatch(createBodyweight(weight))
+      createWeight: weight => dispatch(bodyweightActions['create'](weight))
     };
   }
 )(ConnectedNewBodyWeightEntryForm);
@@ -278,7 +289,7 @@ const BodyWeightTimeSeries = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(fetchBodyweight())
+      updateData: () => dispatch(bodyweightActions['fetch']())
     };
   }
 )(ConnectedBodyWeightTimeSeries);
@@ -435,7 +446,7 @@ const BodyWeightScatterPlot = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(fetchBodyweight())
+      updateData: () => dispatch(bodyweightActions['fetch']())
     };
   }
 )(ConnectedBodyWeightScatterPlot);

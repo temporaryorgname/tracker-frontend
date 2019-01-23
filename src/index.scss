@@ -54,6 +54,7 @@ nav {
   text-align: left;
   white-space: nowrap;
   border-bottom: 1px solid;
+  box-shadow: 0px 3px 4px rgba(0, 0, 0, .5);
   ul {
     display: inline-block;
   }
@@ -61,7 +62,10 @@ nav {
     display: inline-block;
     text-align: right;
     margin: 15px;
-    float: right;
+    vertical-align: top;
+    &.user {
+      float: right;
+    }
   }
   li {
     display: inline-block;
@@ -76,8 +80,13 @@ nav {
   }
 }
 
+h2 {
+  margin-top: 100px;
+}
+
 a {
   color: $primary-colour;
+  outline: none;
 }
 
 input {

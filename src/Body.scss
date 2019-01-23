@@ -30,10 +30,14 @@
 }
 
 @media only screen and (min-width: 768px) {
+  .body-page-container {
+    display: inline-block;
+    width: 1000px;
+  }
+
   .bodyweight-table-container {
     display: inline-block;
     width: 45vw;
-    float: left;
 
     table {
       width: 100%;

@@ -60,7 +60,7 @@ function createActions(dataType, path, autosortProps) {
           dispatch({
             type: 'CREATE_'+dataType+'_SUCCESS',
             payload: {
-              data: newEntity
+              data: {...newEntity, id: response.data.id}
             }
           })
         });
@@ -81,8 +81,15 @@ function createActions(dataType, path, autosortProps) {
       return function(dispatch) {
         return axios.delete(
           process.env.REACT_APP_SERVER_ADDRESS+path,
-          {data: filters, withCredentials: true}
-        );
+          {params: filters, withCredentials: true}
+        ).then(function(response) {
+          dispatch({
+            type: 'DELETE_'+dataType+'_SUCCESS',
+            payload: {
+              filters: filters
+            }
+          });
+        });
       }
     }
   }
@@ -93,6 +100,7 @@ export const photoActions = createActions('PHOTOS', '/data/photos');
 export const photoGroupActions = createActions('PHOTO_GROUPS', '/data/photo_groups');
 export const tagActions = createActions('TAGS', '/data/tags');
 export const labelActions = createActions('LABELS', '/data/labels');
+export const bodyweightActions = createActions('BODYWEIGHT', '/data/body/weights');
 
 photoActions['create'] = (function(){
   let createPhoto = photoActions['create'];
