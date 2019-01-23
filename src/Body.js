@@ -22,10 +22,10 @@ export class BodyStatsPage extends Component {
         </div>
         <h2>Body Stats</h2>
         <BodyWeightTable />
+        <BodyWeightTimeSeries />
+        <BodyWeightScatterPlot />
       </div>
     );
-    //<BodyWeightTimeSeries />
-    //<BodyWeightScatterPlot />
   }
 }
 
@@ -285,7 +285,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
 }
 const BodyWeightTimeSeries = connect(
   function(state, ownProps) {
-    return {data: state.bodyweight}
+    return {data: Object.values(state.bodyweight.entities)}
   },
   function(dispatch, ownProps) {
     return {
@@ -442,7 +442,7 @@ class ConnectedBodyWeightScatterPlot extends Component {
 }
 const BodyWeightScatterPlot = connect(
   function(state, ownProps) {
-    return {data: state.bodyweight}
+    return {data: Object.values(state.bodyweight.entities)}
   },
   function(dispatch, ownProps) {
     return {
