@@ -1,0 +1,13 @@
+.home-page-container {
+  text-align: center;
+  width: 1000px;
+  display: inline-block;
+
+  input[type='text'] {
+    width: 100px;
+  }
+
+  span {
+    font-weight: bold;
+  }
+}

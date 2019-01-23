@@ -6,6 +6,7 @@ import './App.scss';
 import { connect } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
 
+import { HomePage } from './Home.js'
 import { DietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 import { UserPage } from './User.js'
@@ -28,6 +29,7 @@ class ConnectedApp extends Component {
               <Route path="/user" component={UserPage} />
               <Route path="/data" component={DataPage} />
               <Route path="/tags" component={TagsPage} />
+              <Route path="/" component={HomePage} />
               <Route render={() => <ErrorPage404 />}/>
             </Switch>
           </div>
