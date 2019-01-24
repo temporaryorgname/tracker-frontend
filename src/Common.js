@@ -7,6 +7,21 @@ import {
 } from './actions/Data.js';
 import './Common.scss';
 
+class Checkbox extends Component {
+	render() {
+		return (
+			<div className='checkbox'>
+				<label>
+					<i className='material-icons'>
+						{this.props.checked ? 'check_box' : 'check_box_outline_blank'}
+					</i>
+					<input type='checkbox' {...this.props} />
+				</label>
+			</div>
+		);
+	}
+}
+
 class Modal extends Component {
   constructor(props) {
     super(props);
@@ -308,5 +323,5 @@ class AutocompleteInput extends Component {
   }
 }
 
-export { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput };
+export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput };
 

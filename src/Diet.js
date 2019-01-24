@@ -13,7 +13,7 @@ import {
   photoGroupActions
 } from './actions/Actions.js';
 
-import { Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
+import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
@@ -78,7 +78,9 @@ class ConnectedDietPage extends Component {
         <h2>Diet Log</h2>
         <h3 className='date'>
           <i className='material-icons' onClick={this.prevDate}>navigate_before</i>
-          {this.state.params.date}
+					<DatePicker 
+						onChange={this.handleDateChange}
+						customInput={<span>{this.state.params.date}</span>}/>
           <i className='material-icons' onClick={this.nextDate}>navigate_next</i>
         </h3>
         <Switch>
@@ -895,7 +897,6 @@ class ConnectedFoodRowNewEntry extends Component {
     return (
       <tr className='new-entry' onKeyPress={this.handleKeyPress}>
         <td></td>
-        <td>{formatDate(this.props.date)}</td>
         <td>
           <FoodNameInput 
               value={this.state.name} 
@@ -933,7 +934,9 @@ class ConnectedFoodRowNewEntry extends Component {
         <td className='actions'>
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>
-        <td className='submit'><button className='primary' onClick={this.addEntry}>Save</button></td>
+        <td className='submit'>
+					<i className='material-icons' onClick={this.addEntry}>save</i>
+				</td>
       </tr>
     );
   }
@@ -1023,16 +1026,14 @@ class ConnectedFoodRow extends Component {
                 onChange={this.toggleChildren} />
             }
           </td>
-          <FoodRowCell data-label='Date' value={this.state.data.date} onChange={this.getOnUpdateHandler('date')} />
           <FoodRowCell data-label='Item' value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
           <FoodRowCell data-label='Qty' value={this.state.data.quantity} onChange={this.getOnUpdateHandler('quantity')} />
           <FoodRowCell data-label='Cals' value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
           <FoodRowCell data-label='Prot' value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
           <td className='actions'>
-            <FileUploadDialog onUpload={this.getOnUpdateHandler('photos')} files={this.state.data.photos}/>
           </td>
           <td className='select'>
-            <input type='checkbox' checked={selected}
+            <Checkbox checked={selected}
               onChange={()=>this.props.onToggleSelected(this.props.id)} />
           </td>
         </tr>
@@ -1080,10 +1081,7 @@ class FoodRowCell extends Component {
   }
   render() {
     return (
-      <td data-label={this.props['data-label']}>
-        <label>
-          {this.props['data-label']}
-        </label>
+      <td>
         <input type='text' 
           value={this.props.value}
           onChange={this.handleChange}
@@ -1109,6 +1107,7 @@ class ConnectedFoodTable extends Component {
     //];
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
+    this.handlePhotoUpload = this.handlePhotoUpload.bind(this);
 
     this.props.updateData(this.props.date);
   }
@@ -1140,24 +1139,41 @@ class ConnectedFoodTable extends Component {
         that.props.updateData(that.props.date);
       });
   }
+	handlePhotoUpload(photoId) {
+		console.log('Photo Uploaded');
+		console.log(photoId);
+	}
   render() {
     var that = this;
+		let controls = null;
+		if (this.state.selected.size === 1) {
+			controls = (
+				<>
+					<Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+					<FileUploadDialog onUpload={this.handlePhotoUpload} files={[/*TODO*/]}/>
+					<i className='material-icons'>date_range</i>
+				</>
+			);
+		} else if (this.state.selected.size > 1) {
+			controls = (
+				<>
+        	<Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+					<i className='material-icons'>date_range</i>
+				</>
+			);
+		}
     return (
       <div className='food-table'>
         <div className='controls'>
           <div className='table-controls'>
-            <DatePicker 
-              onChange={this.props.onDateChange}
-              customInput={<span><i className="material-icons">date_range</i></span>}/>
           </div>
           <div className='entry-controls'>
-            <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+						{controls}
           </div>
         </div>
         <table className="Food cards">
           <colgroup>
             <col className='expand' />
-            <col />
             <col className='item'/>
             <col className='numbers'/>
             <col className='numbers'/>
@@ -1168,7 +1184,6 @@ class ConnectedFoodTable extends Component {
           <thead>
           <tr>
             <td>{this.props.dirty ? <i className='material-icons spin' alt='Saving changes...'>autorenew</i> : <i className='material-icons' alt='Changes saved'>check</i>}</td>
-            <th>Date</th>
             <th>Item</th>
             <th>Quantity</th>
             <th>Calories</th>
@@ -1182,9 +1197,9 @@ class ConnectedFoodTable extends Component {
             <td></td>
             <th>Total</th>
             <td></td>
-            <td></td>
             <td data-label='Cals'>{this.props.total.calories}</td>
             <td data-label='Prot'>{this.props.total.protein}</td>
+            <td></td>
             <td></td>
           </tr>
           <FoodRowNewEntry date={this.props.date} />
@@ -1235,3 +1250,4 @@ const FoodTable = connect(
     };
   }
 )(ConnectedFoodTable);
+

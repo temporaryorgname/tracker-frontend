@@ -5,7 +5,6 @@
   display: inline-block;
   position: relative;
   overflow: hidden;
-  width: 1000px;
   margin-bottom: 100px;
 
   .date .material-icons {
@@ -19,8 +18,16 @@
   display: inline-block;
   width: 990px;
 
+  i.material-icons {
+    cursor: pointer;
+    &:hover {
+      color: rgba($primary-colour, 0.7);
+    }
+  }
+
   .controls{
     padding: 5px 20px;
+    height: 32px;
   }
   .table-controls{
     display: inline-block;
@@ -33,6 +40,9 @@
     text-align: right;
   }
 
+  table {
+    display: inline-block;
+  }
   tr {
     &.new-entry {
       input[type='text'] {
@@ -40,9 +50,6 @@
       }
     }
     &.entry {
-      label {
-        display: none;
-      }
       input[type='text'] {
         border-style: none;
         &:focus {
@@ -152,164 +159,55 @@
   display: inline-block;
 }
 
+@media only screen and (min-width: 1366px) {
+  main {
+    width: 1000px;
+  }
+}
+
 @media only screen and (max-width: 1366px) {
-  .food-table {
+  main {
     width: 750px;
+  }
+  .food-table {
+    width: 100%;
+    table {
+      width: 100%;
+    }
+    col.numbers {
+      width: 10px;
+    }
+    col.item {
+      width: 100%;
+    }
   }
 }
 
 @media only screen and (max-width: 768px) {
+  main {
+    width: 100%;
+  }
+  i.material-icons {
+    font-size: 18px;
+  }
+  input[type='text'] {
+    font-size: 10px;
+  }
   .food-table {
     width: 100%;
-  }
-
-  table.cards {
-    border: 0;
-    width: 100%;
-
-    colgroup {
-      display: none;
-    }
-
-    thead {
-      display: none;
-    }
-
-    tr {
-      margin: 10px;
-      display: inline-block;
-      border: 1px solid #ddd;
-
-      &.total {
-        position: sticky;
-        display: block;
-        top: 0;
-        background-color: $background-colour;
-        z-index: $sticky-z;
-        td {
-          display: none;
-          &[data-label] {
-            display: inline-block;
-          }
-        }
-        th {
-          display: inline-block;
-        }
-      }
-
-      &.new-entry {
-        display: block;
-        td {
-          margin: 5px;
-          padding: 5px;
-          input[type='text'] {
-            font-size: 12px;
-            margin: 0px;
-            padding: 0px;
-          }
-          &.actions {
-            display: inline-block;
-          }
-          &.submit {
-            display: inline-block;
-          }
-        }
-      }
-
-      &.entry {
-        td {
-          margin: 5px;
-          padding: 5px;
-        }
-        label {
-          display: inline-block;
-          text-align: left;
-        }
-        input[type='text'] {
-          font-size: 12px;
-          display: inline-block;
-          width: auto;
-          text-align: right;
-          margin: 0;
-          padding: 0 5px;
-          border-style: none;
-
-          transition: 0.3s ease;
-
-          &:focus {
-            border-style: solid;
-          }
-        }
-      }
-    }
-
-    td {
-      display: block;
-      text-align: right;
-      font-size: 13px;
-      &:last-child {
-        border-bottom: 0;
-      }
-
-      &.actions {
-        display: inline-block;
-      }
-
-      &.select {
-        display: inline-block;
-        float: right;
-      }
-    }
-  }
-
-  .food-name-input {
-    position: relative;
-
+    font-size: 10px;
     table {
-      position: absolute;
-      z-index: 1;
-      left: 0;
-      background-color: rgba(255,255,255,.8);
-      box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
       width: 100%;
-
-      tbody {
-        white-space: nowrap;
-        text-overflow: clip;
-      }
-      td, th {
-        width: 100%;
-        text-align: left;
-
-        &.loading {
-          text-align: center;
-        }
-        &.name {
-          display: block;
-        }
-        &.numbers {
-          display: inline-block;
-          width: 20%;
-          text-align: right;
-          &::before {
-            content: attr(data-label);
-            float: left;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-right: 10px;
-          }
-        }
-      }
-      tr {
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        cursor: pointer;
-        display: block;
-
-        &.selected {
-          background-color: $background-colour;
-        }
-      }
+      padding: 10px;
+    }
+    col.numbers {
+      width: 10px;
+    }
+    col.item {
+      width: 100%;
+    }
+    th, td {
+      padding: 3px;
     }
   }
 }
