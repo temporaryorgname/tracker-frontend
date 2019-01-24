@@ -1,11 +1,9 @@
 $background-colour: #FFFFFF;
 $primary-colour: #000000;
 $secondary-colour: #FFFFFF;
-$accent-colour: #BEF202;
-$muted-colour: #88C425;
 
-$focus-colour: $secondary-colour;
-$success-colour: $primary-colour;
+$focus-colour: rgba($primary-colour, 0.8);
+$success-colour: green;
 $error-colour: red;
 
 $modal-z: 10000;

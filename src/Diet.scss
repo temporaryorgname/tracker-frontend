@@ -14,25 +14,6 @@
   }
 }
 
-.side-nav {
-  display: inline-block;
-  vertical-align: top;
-  border-right: 1px solid;
-  text-align: left;
-  padding: 5px;
-  height: 100vh;
-
-  li {
-    padding: 5px 20px 5px 0px;
-    list-style-type: none;
-    cursor: pointer;
-
-    &:hover {
-      color: $secondary-colour;
-    }
-  }
-}
-
 .food-table {
   text-align: center;
   display: inline-block;

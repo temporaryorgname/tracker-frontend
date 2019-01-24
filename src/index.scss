@@ -242,7 +242,7 @@ div.modal-background {
     background: $background-colour;
     margin: 15% auto;
     padding: 20px;
-    border: 1px solid $accent-colour;
+    border: 1px solid $primary-colour;
     display: inline-block;
     text-align: left;
     min-width: 500px;
@@ -259,7 +259,7 @@ div.modal-background {
       font-size: 24pt;
       white-space: nowrap;
       margin-right: 50px;
-      border-bottom: 1px solid $accent-colour;
+      border-bottom: 1px solid $primary-colour;
     }
 
     div.modal-body {
@@ -282,7 +282,10 @@ table {
   tr {
     border-bottom: solid 1px;
     border-top: solid 1px;
-    border-color: rgba($muted-colour, 0.4);
+    border-color: rgba($primary-colour, 0.1);
+    &:hover {
+      background-color: rgba(0,0,0,0.1);
+    }
   }
   td, th {
     text-align: left;
