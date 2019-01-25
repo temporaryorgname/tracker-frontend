@@ -63,6 +63,7 @@ function createActions(dataType, path, autosortProps) {
               data: {...newEntity, id: response.data.id}
             }
           })
+					return response;
         });
       }
     },

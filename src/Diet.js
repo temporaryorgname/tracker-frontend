@@ -571,10 +571,11 @@ class ConnectedFileUploadDialog extends Component {
   }
   uploadFile(event) {
     let that = this;
-    this.props.uploadPhoto(event.target.files)
+    let target = event.target;
+    this.props.uploadPhoto(target.files)
     .then(function(response){
-      event.target.value = "";
-      that.onUpload(that.props.files.concat([response.data.id]));
+      target.value = "";
+      that.onUpload([...that.props.files, response.data.id]);
       that.loadPrediction(response.data.id);
     });
   }
@@ -944,6 +945,8 @@ class ConnectedFoodRowNewEntry extends Component {
     this.setState(x);
   }
   onFileUpload(photoIds) {
+    console.log('File uploaded');
+    console.log(photoIds);
     this.setState({
       photos: photoIds
     });
