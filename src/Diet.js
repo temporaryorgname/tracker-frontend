@@ -125,6 +125,7 @@ class ConnectedGallery extends Component {
     this.newEntry = this.newEntry.bind(this);
   }
   handleSelectPhoto(photoId) {
+    photoId = parseInt(photoId);
     if (this.state.selectedPhotoId === photoId) {
       this.setState({
         selectedPhotoId: null,
@@ -355,7 +356,7 @@ const Gallery = connect(
         photoIds.map(function(photoId){
           // Add photo ID to the appropriate group
           var photo = state.photos.entities[photoId];
-          photoIdsByGroup[photo.group_id].push(photoId);
+          photoIdsByGroup[photo.group_id].push(parseInt(photoId));
           // Add photo to the dictionary of photos
           photos[photoId] = state.photos.entities[photoId];
         });
@@ -554,7 +555,7 @@ const GalleryNutritionTable = connect(
   }
 )(ConnectedGalleryNutritionTable);
 
-class FileUploadDialog extends Component {
+class ConnectedFileUploadDialog extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -569,23 +570,13 @@ class FileUploadDialog extends Component {
     this.getSelectPredictionHandler = this.getSelectPredictionHandler.bind(this);
   }
   uploadFile(event) {
-    var target = event.target;
-    var formData = new FormData();
-    var that = this;
-    formData.append("file", target.files[0]);
-    if (this.props.date) {
-      formData.append("date", this.props.date);
-    }
-    axios.post(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo", formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            },
-            withCredentials: true
-        }).then(function(response){
-          target.value = "";
-          that.onUpload(that.props.files.concat([response.data.id]));
-          that.loadPrediction(response.data.id);
-        });
+    let that = this;
+    this.props.uploadPhoto(event.target.files)
+    .then(function(response){
+      event.target.value = "";
+      that.onUpload(that.props.files.concat([response.data.id]));
+      that.loadPrediction(response.data.id);
+    });
   }
   loadPrediction(photoId) {
     var that = this;
@@ -645,6 +636,18 @@ class FileUploadDialog extends Component {
     );
   }
 }
+const FileUploadDialog = connect(
+  function(state, ownProps) {
+    return {};
+  },
+  function(dispatch, ownProps) {
+    return {
+      uploadPhoto: (files) => dispatch(
+        photoActions['create'](files, ownProps.date)
+      ),
+    };
+  }
+)(ConnectedFileUploadDialog);
 
 class FoodNameInput extends Component {
   constructor(props) {
@@ -921,7 +924,7 @@ class ConnectedFoodRowNewEntry extends Component {
       quantity: this.state.quantity,
       calories: this.state.calories,
       protein: this.state.protein,
-      photos: this.state.photos
+      photo_id: this.state.photos.length > 0 ? this.state.photos[0] : null
     }).then(function(response){
       // Clear form
       that.setState({
@@ -1019,7 +1022,10 @@ class ConnectedFoodRowNewEntry extends Component {
               name='protein' />
         </td>
         <td className='actions'>
-          <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
+          <FileUploadDialog
+              onUpload={this.onFileUpload}
+              files={this.state.photos}
+              date={this.props.date}/>
         </td>
         <td className='submit'>
           <i className='material-icons' onClick={this.addEntry}>save</i>

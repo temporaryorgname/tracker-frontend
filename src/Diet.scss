@@ -121,6 +121,10 @@
     white-space: nowrap;
     overflow-x: scroll;
     padding: 5px;
+
+    &.selected {
+      border-width: 3px;
+    }
   }
 }
 
