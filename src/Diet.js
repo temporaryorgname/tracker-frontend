@@ -78,9 +78,9 @@ class ConnectedDietPage extends Component {
         <h2>Diet Log</h2>
         <h3 className='date'>
           <i className='material-icons' onClick={this.prevDate}>navigate_before</i>
-					<DatePicker 
-						onChange={this.handleDateChange}
-						customInput={<span>{this.state.params.date}</span>}/>
+          <DatePicker 
+            onChange={this.handleDateChange}
+            customInput={<span>{this.state.params.date}</span>}/>
           <i className='material-icons' onClick={this.nextDate}>navigate_next</i>
         </h3>
         <Switch>
@@ -109,33 +109,57 @@ class ConnectedGallery extends Component {
     super(props);
     this.state = {
       groups: [],
-      selectedPhotoId: null
+      selectedPhotoId: null,
+      selectedGroupId: null
     };
     this.props.fetchPhotos(this.props.uid);
     this.props.fetchGroups();
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
+    this.handleSelectGroup = this.handleSelectGroup.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.createGroup = this.createGroup.bind(this);
     this.handleDragOver = this.handleDragOver.bind(this);
     this.handleDrop = this.handleDrop.bind(this);
     this.handleDragStart = this.handleDragStart.bind(this);
+    this.newEntry = this.newEntry.bind(this);
   }
   handleSelectPhoto(photoId) {
     if (this.state.selectedPhotoId === photoId) {
-      return;
+      this.setState({
+        selectedPhotoId: null,
+        selectedGroupId: null
+      });
+    } else {
+      this.setState({
+        selectedPhotoId: parseInt(photoId),
+        selectedGroupId: null
+      });
     }
-    this.setState({
-      selectedPhotoId: photoId,
-      selectedGroupId: null
-    });
   }
   handleSelectGroup(groupId) {
     if (this.state.selectedGroupId === groupId) {
-      return;
+      this.setState({
+        selectedPhotoId: null,
+        selectedGroupId: null
+      });
+    } else {
+      this.setState({
+        selectedPhotoId: null,
+        selectedGroupId: parseInt(groupId)
+      });
+    }
+  }
+  handleDelete() {
+    if (this.state.selectedPhotoId) {
+      this.props.deletePhoto(this.state.selectedPhotoId);
+    }
+    if (this.state.selectedGroupId) {
+      this.props.deletePhotoGroup(this.state.selectedGroupId);
     }
     this.setState({
       selectedPhotoId: null,
-      selectedGroupId: groupId
+      selectedGroupId: null
     });
   }
   uploadFile(event) {
@@ -164,9 +188,45 @@ class ConnectedGallery extends Component {
     console.log('drag start');
     event.dataTransfer.setData('photoId', photoId);
   }
+  newEntry() {
+    if (this.state.selectedPhotoId) {
+      this.props.createFood({
+        name: 'Food',
+        date: this.props.date,
+        photo_id: this.state.selectedPhotoId
+      });
+    } else if (this.state.selectedGroupId) {
+      this.props.createFood({
+        name: 'Food 2',
+        date: this.props.date,
+        photo_group_id: this.state.selectedGroupId
+      });
+    }
+  }
   render() {
     var that = this;
     if (this.props.groups) {
+      // Render controls
+      let controls = (
+        <>
+          <label>
+            <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+            <i className='material-icons'>add_a_photo</i>
+          </label>
+          <label onClick={this.createGroup}>
+            <i className='material-icons'>create_new_folder</i>
+          </label>
+        </>
+      );
+      if (this.state.selectedPhotoId || this.state.selectedGroupId) {
+        controls = (
+          <>
+            <i className='material-icons' onClick={this.handleDelete}>delete</i>
+            <i className='material-icons' onClick={this.newEntry}>playlist_add</i>
+          </>
+        );
+      }
+      // Render thumbnails
       var thumbnails = {};
       for (var k in this.props.groups) {
         if (k === 'null') {
@@ -195,49 +255,58 @@ class ConnectedGallery extends Component {
           });
         }
       }
-      var groups = this.props.groups && Object.keys(this.props.groups).map(
-        function(groupId){
-          if (groupId === 'null') { // Object.keys() converts the null key to a string
-            return null;
+      // Render groups
+      let groups = null;
+      if (this.props.groups) {
+        let noThumbnails = <i className='material-icons'>folder</i>
+        groups = Object.keys(this.props.groups).map(
+          function(groupId){
+            if (groupId === 'null') { // Object.keys() converts the null key to a string
+              return null;
+            }
+            var classNames = ['thumbnail', 'group'];
+            if (that.state.selectedGroupId === groupId) {
+              classNames.push('selected');
+            }
+            classNames = classNames.join(' ');
+            let groupThumbnails = thumbnails[groupId];
+            if (groupThumbnails.length === 0) {
+              groupThumbnails = noThumbnails;
+            }
+            return (
+              <div className={classNames}
+                  onClick={()=>that.handleSelectGroup(groupId)}
+                  onDragOver={that.handleDragOver}
+                  onDrop={(e)=>that.handleDrop(e,groupId)}>
+                {groupThumbnails}
+              </div>
+            );
           }
-          var classNames = ['thumbnail', 'group'];
-          if (that.state.selectedGroupId === groupId) {
-            classNames.push('selected');
-          }
-          classNames = classNames.join(' ');
-          return (
-            <div className={classNames}
-                onClick={()=>that.handleSelectGroup(groupId)}
-                onDragOver={that.handleDragOver}
-                onDrop={(e)=>that.handleDrop(e,groupId)}>
-              {thumbnails[groupId]}
-            </div>
-          );
-        }
-      );
+        );
+      }
+      // Render nutrition table for selected group or photo
+      let nutritionTable = null;
+      if (this.state.selectedPhotoId) {
+        nutritionTable = (
+          <GalleryNutritionTable
+              date={this.props.date}
+              photoId={this.state.selectedPhotoId}/>
+        );
+      } else if (this.state.selectedGroupId) {
+        nutritionTable = (
+          <GalleryNutritionTable
+              date={this.props.date}
+              groupId={this.state.selectedGroupId}/>
+        );
+      }
       return (
-        <div onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
-          {thumbnails[null]}
-          {groups}
-          <div className='thumbnail new-thumbnail'>
-            <label>
-              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
-              <i className='material-icons'>add_a_photo</i>
-            </label>
+        <div className='gallery' onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
+          <div className='controls'>{controls}</div>
+          <div className='thumbnails'>
+            {thumbnails[null]}
+            {groups}
           </div>
-          <div className='thumbnail new-thumbnail' onClick={this.createGroup}>
-            <label>
-              <i className='material-icons'>create_new_folder</i>
-            </label>
-          </div>
-          {
-            this.state.selectedPhotoId && 
-            <GalleryNutritionTable date={this.props.date} photoId={this.state.selectedPhotoId}/>
-          }
-          {
-            this.state.selectedGroupId && 
-            <GalleryNutritionTable date={this.props.date} groupId={this.state.selectedGroupId}/>
-          }
+          {nutritionTable}
         </div>
       );
     } else {
@@ -265,6 +334,7 @@ class ConnectedGallery extends Component {
 }
 const Gallery = connect(
   function(state, ownProps) {
+    console.log(state.photoGroups.entities);
     if (ownProps.date) {
       var groupIds = Object.keys(state.photoGroups.entities)
         .filter(function(id) {
@@ -307,10 +377,27 @@ const Gallery = connect(
       fetchPhotos: (uid) => dispatch(
         photoActions['fetch']({user_id: uid, date: ownProps.date})
       ),
-      fetchGroups: () => dispatch(photoGroupActions['fetch']({date: ownProps.date})),
-      updatePhoto: (data) => dispatch(photoActions['update'](data)), //TODO: Rename other update functions to "load" instead.
-      uploadPhoto: (files) => dispatch(photoActions['create'](files, ownProps.date)),
-      createGroup: () => dispatch(photoGroupActions['create']({date: ownProps.date}))
+      fetchGroups: () => dispatch(
+        photoGroupActions['fetch']({date: ownProps.date})
+      ),
+      updatePhoto: (data) => dispatch(
+        photoActions['update'](data)
+      ),
+      uploadPhoto: (files) => dispatch(
+        photoActions['create'](files, ownProps.date)
+      ),
+      createGroup: () => dispatch(
+        photoGroupActions['create']({date: ownProps.date})
+      ),
+      createFood: (data) => dispatch(
+        foodActions['create'](data)
+      ),
+      deletePhoto: (id) => dispatch(
+        photoActions['delete'](id)
+      ),
+      deletePhotoGroup: (id) => dispatch(
+        photoGroupActions['delete'](id)
+      )
     };
   }
 )(ConnectedGallery);
@@ -935,8 +1022,8 @@ class ConnectedFoodRowNewEntry extends Component {
           <FileUploadDialog onUpload={this.onFileUpload} files={this.state.photos}/>
         </td>
         <td className='submit'>
-					<i className='material-icons' onClick={this.addEntry}>save</i>
-				</td>
+          <i className='material-icons' onClick={this.addEntry}>save</i>
+        </td>
       </tr>
     );
   }
@@ -1118,6 +1205,7 @@ class ConnectedFoodTable extends Component {
   }
   handleToggleSelected(entryId) {
     /* Callback to be triggered when an entry has been selected. */
+    console.log(entryId);
     var setCopy = new Set(this.state.selected);
     if (this.state.selected.has(entryId)){
       setCopy.delete(entryId);
@@ -1139,36 +1227,36 @@ class ConnectedFoodTable extends Component {
         that.props.updateData(that.props.date);
       });
   }
-	handlePhotoUpload(photoId) {
-		console.log('Photo Uploaded');
-		console.log(photoId);
-	}
+  handlePhotoUpload(photoId) {
+    console.log('Photo Uploaded');
+    console.log(photoId);
+  }
   render() {
     var that = this;
-		let controls = null;
-		if (this.state.selected.size === 1) {
-			controls = (
-				<>
-					<Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
-					<FileUploadDialog onUpload={this.handlePhotoUpload} files={[/*TODO*/]}/>
-					<i className='material-icons'>date_range</i>
-				</>
-			);
-		} else if (this.state.selected.size > 1) {
-			controls = (
-				<>
-        	<Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
-					<i className='material-icons'>date_range</i>
-				</>
-			);
-		}
+    let controls = null;
+    if (this.state.selected.size === 1) {
+      controls = (
+        <>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+          <FileUploadDialog onUpload={this.handlePhotoUpload} files={[/*TODO*/]}/>
+          <i className='material-icons'>date_range</i>
+        </>
+      );
+    } else if (this.state.selected.size > 1) {
+      controls = (
+        <>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+          <i className='material-icons'>date_range</i>
+        </>
+      );
+    }
     return (
       <div className='food-table'>
         <div className='controls'>
           <div className='table-controls'>
           </div>
           <div className='entry-controls'>
-						{controls}
+            {controls}
           </div>
         </div>
         <table className="Food cards">
@@ -1246,7 +1334,7 @@ const FoodTable = connect(
   function(dispatch, ownProps) {
     return {
       updateData: date => dispatch(foodActions['fetch']({date: date})),
-      deleteEntry: ids => dispatch(foodActions['delete'](ids))
+      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids))
     };
   }
 )(ConnectedFoodTable);

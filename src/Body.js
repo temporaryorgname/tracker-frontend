@@ -83,7 +83,7 @@ const BodyWeightTable = connect(
   function(dispatch, ownProps) {
     return {
       updateData: () => dispatch(bodyweightActions['fetch']()),
-      deleteEntry: (id) => dispatch(bodyweightActions['delete']({id:id}))
+      deleteEntry: (id) => dispatch(bodyweightActions['delete'](id))
     };
   }
 )(ConnectedBodyWeightTable);

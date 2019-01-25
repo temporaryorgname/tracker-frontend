@@ -76,12 +76,28 @@ function createActions(dataType, path, autosortProps) {
         }
       }
     },
-    delete: function(filters) {
+    delete: function(id) {
+      console.log('DELETE '+dataType);
+      return function(dispatch) {
+        return axios.delete(
+          process.env.REACT_APP_SERVER_ADDRESS+path+'/'+id,
+          {withCredentials: true}
+        ).then(function(response) {
+          dispatch({
+            type: 'DELETE_'+dataType+'_SUCCESS',
+            payload: {
+							filters: {id: id}
+            }
+          });
+        });
+      }
+    },
+    deleteMultiple: function(filters) {
       console.log('DELETE '+dataType);
       return function(dispatch) {
         return axios.delete(
           process.env.REACT_APP_SERVER_ADDRESS+path,
-          {params: filters, withCredentials: true}
+          {data: filters, withCredentials: true}
         ).then(function(response) {
           dispatch({
             type: 'DELETE_'+dataType+'_SUCCESS',

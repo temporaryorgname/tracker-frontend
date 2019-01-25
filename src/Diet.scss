@@ -102,6 +102,28 @@
   }
 }
 
+.gallery {
+  i.material-icons {
+    margin: 5px;
+    cursor: pointer;
+    &:hover {
+      color: rgba($primary-colour, 0.7);
+    }
+  }
+  .controls {
+    text-align: right;
+    padding-right: 10px;
+    input[type='file'] {
+      display: none;
+    }
+  }
+  .thumbnails {
+    white-space: nowrap;
+    overflow-x: scroll;
+    padding: 5px;
+  }
+}
+
 .gallery-nutrition-table-container {
   div.table {
     padding: 5px;
