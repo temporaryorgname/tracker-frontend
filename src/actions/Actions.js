@@ -113,6 +113,7 @@ function createActions(dataType, path, autosortProps) {
 }
 
 export const foodActions = createActions('FOOD', '/data/foods');
+export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
 export const photoActions = createActions('PHOTOS', '/data/photos');
 export const photoGroupActions = createActions('PHOTO_GROUPS', '/data/photo_groups');
 export const tagActions = createActions('TAGS', '/data/tags');

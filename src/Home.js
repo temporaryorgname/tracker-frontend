@@ -6,12 +6,14 @@ import './Home.scss';
 import { connect } from "react-redux";
 import { 
   foodActions,
+  foodSummaryActions,
   bodyweightActions
 } from './actions/Actions.js';
 
 class ConnectedHomePage extends Component {
   constructor(props) {
     super(props);
+    this.props.updateData();
   }
   render() {
     return (
@@ -40,9 +42,22 @@ class ConnectedHomePage extends Component {
 }
 export const HomePage = connect(
   function(state, ownProps) {
+    console.log(state.foodSummary.history);
+    let total = 0;
+    let count = 0;
+    let history = state.foodSummary.history;
+    if (history === null) {
+      return {};
+    }
+    history.map(function(x){
+      if (x.calories) {
+        total += x.calories;
+        count += 1;
+      }
+    })
     let goalCalories = 2500;
-    let avgCalories = Math.floor(Math.random()*700+1500);
-    let todayCalories = Math.floor(Math.random()*700+1500);
+    let avgCalories = count > 0 ? Math.floor(total/count) : 0;
+    let todayCalories = history[0].calories;
     let caloriesLeft = goalCalories-todayCalories;
     return {
       uid: state.user.session.uid,
@@ -54,6 +69,8 @@ export const HomePage = connect(
     }
   },
   function(dispatch, ownProps) {
-    return {};
+    return {
+      updateData: () => dispatch(foodSummaryActions['fetch']()),
+    };
   }
 )(ConnectedHomePage);

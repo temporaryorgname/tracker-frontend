@@ -234,74 +234,15 @@ function loadingStatusReducer(state = {}, action) {
   }
 }
 
-const initialFoodState = {
-  entities: {},
-  by: {},
-  dirtyEntities: new Set() // IDs of entries that were modified
-};
-function foodReducer(state = initialFoodState, action) {
+function foodSummaryReducer(state = {history: null}, action) {
   switch (action.type) {
-    case 'FETCH_FOOD_SUCCESS': {
-      let filters = action.payload.filters;
-      let data = action.payload.data;
-      let ids = [];
-      let entities = {};
-      data.forEach(function(x){
-        entities[x.id] = x;
-        ids.push(x.id);
-      });
-
-      let filterKeys = Object.keys(filters);
-      if (filterKeys.length == 1) {
-        // If we filtered by one criterion, then update the 'by' object
-        let filterKey = filterKeys[0];
-        let filterValue = filters[filterKey];
-        return {...state,
-          by: {
-            ...state.by,
-            [filterKey]: {
-              ...state.by[filterValue],
-              [filterValue]: ids
-            }
-          },
-          entities: {...state.entities, ...entities}
-        };
-      } else {
-        // If there's moe than one filter, then only update the individual entities
-        return {...state,
-          entities: {...state.entities, ...entities}
-        };
-      }
+    case 'FETCH_FOOD_SUMMARY_SUCCESS': {
+			let data = action.payload.data;
+			return {
+				...state,
+				history: data
+			}
     }
-    case 'UPDATE_FOOD': {
-      let id = action.payload.id;
-      let data = action.payload.data;
-      let dirtyEntriesCopy = new Set(state.dirtyEntries);
-      dirtyEntriesCopy.add(id);
-      return {...state,
-        entries: {...state.entries, [id]: data},
-        dirtyEntries: dirtyEntriesCopy
-      };
-    }
-    case 'UPDATE_FOOD_COMPLETED': {
-      var id = action.payload.id;
-      var dirtyEntriesCopy = new Set(state.dirtyEntries);
-      dirtyEntriesCopy.delete(id);
-      return {...state,
-        dirtyEntries: dirtyEntriesCopy
-      };
-    }
-    default:
-      return state;
-  }
-}
-
-function bodyweightReducer(state = [], action) {
-  switch (action.type) {
-    case REQUEST_BODYWEIGHT:
-      return state; //TODO: Mark as loading
-    case RECEIVE_BODYWEIGHT:
-      return action.payload.data;
     default:
       return state;
   }
@@ -590,6 +531,7 @@ function dataReducer(state = initialDataState, action) {
 
 const rootReducer = combineReducers({
   food: createReducer('FOOD'),
+	foodSummary: foodSummaryReducer,
   photos: createReducer('PHOTOS'),
   photoGroups: createReducer('PHOTO_GROUPS'),
   tags: createReducer('TAGS'),
