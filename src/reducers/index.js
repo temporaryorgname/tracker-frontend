@@ -130,7 +130,8 @@ function createReducer(entityName) {
   }
 }
 
-function getLoadingStatus(tree, filters, keysToCheck) {
+export function getLoadingStatus(tree, filters, keysToCheck=null) {
+	keysToCheck = keysToCheck || new Set(Object.keys(filters));
   if (typeof tree === 'string') {
     return tree;
   }
@@ -146,7 +147,8 @@ function getLoadingStatus(tree, filters, keysToCheck) {
     return getLoadingStatus(tree.children[filters[tree.key]], filters, keysToCheck) || getLoadingStatus(tree.children[null], filters, keysToCheck);
   }
 }
-function updateLoadingStatus(tree, filters, keysToCheck, status) {
+export function updateLoadingStatus(tree, filters, status, keysToCheck=null) {
+	keysToCheck = keysToCheck || new Set(Object.keys(filters));
   if (keysToCheck.size === 0) {
     return status;
   }
@@ -161,7 +163,7 @@ function updateLoadingStatus(tree, filters, keysToCheck, status) {
       key: key,
       children: {
         [filters[key]]: updateLoadingStatus(
-          null, filters, keysToCheck, status
+          null, filters, status, keysToCheck
         )
       }
     }
@@ -171,7 +173,7 @@ function updateLoadingStatus(tree, filters, keysToCheck, status) {
       key: tree.key,
       children: {
         ...tree.children,
-        [null]: updateLoadingStatus(tree[null], filters, keysToCheck, status)
+        [null]: updateLoadingStatus(tree[null], filters, status, keysToCheck)
       }
     }
   } else {
@@ -179,7 +181,7 @@ function updateLoadingStatus(tree, filters, keysToCheck, status) {
     keysToCheck.delete(tree.key);
     if (tree.children[filters[tree.key]]) {
       return updateLoadingStatus(
-        tree[filters[tree.key]], filters, keysToCheck, status
+        tree[filters[tree.key]], filters, status, keysToCheck
       );
     } else {
       return {
@@ -187,14 +189,14 @@ function updateLoadingStatus(tree, filters, keysToCheck, status) {
         children: {
           ...tree.children,
           [filters[tree.key]]: updateLoadingStatus(
-            null, filters, keysToCheck, status
+            null, filters, status, keysToCheck
           )
         }
       };
     }
   }
 }
-function loadingStatusReducer(state = {}, action) {
+export function loadingStatusReducer(state = {}, action) {
   switch (action.type) {
     case 'LOADING_START': {
       let entityName = action.payload.entityName;
