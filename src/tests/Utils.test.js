@@ -5,8 +5,7 @@ import renderer from 'react-test-renderer';
 import { 
   getLoadingStatus,
   updateLoadingStatus,
-  loadingStatusReducer
-} from '../reducers/index.js';
+} from '../Utils.js';
 
 test('updateLoadingStatus empty tree', () => {
   let tree = updateLoadingStatus(null, {a: 0}, 'loading');
@@ -146,4 +145,32 @@ test('getLoadingStatus partial match with multikeys filters', () => {
 
   status = getLoadingStatus(tree, {b: 1});
   expect(status).toEqual('status');
+});
+
+test('getLoadingStatus one item (object)', () => {
+  let tree = updateLoadingStatus(null, {a: 0}, {status: 'status'});
+  let status = null;
+
+  status = getLoadingStatus(tree, {a: 0});
+  expect(status).not.toEqual(null);
+  expect(typeof status).toEqual('object');
+  expect(status.status).toEqual('status');
+
+  status = getLoadingStatus(tree, {a: 1});
+  expect(status).toEqual(null);
+
+  status = getLoadingStatus(tree, {b: 0});
+  expect(status).toEqual(null);
+
+  tree = updateLoadingStatus(tree, {a: 0}, {status: 'status2'});
+  status = getLoadingStatus(tree, {a: 0});
+  expect(status).not.toEqual(null);
+  expect(typeof status).toEqual('object');
+  expect(status.status).toEqual('status2');
+
+  status = getLoadingStatus(tree, {a: 1});
+  expect(status).toEqual(null);
+
+  status = getLoadingStatus(tree, {b: 0});
+  expect(status).toEqual(null);
 });

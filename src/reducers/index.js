@@ -1,12 +1,8 @@
 import { combineReducers } from 'redux'
-
 import { 
-  RECEIVE_FOOD,
-  REQUEST_BODYWEIGHT,
-  RECEIVE_BODYWEIGHT,
-  REQUEST_USER_PROFILE,
-  RECEIVE_USER_PROFILE
-} from "../constants/action-types";
+  getLoadingStatus,
+  updateLoadingStatus,
+} from '../Utils.js';
 
 function createReducer(entityName) {
   let initialState = {
@@ -35,7 +31,7 @@ function createReducer(entityName) {
             by: {
               ...state.by,
               [filterKey]: {
-                ...state.by[filterValue],
+                ...state.by[filterKey],
                 [filterValue]: ids
               }
             },
@@ -130,106 +126,44 @@ function createReducer(entityName) {
   }
 }
 
-export function getLoadingStatus(tree, filters, keysToCheck=null) {
-	keysToCheck = keysToCheck || new Set(Object.keys(filters));
-  if (typeof tree === 'string') {
-    return tree;
-  }
-  if (typeof tree === 'undefined' || keysToCheck.size === 0) {
-    return null;
-  }
-
-  if (!keysToCheck.has(tree.key)) {
-    return getLoadingStatus(tree.children[null], filters, keysToCheck);
-  } else {
-    keysToCheck = new Set(keysToCheck);
-    keysToCheck.delete(tree.key);
-    return getLoadingStatus(tree.children[filters[tree.key]], filters, keysToCheck) || getLoadingStatus(tree.children[null], filters, keysToCheck);
-  }
-}
-export function updateLoadingStatus(tree, filters, status, keysToCheck=null) {
-	keysToCheck = keysToCheck || new Set(Object.keys(filters));
-  if (keysToCheck.size === 0) {
-    return status;
-  }
-  if (typeof tree === 'string') {
-    return tree;
-  }
-  if (!tree) { // null or undefined tree
-    let key = keysToCheck.values().next().value;
-    keysToCheck = new Set(keysToCheck);
-    keysToCheck.delete(key);
-    return {
-      key: key,
-      children: {
-        [filters[key]]: updateLoadingStatus(
-          null, filters, status, keysToCheck
-        )
-      }
-    }
-  }
-  if (!keysToCheck.has(tree.key)) {
-    return {
-      key: tree.key,
-      children: {
-        ...tree.children,
-        [null]: updateLoadingStatus(tree[null], filters, status, keysToCheck)
-      }
-    }
-  } else {
-    keysToCheck = new Set(keysToCheck);
-    keysToCheck.delete(tree.key);
-    if (tree.children[filters[tree.key]]) {
-      return updateLoadingStatus(
-        tree[filters[tree.key]], filters, status, keysToCheck
-      );
-    } else {
-      return {
-        key: tree.key,
-        children: {
-          ...tree.children,
-          [filters[tree.key]]: updateLoadingStatus(
-            null, filters, status, keysToCheck
-          )
-        }
-      };
-    }
-  }
-}
 export function loadingStatusReducer(state = {}, action) {
   switch (action.type) {
     case 'LOADING_START': {
       let entityName = action.payload.entityName;
       let filters = action.payload.filters;
-      let filterKeys = new Set(Object.keys(filters));
       let statusTree = state[entityName];
-      let newStatus = updateLoadingStatus(statusTree, filters, filterKeys, 'loading');
+      let newStatus = updateLoadingStatus(
+				statusTree, filters, {status: 'loading'}
+			);
       return {
         ...state,
-        newStatus
-      }
+        [entityName]: newStatus
+      };
     }
     case 'LOADING_SUCCESS': {
       let entityName = action.payload.entityName;
       let filters = action.payload.filters;
-      let filterKeys = new Set(Object.keys(filters));
       let statusTree = state[entityName];
-      let newStatus = updateLoadingStatus(statusTree, filters, filterKeys, 'loaded');
+      let newStatus = updateLoadingStatus(
+				statusTree, filters, {status: 'loaded', time: new Date()}
+			);
       return {
         ...state,
-        newStatus
-      }
+        [entityName]: newStatus
+      };
     }
     case 'LOADING_FAILURE': {
       let entityName = action.payload.entityName;
       let filters = action.payload.filters;
-      let filterKeys = new Set(Object.keys(filters));
+      let error = action.payload.error;
       let statusTree = state[entityName];
-      let newStatus = updateLoadingStatus(statusTree, filters, filterKeys, null);
+      let newStatus = updateLoadingStatus(
+				statusTree, filters, {status: 'error', error: error, time: new Date()}
+			);
       return {
         ...state,
-        newStatus
-      }
+        [entityName]: newStatus
+      };
     }
     default:
       return state;
@@ -304,7 +238,7 @@ function userReducer(state = initialUserState, action) {
         session: {}
       };
     }
-    case REQUEST_USER_PROFILE:
+    case 'REQUEST_USER_PROFILE':
       var userId = action.payload.userId;
       return {
         ...state,
@@ -315,7 +249,7 @@ function userReducer(state = initialUserState, action) {
           }
         }
       }
-    case RECEIVE_USER_PROFILE:
+    case 'RECEIVE_USER_PROFILE':
       var data = action.payload.data;
       return {
         ...state,

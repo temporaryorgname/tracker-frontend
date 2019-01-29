@@ -1317,7 +1317,6 @@ class ConnectedFoodTable extends Component {
 const FoodTable = connect(
   function(state, ownProps) {
     let byDate = state.food.by['date'] || {};
-    console.log(byDate);
     let ids = byDate[ownProps.date] || [];
     return {
       ids: ids,

@@ -1,4 +1,8 @@
 import axios from 'axios';
+import { 
+  getLoadingStatus,
+  updateLoadingStatus,
+} from '../Utils.js';
 
 function createActions(dataType, path, autosortProps) {
   // Process path. If it should start with a / but not end with one.
@@ -13,13 +17,26 @@ function createActions(dataType, path, autosortProps) {
     fetch: function(filters) {
       console.log('FETCH '+dataType);
       const ACTION = 'FETCH_'+dataType;
-      return function(dispatch) {
+      return function(dispatch, getState) {
+				// Check if this is already loading/loaded
+				if (filters) {
+					let status = getLoadingStatus(getState().loadingStatus[dataType], filters);
+					// Check if there was an error. (TODO)
+					// If not, then skip sending the request
+					if (status) {
+						console.log('Already loaded. Skipping.');
+						return;
+					}
+				}
+				// Save 'loading' status
         dispatch({
-          type: ACTION+'_START',
+          type: 'LOADING_START',
           payload: {
+						entityName: dataType,
             filters: filters
           }
         });
+				// Send request
         return axios.get(
           process.env.REACT_APP_SERVER_ADDRESS+path,
           {
@@ -27,6 +44,15 @@ function createActions(dataType, path, autosortProps) {
             withCredentials: true
           }
         ).then(function(response){
+					// Save 'loaded' status
+					dispatch({
+						type: 'LOADING_SUCCESS',
+						payload: {
+							entityName: dataType,
+							filters: filters
+						}
+					});
+					// Update data
           dispatch({ 
             type: ACTION+'_SUCCESS',
             payload: {
@@ -34,7 +60,17 @@ function createActions(dataType, path, autosortProps) {
               data: response.data
             }
           });
-        });
+        }).catch(function(error){
+					// Set 'error' status
+					dispatch({
+						type: 'LOADING_FAILURE',
+						payload: {
+							entityName: dataType,
+							filters: filters,
+							error: error
+						}
+					});
+				});
       }
     },
     create: function(newEntity) {
