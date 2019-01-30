@@ -78,11 +78,25 @@ class ConnectedBodyWeightTable extends Component {
 const BodyWeightTable = connect(
   function(state, ownProps) {
     console.log(state.bodyweight.entities);
-    return {data: Object.values(state.bodyweight.entities)}
+    let data = Object.values(state.bodyweight.entities)
+      .sort(function(entry1, entry2){
+        if (entry1.date < entry2.date) {
+          return true;
+        }
+        if (entry1.date === entry2.date) {
+          if (entry1.time < entry2.time) {
+            return true;
+          }
+        }
+        return false;
+      });
+    return {
+      data
+    }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(bodyweightActions['fetch']()),
+      updateData: (page=0) => dispatch(bodyweightActions['fetch']({page})),
       deleteEntry: (id) => dispatch(bodyweightActions['delete'](id))
     };
   }
@@ -105,9 +119,10 @@ class ConnectedNewBodyWeightEntryForm extends Component {
 
     var now = new Date();
     var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
+    var timeString = now.getHours()+":"+(now.getMinutes())+":"+now.getSeconds();
     var payload = {
       date: nowString,
-      time: now.toLocaleTimeString(),
+      time: timeString,
       bodyweight: this.state.bodyweight
     }
     this.props.createWeight(payload)
@@ -309,6 +324,8 @@ class ConnectedBodyWeightScatterPlot extends Component {
       return datum['time'] !== null;
     }).map(function(datum){
       var date = new Date('0000-01-01 '+datum['time']);
+      console.log('0000-01-01 '+datum['time']);
+      console.log(date);
       return {
         hour: date.getHours(),
         bodyweight: datum['bodyweight']
