@@ -15,6 +15,9 @@ test('updateLoadingStatus no filters', () => {
   let tree = updateLoadingStatus(null, {}, 'loading');
   let status = null;
 
+  status = getLoadingStatus(tree, {});
+  expect(status).toEqual('loading');
+
   status = getLoadingStatus(tree, {a: 0});
   expect(status).toEqual('loading');
 

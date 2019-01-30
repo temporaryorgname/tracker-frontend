@@ -10,7 +10,11 @@ import { easeLinear } from "d3-ease";
 import { } from "d3-transition"; // Needed for selection.transition
 
 import { connect } from "react-redux";
-import { bodyweightActions } from './actions/Actions.js';
+import {
+  bodyweightActions,
+  bodyweightSummaryActions
+} from './actions/Actions.js';
+import { getLoadingStatus } from './Utils.js';
 
 import './Body.scss';
 
@@ -178,29 +182,27 @@ class ConnectedBodyWeightTimeSeries extends Component {
   constructor(props) {
     super(props);
     this.updateSVG = this.updateSVG.bind(this);
-    if (this.props.data.length === 0) {
-      this.props.updateData();
-    }
+    this.props.updateData();
   }
   updateSVG(firstRender=false) {
-    if (this.props.data.length === 0) {
+    // Check if data is loaded
+    if (this.props.loadingStatus.status !== 'loaded') {
       return null;
     }
-    var data = this.props.data.map(function(datum){
-      if (datum.time) {
-        return {
-          date: new Date(datum.date+" "+datum.time),
-          value: datum.bodyweight
-        };
-      }
+    // Process data
+    let startDate = new Date(this.props.startDate);
+    let endDate = new Date(this.props.endDate);
+    let diff = (endDate-startDate)/this.props.data.length;
+    let data = this.props.data.map(function(datum, index){
       return {
-        date: new Date(datum.date), 
-        value: datum.bodyweight
+        date: new Date(startDate.getTime()+diff*index),
+        value: datum
       };
-    });
+    }).filter((x) => x.value !== null);
     if (!this.svg) {
       return null;
     }
+    // Render data
     var width = this.svg.width.baseVal.value;
     var height = this.svg.height.baseVal.value;
     var padding = 45;
@@ -215,7 +217,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
     var lineGenerator = line()
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
-
+    // Animation
     if (firstRender) {
       var path = select(this.svg)
         .select('.curves')
@@ -263,21 +265,8 @@ class ConnectedBodyWeightTimeSeries extends Component {
     this.updateSVG();
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    var dataChanged = false;
-    if (this.props.data.length !== prevProps.data.length) {
-      dataChanged = true;
-    } else {
-      dataChanged = this.props.data.every(function(p,i) {
-        for (var key in p) {
-          if (p[key] !== prevProps.data[i][key]) {
-            return true;
-          }
-        }
-        return false;
-      });
-    }
-    if (dataChanged) {
-      this.updateSVG(prevProps.data.length === 0);
+    if (this.props.data !== prevProps.data) {
+      this.updateSVG();
     }
   }
   render() {
@@ -299,11 +288,18 @@ class ConnectedBodyWeightTimeSeries extends Component {
 }
 const BodyWeightTimeSeries = connect(
   function(state, ownProps) {
-    return {data: Object.values(state.bodyweight.entities)}
+    let history = state.bodyweightSummary.history || {};
+    let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {};
+    return {
+      loadingStatus,
+      startDate: history.start_date,
+      endDate: history.end_date,
+      data: history.data
+    }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(bodyweightActions['fetch']())
+      updateData: () => dispatch(bodyweightSummaryActions['fetch']())
     };
   }
 )(ConnectedBodyWeightTimeSeries);
@@ -312,58 +308,26 @@ class ConnectedBodyWeightScatterPlot extends Component {
   constructor(props) {
     super(props);
     this.updateSVG = this.updateSVG.bind(this);
-    if (this.props.data.length === 0) {
-      this.props.updateData();
-    }
-
-    this.computeMean = this.computeMean.bind(this);
-  }
-  computeMean() {
-    return this.props.data.filter(function(datum){
-      return datum['time'] !== null;
-    }).map(function(datum){
-      var date = new Date('0000-01-01 '+datum['time']);
-      return {
-        hour: date.getHours(),
-        bodyweight: datum['bodyweight']
-      }
-    }).reduce(function(acc, datum){
-      acc[datum['hour']].push(datum['bodyweight']);
-      return acc;
-    },[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
-    ).map(function(datum){
-      if (datum.length === 0) {
-        return null;
-      }
-      return mean(datum)
-    }).map((x,i) => {return {hour: i, value: x}})
-    .filter(x => x['value'] !== null);
+    this.props.updateData();
   }
   updateSVG(firstRender=false) {
     // Check if we have data
-    if (this.props.data.length === 0) {
+    if (this.props.loadingStatus.status !== 'loaded') {
       return null;
     }
-    // Convert time to a usable format
+    // Format data
     var data = this.props.data
-      .filter(datum => datum['time'])
-      .map(function(datum){
+      .map(function(datum, index){
         return {
-          date: new Date("0000-01-01 "+datum.time),
-          value: datum.bodyweight
+          date: new Date("0000-01-01 "+index+":00:00"),
+          value: datum
         };
-      });
+      }).filter(x => x.value !== null);
     // Check if there's an svg dom element to draw to
     if (!this.svg) {
       return null;
     }
-    // Compute means
-    var bodyweightMeans = this.computeMean()
-      .map((x) => { return {
-        date: new Date('0000-01-01 '+x['hour']+':00'),
-        value: x['value']
-      }})
-    // Compute points
+    // Setup
     var width = this.svg.width.baseVal.value;
     var height = this.svg.height.baseVal.value;
     var padding = 45;
@@ -378,22 +342,12 @@ class ConnectedBodyWeightScatterPlot extends Component {
     var lineGenerator = line()
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
-
-    var points = select(this.svg)
-      .select('.points')
-      .selectAll('circle')
-      .data(data)
-    points.exit()
-      .remove();
-    points.enter()
-      .append('circle')
-      .attr('cx', (p,i) => xScale(p.date))
-      .attr('cy', (p,i) => yScale(p.value))
-      .attr('r', '3');
+    // Draw line
     var path = select(this.svg)
       .select('.means')
       .select('path')
-      .attr('d',lineGenerator(bodyweightMeans));
+      .attr('d',lineGenerator(data));
+    // Draw axes
     select(this.svg)
       .select('g.x-axis')
       .attr('transform', 'translate(0,'+(height-padding)+')')
@@ -422,20 +376,8 @@ class ConnectedBodyWeightScatterPlot extends Component {
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     var dataChanged = false;
-    if (this.props.data.length !== prevProps.data.length) {
-      dataChanged = true;
-    } else {
-      dataChanged = this.props.data.every(function(p,i) {
-        for (var key in p) {
-          if (p[key] !== prevProps.data[i][key]) {
-            return true;
-          }
-        }
-        return false;
-      });
-    }
-    if (dataChanged) {
-      this.updateSVG(prevProps.data.length === 0);
+    if (this.props.data !== prevProps.data) {
+      this.updateSVG();
     }
   }
   render() {
@@ -456,11 +398,16 @@ class ConnectedBodyWeightScatterPlot extends Component {
 }
 const BodyWeightScatterPlot = connect(
   function(state, ownProps) {
-    return {data: Object.values(state.bodyweight.entities)}
+    let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {};
+    let data = state.bodyweightSummary.by_time;
+    return {
+      loadingStatus,
+      data
+    }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(bodyweightActions['fetch']())
+      updateData: () => dispatch(bodyweightSummaryActions['fetch']())
     };
   }
 )(ConnectedBodyWeightScatterPlot);

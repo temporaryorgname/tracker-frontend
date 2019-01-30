@@ -156,6 +156,7 @@ export const photoGroupActions = createActions('PHOTO_GROUPS', '/data/photo_grou
 export const tagActions = createActions('TAGS', '/data/tags');
 export const labelActions = createActions('LABELS', '/data/labels');
 export const bodyweightActions = createActions('BODYWEIGHT', '/data/body/weights');
+export const bodyweightSummaryActions = createActions('BODYWEIGHT_SUMMARY', '/data/body/weights/summary');
 
 photoActions['create'] = (function(){
   let createPhoto = photoActions['create'];
