@@ -77,7 +77,6 @@ class ConnectedBodyWeightTable extends Component {
 }
 const BodyWeightTable = connect(
   function(state, ownProps) {
-    console.log(state.bodyweight.entities);
     let data = Object.values(state.bodyweight.entities)
       .sort(function(entry1, entry2){
         if (entry1.date < entry2.date) {
@@ -324,8 +323,6 @@ class ConnectedBodyWeightScatterPlot extends Component {
       return datum['time'] !== null;
     }).map(function(datum){
       var date = new Date('0000-01-01 '+datum['time']);
-      console.log('0000-01-01 '+datum['time']);
-      console.log(date);
       return {
         hour: date.getHours(),
         bodyweight: datum['bodyweight']
