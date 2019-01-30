@@ -84,14 +84,14 @@ const BodyWeightTable = connect(
     let data = Object.values(state.bodyweight.entities)
       .sort(function(entry1, entry2){
         if (entry1.date < entry2.date) {
-          return true;
+          return 1;
         }
         if (entry1.date === entry2.date) {
           if (entry1.time < entry2.time) {
-            return true;
+            return 1;
           }
         }
-        return false;
+        return -1;
       });
     return {
       data
