@@ -14,12 +14,13 @@ function createActions(dataType, path, autosortProps) {
   }
 
   return {
-    fetch: function(filters) {
+    fetch: function(filters, cache=true) {
+			filters = filters || {};
       console.log('FETCH '+dataType);
       const ACTION = 'FETCH_'+dataType;
       return function(dispatch, getState) {
 				// Check if this is already loading/loaded
-				if (filters) {
+				if (filters && cache) {
 					let status = getLoadingStatus(getState().loadingStatus[dataType], filters);
 					// Check if there was an error. (TODO)
 					// If not, then skip sending the request

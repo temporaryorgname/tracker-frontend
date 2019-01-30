@@ -11,6 +11,20 @@ test('updateLoadingStatus empty tree', () => {
   let tree = updateLoadingStatus(null, {a: 0}, 'loading');
 });
 
+test('updateLoadingStatus no filters', () => {
+  let tree = updateLoadingStatus(null, {}, 'loading');
+  let status = null;
+
+  status = getLoadingStatus(tree, {a: 0});
+  expect(status).toEqual('loading');
+
+  status = getLoadingStatus(tree, {a: 1});
+  expect(status).toEqual('loading');
+
+  status = getLoadingStatus(tree, {b: 0});
+  expect(status).toEqual('loading');
+});
+
 test('getLoadingStatus one item', () => {
   let tree = updateLoadingStatus(null, {a: 0}, 'loading');
   let status = null;
