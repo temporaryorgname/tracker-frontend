@@ -17,7 +17,7 @@ class ConnectedHomePage extends Component {
   }
   render() {
     return (
-      <div className='home-page-container'>
+      <main className='home-page-container'>
         <div className='background'>
         </div>
         <h2>Hello {this.props.name}</h2>
@@ -36,7 +36,7 @@ class ConnectedHomePage extends Component {
             Quick-add calories: <input type='text' />
           </div>
         </div>
-      </div>
+      </main>
     );
   }
 }

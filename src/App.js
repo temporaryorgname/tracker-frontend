@@ -41,9 +41,9 @@ class ConnectedApp extends Component {
           <div className="App container-fluid">
             <Navigation loggedIn={this.props.loggedIn}/>
             <Switch>
-              <Route path="/login" component={LoginPrompt} />
-              <Route path="/signup" component={Signup} />
-              <Route component={LoginPrompt} />
+              <Route path="/login" component={LoginPage} />
+              <Route path="/signup" component={SignupPage} />
+              <Route component={LoginPage} />
             </Switch>
           </div>
         </Router>
@@ -215,6 +215,17 @@ const LoginPrompt = connect(
   }
 )(ConnectedLoginPrompt);
 
+class LoginPage extends Component {
+  render() {
+    return (
+      <main>
+        <div className='background'></div>
+        <LoginPrompt />
+      </main>
+    );
+  }
+}
+
 class Signup extends Component {
   constructor(props) {
     super(props);
@@ -295,6 +306,17 @@ class Signup extends Component {
         <input className='btn btn-primary' type='submit' value={this.state.signingUp ? 'Signing up...' : 'Sign Up'} />
       </form>
       </div>
+    );
+  }
+}
+
+class SignupPage extends Component {
+  render() {
+    return (
+      <main>
+        <div className='background'></div>
+        <Signup />
+      </main>
     );
   }
 }
