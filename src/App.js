@@ -82,9 +82,6 @@ class ConnectedNavigation extends Component {
               <Link to={"/food/table?uid="+this.props.uid}>Diet</Link>
             </li>
             <li>
-              <Link to="/workout">Workouts</Link>
-            </li>
-            <li>
               <Link to={"/body?uid="+this.props.uid}>Body Stats</Link>
             </li>
             <li>
