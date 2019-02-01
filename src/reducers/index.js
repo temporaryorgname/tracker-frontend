@@ -17,10 +17,15 @@ function createReducer(entityName) {
         let data = action.payload.data;
         let ids = [];
         let entities = {};
-        data.forEach(function(x){
-          entities[x.id] = x;
-          ids.push(x.id);
-        });
+				if (typeof data === 'array') {
+					data.forEach(function(x){
+						entities[x.id] = x;
+						ids.push(x.id);
+					});
+				} else {
+					entities[data.id] = data;
+					ids.push(data.id);
+				}
 
         let filterKeys = Object.keys(filters);
         if (filterKeys.length == 1) {
@@ -194,80 +199,40 @@ function bodyweightSummaryReducer(state = {}, action) {
   }
 }
 
-const initialUserState = {
-  session: {},
-  profiles: {} // Key: user id
-};
-function userReducer(state = initialUserState, action) {
+function sessionReducer(state = {}, action) {
   switch (action.type) {
-    case 'UPDATE_SESSION_COMPLETED': {
+    case 'UPDATE_SESSION_SUCCESS': {
       if (isFinite(action.payload)) {
         return {
-          ...state,
-          session: {
-            uid: action.payload
-          }
+          uid: action.payload
         };
       } else {
         return {
-          ...state,
-          session: {}
+          uid: null
         };
       }
     }
     case 'LOGIN_START': {
       return {
-        ...state,
-        session: {
-          loggingIn: true
-        }
+        loggingIn: true
       };
     }
-    case 'LOGIN_COMPLETED': {
-      if (action.payload.error) {
-        return {
-          ...state,
-          session: {
-            error: action.payload.error
-          }
-        };
-      }
-      if (action.payload.id) {
-        return {
-          ...state,
-          session: {
-            uid: action.payload.id
-          }
-        };
-      }
+    case 'LOGIN_SUCCESS': {
+			return {
+				...state,
+				session: {
+					uid: action.payload.id
+				}
+			};
+    }
+    case 'LOGIN_FAILURE': {
+			return {
+				error: action.payload.error
+			};
+    }
+    case 'LOGOUT_SUCCESS': {
       return {};
     }
-    case 'LOGOUT_COMPLETED': {
-      return {
-        ...state,
-        session: {}
-      };
-    }
-    case 'REQUEST_USER_PROFILE':
-      var userId = action.payload.userId;
-      return {
-        ...state,
-        profiles: {
-          ...state.profiles,
-          [userId]: {
-            loading: true
-          }
-        }
-      }
-    case 'RECEIVE_USER_PROFILE':
-      var data = action.payload.data;
-      return {
-        ...state,
-        profiles: {
-          ...state.profiles,
-          [data.id]: data
-        }
-      }
     default:
       return state;
   }
@@ -283,7 +248,8 @@ const rootReducer = combineReducers({
   bodyweight: createReducer('BODYWEIGHT'),
   bodyweightSummary: bodyweightSummaryReducer,
   loadingStatus: loadingStatusReducer,
-  user: userReducer
+  users: createReducer('USERS'),
+  session: sessionReducer
 });
 
 export default rootReducer;

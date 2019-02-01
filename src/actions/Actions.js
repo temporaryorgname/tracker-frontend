@@ -14,7 +14,28 @@ function createActions(dataType, path, autosortProps) {
   }
 
   return {
-    fetch: function(filters, cache=true) {
+    fetchSingle: function(id) {
+      console.log('FETCH '+dataType);
+      const ACTION = 'FETCH_'+dataType;
+      return function(dispatch, getState) {
+				// Send request
+        return axios.get(
+          process.env.REACT_APP_SERVER_ADDRESS+path+'/'+id,
+          {
+            withCredentials: true
+          }
+        ).then(function(response){
+					// Update data
+          dispatch({ 
+            type: ACTION+'_SUCCESS',
+            payload: {
+              data: response.data
+            }
+          });
+        });
+      }
+    },
+    fetchMultiple: function(filters, cache=true) {
 			filters = filters || {};
       console.log('FETCH '+dataType);
       const ACTION = 'FETCH_'+dataType;
@@ -114,7 +135,7 @@ function createActions(dataType, path, autosortProps) {
         }
       }
     },
-    delete: function(id) {
+    deleteSingle: function(id) {
       console.log('DELETE '+dataType);
       return function(dispatch) {
         return axios.delete(
@@ -149,6 +170,7 @@ function createActions(dataType, path, autosortProps) {
   }
 }
 
+export const userActions = createActions('USERS', '/data/users');
 export const foodActions = createActions('FOOD', '/data/foods');
 export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
 export const photoActions = createActions('PHOTOS', '/data/photos');

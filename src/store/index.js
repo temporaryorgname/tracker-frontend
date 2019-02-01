@@ -34,14 +34,14 @@ function initDirtyEntityWatcher(entityName, path, debounceTime) {
       function() { // Update one at a time
         var id = lastDirtyEntities.values().next().value;
         console.log(lastDirtyEntities);
-        var data = store.getState().food.entities[id];
+        var data = store.getState()[entityName].entities[id];
         axios.put(
           process.env.REACT_APP_SERVER_ADDRESS+path+id,
           data,
           {withCredentials: true}
         ).then(function(response){
           store.dispatch({
-            type: 'UPDATE_FOOD_SUCCESS',
+            type: 'UPDATE_'+entityName.toUpperCase()+'_SUCCESS',
             payload: {
               id: id
             }
@@ -52,8 +52,9 @@ function initDirtyEntityWatcher(entityName, path, debounceTime) {
   });
 }
 
-let debounceTime = 5000;
+let debounceTime = 500;
 initDirtyEntityWatcher('food', '/data/foods/', debounceTime);
 initDirtyEntityWatcher('photos', '/data/photos/', debounceTime);
+initDirtyEntityWatcher('users', '/data/users/', debounceTime);
 
 export default store;

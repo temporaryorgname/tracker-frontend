@@ -60,7 +60,7 @@ export const HomePage = connect(
     let todayCalories = history[0].calories;
     let caloriesLeft = goalCalories-todayCalories;
     return {
-      uid: state.user.session.uid,
+      uid: state.session.uid,
       name: '[Placeholder Name]',
       goalCalories: goalCalories,
       todayCalories: todayCalories,

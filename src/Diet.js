@@ -94,12 +94,12 @@ class ConnectedDietPage extends Component {
 export const DietPage = connect(
   function(state, ownProps) {
     return {
-      uid: state.user.session.uid
+      uid: state.session.uid
     }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (uid) => dispatch(photoActions['fetch']({user_id: uid}))
+      updateData: (uid) => dispatch(photoActions['fetchMultiple']({user_id: uid}))
     };
   }
 )(ConnectedDietPage);
@@ -376,10 +376,10 @@ const Gallery = connect(
   function(dispatch, ownProps) {
     return {
       fetchPhotos: (uid) => dispatch(
-        photoActions['fetch']({user_id: uid, date: ownProps.date})
+        photoActions['fetchMultiple']({user_id: uid, date: ownProps.date})
       ),
       fetchGroups: () => dispatch(
-        photoGroupActions['fetch']({date: ownProps.date})
+        photoGroupActions['fetchMultiple']({date: ownProps.date})
       ),
       updatePhoto: (data) => dispatch(
         photoActions['update'](data)
@@ -394,10 +394,10 @@ const Gallery = connect(
         foodActions['create'](data)
       ),
       deletePhoto: (id) => dispatch(
-        photoActions['delete'](id)
+        photoActions['deleteSingle'](id)
       ),
       deletePhotoGroup: (id) => dispatch(
-        photoGroupActions['delete'](id)
+        photoGroupActions['deleteSingle'](id)
       )
     };
   }
@@ -549,7 +549,7 @@ const GalleryNutritionTable = connect(
   },
   function(dispatch, ownProps) {
     return {
-      fetchFood: () => dispatch(foodActions['fetch']({date: ownProps.date})),
+      fetchFood: () => dispatch(foodActions['fetchMultiple']({date: ownProps.date})),
       createFood: (data) => dispatch(foodActions['create'](data))
     };
   }
@@ -1341,7 +1341,7 @@ const FoodTable = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: date => dispatch(foodActions['fetch']({date: date})),
+      updateData: date => dispatch(foodActions['fetchMultiple']({date: date})),
       deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids))
     };
   }

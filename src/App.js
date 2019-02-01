@@ -53,7 +53,7 @@ class ConnectedApp extends Component {
 }
 const App = connect(
   function(state, ownProps) {
-    if (state.user.session.uid) {
+    if (state.session.uid) {
       return {
         loggedIn: true
       };
@@ -89,7 +89,7 @@ class ConnectedNavigation extends Component {
             </li>
           </ul>
           <div className='user'>
-            <Link to="/user"><i className='material-icons'>account_circle</i></Link>
+            <Link to={"/user?uid="+this.props.uid}><i className='material-icons'>account_circle</i></Link>
           </div>
         </nav>
       );
@@ -112,7 +112,7 @@ class ConnectedNavigation extends Component {
 const Navigation = connect(
   function(state, ownProps) {
     return {
-      uid: state.user.session.uid
+      uid: state.session.uid
     };
   },
   function(dispatch, ownProps) {
@@ -188,19 +188,19 @@ class ConnectedLoginPrompt extends Component {
 }
 const LoginPrompt = connect(
   function(state, ownProps) {
-    if (state.user.session.loggingIn) {
+    if (state.session.loggingIn) {
       return {
         loggingIn: true
       };
     }
-    if (state.user.session.error) {
+    if (state.session.error) {
       return {
-        error: state.user.session.error
+        error: state.session.error
       };
     }
-    if (state.user.session.uid) {
+    if (state.session.uid) {
       return {
-        uid: state.user.session.uid
+        uid: state.session.uid
       };
     }
     return {};

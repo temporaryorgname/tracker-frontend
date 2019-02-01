@@ -99,8 +99,8 @@ const BodyWeightTable = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (page=0) => dispatch(bodyweightActions['fetch']({page})),
-      deleteEntry: (id) => dispatch(bodyweightActions['delete'](id))
+      updateData: (page=0) => dispatch(bodyweightActions['fetchMultiple']({page})),
+      deleteEntry: (id) => dispatch(bodyweightActions['deleteSingle'](id))
     };
   }
 )(ConnectedBodyWeightTable);
@@ -299,7 +299,7 @@ const BodyWeightTimeSeries = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(bodyweightSummaryActions['fetch']())
+      updateData: () => dispatch(bodyweightSummaryActions['fetchMultiple']())
     };
   }
 )(ConnectedBodyWeightTimeSeries);
@@ -407,7 +407,7 @@ const BodyWeightScatterPlot = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(bodyweightSummaryActions['fetch']())
+      updateData: () => dispatch(bodyweightSummaryActions['fetchMultiple']())
     };
   }
 )(ConnectedBodyWeightScatterPlot);
