@@ -5,6 +5,7 @@ import './Home.scss';
 
 import { connect } from "react-redux";
 import { 
+  userActions,
   foodActions,
   foodSummaryActions,
   bodyweightActions
@@ -13,7 +14,8 @@ import {
 class ConnectedHomePage extends Component {
   constructor(props) {
     super(props);
-    this.props.updateData();
+    this.props.fetchFoodData();
+    this.props.fetchUserData(this.props.uid);
   }
   render() {
     return (
@@ -55,13 +57,16 @@ export const HomePage = connect(
         count += 1;
       }
     })
-    let goalCalories = 2500;
+    let uid = state.session.uid;
+    let user = state.users.entities[uid] || {};
+
+    let goalCalories = user.target_calories;
     let avgCalories = count > 0 ? Math.floor(total/count) : 0;
     let todayCalories = history[0].calories;
     let caloriesLeft = goalCalories-todayCalories;
     return {
-      uid: state.session.uid,
-      name: '[Placeholder Name]',
+      uid: uid,
+      name: user.name,
       goalCalories: goalCalories,
       todayCalories: todayCalories,
       avgCalories: avgCalories,
@@ -70,7 +75,8 @@ export const HomePage = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateData: () => dispatch(foodSummaryActions['fetch']()),
+      fetchFoodData: () => dispatch(foodSummaryActions['fetchMultiple']()),
+      fetchUserData: (id) => dispatch(userActions['fetchSingle'](id)),
     };
   }
 )(ConnectedHomePage);
