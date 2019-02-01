@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 
-import axios from 'axios';
-
 import { connect } from "react-redux";
 
 import './Data.scss';
@@ -43,7 +41,6 @@ export class TagsPage extends Component {
     });
   }
   render() {
-    var queryParams = parseQueryString(this.props.location.search);
     return (
       <div className='tag-page-container'>
         <h2>Tags</h2>
@@ -671,6 +668,7 @@ class ConnectedTagInput extends AutocompleteInput {
         if (tag.description.toLowerCase().includes(that.props.value.toLowerCase())) {
           return true;
         }
+        return false;
       }).slice(0,5),
       loading: false
     });
@@ -758,12 +756,13 @@ class ConnectedTagList extends Component {
     var data = this.props.data
       .map((x,i) => {return {'value': x, 'index': i}})
       .filter(x => x['value'] !== null)
+    var filteredData;
     if (this.state.filter.length > 0) {
-      var filteredData = data.filter(
+      filteredData = data.filter(
         x => x['value']['tag'].includes(this.state.filter)
       );
     } else {
-      var filteredData = data;
+      filteredData = data;
     }
     return (
       <div>

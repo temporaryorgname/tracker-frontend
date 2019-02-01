@@ -1,6 +1,5 @@
 import { combineReducers } from 'redux'
 import { 
-  getLoadingStatus,
   updateLoadingStatus,
 } from '../Utils.js';
 
@@ -17,7 +16,7 @@ function createReducer(entityName) {
         let data = action.payload.data;
         let ids = [];
         let entities = {};
-				if (typeof data === 'array') {
+				if (data instanceof Array) {
 					data.forEach(function(x){
 						entities[x.id] = x;
 						ids.push(x.id);
@@ -28,7 +27,7 @@ function createReducer(entityName) {
 				}
 
         let filterKeys = Object.keys(filters);
-        if (filterKeys.length == 1) {
+        if (filterKeys.length === 1) {
           // If we filtered by one criterion, then update the 'by' object
           let filterKey = filterKeys[0];
           let filterValue = filters[filterKey];
@@ -83,7 +82,7 @@ function createReducer(entityName) {
         }
         // Update 'by'
         let by = {...state.by};
-        changedProps.map(function(key){
+        changedProps.forEach(function(key){
           //TODO: Remove only by[key][oldEntity[key]] and by[key][newEntity[key]]
           by[key] = {};
         });
@@ -115,7 +114,7 @@ function createReducer(entityName) {
           return false;
         });
         let entities = {};
-        filteredKeys.map(function(key){
+        filteredKeys.forEach(function(key){
           entities[key] = state.entities[key];
         });
         // Remove matching entity IDs from `by`

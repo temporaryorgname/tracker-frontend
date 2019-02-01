@@ -1,14 +1,10 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
-import axios from 'axios';
 import './Home.scss';
 
 import { connect } from "react-redux";
 import { 
   userActions,
-  foodActions,
-  foodSummaryActions,
-  bodyweightActions
+  foodSummaryActions
 } from './actions/Actions.js';
 
 class ConnectedHomePage extends Component {
@@ -51,7 +47,7 @@ export const HomePage = connect(
     if (history === null) {
       return {};
     }
-    history.map(function(x){
+    history.forEach(function(x){
       if (x.calories) {
         total += x.calories;
         count += 1;

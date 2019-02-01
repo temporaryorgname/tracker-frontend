@@ -7,11 +7,6 @@ import {
   parseBox
 } from '../Utils.js';
 
-import { 
-  REQUEST_USER_PROFILE,
-  RECEIVE_USER_PROFILE
-} from "../constants/action-types";
-
 export const fetchPhotoStart = function(userId){
   return {
     type: 'FETCH_PHOTO_START',

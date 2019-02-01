@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
+import { Route, Link, Switch } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -13,7 +13,7 @@ import {
   photoGroupActions
 } from './actions/Actions.js';
 
-import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
+import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
@@ -341,9 +341,10 @@ const Gallery = connect(
         .filter(function(id) {
           return state.photoGroups.entities[id].date === ownProps.date;
         });
+      let photoIdsByGroup = null;
       if (groupIds) {
         // Init photo IDs by photo group
-        var photoIdsByGroup = groupIds.reduce(function(acc,id) {
+        photoIdsByGroup = groupIds.reduce(function(acc,id) {
           acc[id] = [];
           return acc;
         }, {null: []});
@@ -353,15 +354,13 @@ const Gallery = connect(
             return state.photos.entities[id].date === ownProps.date;
           });
         var photos = {};
-        photoIds.map(function(photoId){
+        photoIds.forEach(function(photoId){
           // Add photo ID to the appropriate group
           var photo = state.photos.entities[photoId];
           photoIdsByGroup[photo.group_id].push(parseInt(photoId));
           // Add photo to the dictionary of photos
           photos[photoId] = state.photos.entities[photoId];
         });
-      } else {
-        var photoIdsByGroup = null;
       }
       return {
         groups: photoIdsByGroup,
@@ -522,21 +521,22 @@ const GalleryNutritionTable = connect(
       };
     }
 
+    var entries;
     if (photoId) {
-      var entries = entriesByDate
-        .filter(id => state.food.entities[id].photo_id == photoId) // FIXME: Doesn't work with ===
+      entries = entriesByDate
+        .filter(id => parseInt(state.food.entities[id].photo_id) === parseInt(photoId))
         .map(id => state.food.entities[id]);
     } else if (groupId) {
-      var entries = entriesByDate
+      entries = entriesByDate
         .filter(function(id) {
           let food = state.food.entities[id];
           // Check if the entry is associated with the current group
-          if (food.photo_group_id == groupId) {
+          if (parseInt(food.photo_group_id) === parseInt(groupId)) {
             return true;
           }
           // Check if the entry is associated with a photo in the current group
           var photo = state.photos.entities[food.photo_id];
-          if (photo && photo.group_id == groupId) {
+          if (photo && parseInt(photo.group_id) === parseInt(groupId)) {
             return true;
           }
           return false;

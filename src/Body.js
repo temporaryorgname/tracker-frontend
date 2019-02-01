@@ -4,9 +4,8 @@ import { Link } from "react-router-dom";
 import { select } from "d3-selection";
 import { line } from "d3-shape";
 import { scaleTime, scaleLinear } from "d3-scale";
-import { mean, extent } from "d3-array";
+import { extent } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
-import { easeLinear } from "d3-ease";
 import { } from "d3-transition"; // Needed for selection.transition
 
 import { connect } from "react-redux";
@@ -343,7 +342,7 @@ class ConnectedBodyWeightScatterPlot extends Component {
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
     // Draw line
-    var path = select(this.svg)
+    select(this.svg)
       .select('.means')
       .select('path')
       .attr('d',lineGenerator(data));
@@ -375,7 +374,6 @@ class ConnectedBodyWeightScatterPlot extends Component {
     this.updateSVG();
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    var dataChanged = false;
     if (this.props.data !== prevProps.data) {
       this.updateSVG();
     }

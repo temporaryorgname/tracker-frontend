@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { 
-  getLoadingStatus,
-  updateLoadingStatus,
+  getLoadingStatus
 } from '../Utils.js';
 
 function createActions(dataType, path, autosortProps) {
