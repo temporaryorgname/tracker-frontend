@@ -57,6 +57,11 @@
         }
       }
     }
+    &.status {
+      td {
+        text-align: center;
+      }
+    }
   }
 
   .react-datepicker-popper {

@@ -169,7 +169,7 @@ function createActions(dataType, path, autosortProps) {
   }
 }
 
-export const userActions = createActions('USERS', '/data/users');
+export const userProfileActions = createActions('USER_PROFILES', '/data/user_profiles');
 export const foodActions = createActions('FOOD', '/data/foods');
 export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
 export const photoActions = createActions('PHOTOS', '/data/photos');

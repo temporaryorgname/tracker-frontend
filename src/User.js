@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 
 //import './User.scss';
 import { parseQueryString } from './Utils.js';
-import { userActions } from './actions/Actions.js';
+import { userProfileActions } from './actions/Actions.js';
 
 import './User.scss';
 
@@ -52,18 +52,18 @@ class ConnectedUserProfile extends Component {
   }
   handleSaveProfile(event) {
     event.preventDefault();
-    let name = this.state.form.name;
+    let display_name = this.state.form.display_name;
     let country = this.state.form.country;
     let prefered_units = this.state.form.prefered_units;
-    if (name && name.length === 0) {
-      name = null;
+    if (display_name && display_name.length === 0) {
+      display_name = null;
     }
     if (country && country.length === 0) {
       country = null;
     }
     let user = {
       ...this.props.userInfo,
-      name, country, prefered_units
+      display_name, country, prefered_units
     };
     this.props.updateUser(user);
   }
@@ -89,7 +89,7 @@ class ConnectedUserProfile extends Component {
         <form>
           <label>
             <span>Display Name</span>
-            <input type='text' name='name' value={this.state.form.name} onChange={this.handleFormChange}/>
+            <input type='text' name='display_name' value={this.state.form.display_name} onChange={this.handleFormChange}/>
           </label>
           <label>
             <span>Country</span>
@@ -151,7 +151,7 @@ const UserProfile = connect(
     if (!uid) {
       return {};
     }
-    var userInfo = state.users.entities[uid];
+    var userInfo = state.userProfiles.entities[uid];
     if (!userInfo) {
       return {};
     } else {
@@ -162,8 +162,8 @@ const UserProfile = connect(
   },
   function(dispatch, ownProps) {
     return {
-      fetchData: () => dispatch(userActions['fetchSingle'](ownProps.uid)),
-      updateUser: (user) => dispatch(userActions['update'](user))
+      fetchData: () => dispatch(userProfileActions['fetchSingle'](ownProps.uid)),
+      updateUser: (user) => dispatch(userProfileActions['update'](user))
     };
   }
 )(ConnectedUserProfile);

@@ -3,7 +3,7 @@ import './Home.scss';
 
 import { connect } from "react-redux";
 import { 
-  userActions,
+  userProfileActions,
   foodSummaryActions
 } from './actions/Actions.js';
 
@@ -40,12 +40,14 @@ class ConnectedHomePage extends Component {
 }
 export const HomePage = connect(
   function(state, ownProps) {
+    let uid = state.session.uid;
+
     console.log(state.foodSummary.history);
     let total = 0;
     let count = 0;
     let history = state.foodSummary.history;
     if (history === null) {
-      return {};
+      return {uid};
     }
     history.forEach(function(x){
       if (x.calories) {
@@ -53,8 +55,7 @@ export const HomePage = connect(
         count += 1;
       }
     })
-    let uid = state.session.uid;
-    let user = state.users.entities[uid] || {};
+    let user = state.userProfiles.entities[uid] || {};
 
     let goalCalories = user.target_calories;
     let avgCalories = count > 0 ? Math.floor(total/count) : 0;
@@ -62,7 +63,7 @@ export const HomePage = connect(
     let caloriesLeft = goalCalories-todayCalories;
     return {
       uid: uid,
-      name: user.name,
+      name: user.display_name,
       goalCalories: goalCalories,
       todayCalories: todayCalories,
       avgCalories: avgCalories,
@@ -72,7 +73,7 @@ export const HomePage = connect(
   function(dispatch, ownProps) {
     return {
       fetchFoodData: () => dispatch(foodSummaryActions['fetchMultiple']()),
-      fetchUserData: (id) => dispatch(userActions['fetchSingle'](id)),
+      fetchUserData: (id) => dispatch(userProfileActions['fetchSingle'](id)),
     };
   }
 )(ConnectedHomePage);

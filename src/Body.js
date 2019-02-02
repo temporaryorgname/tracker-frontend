@@ -47,6 +47,28 @@ class ConnectedBodyWeightTable extends Component {
   }
   render() {
     var that = this;
+    let status = null;
+    if (this.props.loadingStatus) {
+      switch (this.props.loadingStatus.status) {
+        case 'loading':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>LOADING</td>
+            </tr>
+          );
+          break;
+        case 'error':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
+            </tr>
+          );
+          break;
+        default:
+          status = null;
+          break;
+      }
+    }
     return (
       <div className='bodyweight-table-container'>
         <NewBodyWeightEntryForm onAddWeight={this.updateData}/>
@@ -72,6 +94,7 @@ class ConnectedBodyWeightTable extends Component {
                 </td>
               </tr>);
             })}
+            { status }
           </tbody>
         </table>
       </div>
@@ -80,6 +103,7 @@ class ConnectedBodyWeightTable extends Component {
 }
 const BodyWeightTable = connect(
   function(state, ownProps) {
+    let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT'], {page: 0});
     let data = Object.values(state.bodyweight.entities)
       .sort(function(entry1, entry2){
         if (entry1.date < entry2.date) {
@@ -93,6 +117,7 @@ const BodyWeightTable = connect(
         return -1;
       });
     return {
+      loadingStatus,
       data
     }
   },

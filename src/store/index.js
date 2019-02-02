@@ -12,7 +12,7 @@ const store = createStore(
   )
 );
 
-function initDirtyEntityWatcher(entityName, path, debounceTime) {
+function initDirtyEntityWatcher(entityName, upperEntityName, path, debounceTime) {
   var updateTimeout = null;
   var lastDirtyEntities = new Set();
   store.subscribe(function(){
@@ -41,7 +41,7 @@ function initDirtyEntityWatcher(entityName, path, debounceTime) {
           {withCredentials: true}
         ).then(function(response){
           store.dispatch({
-            type: 'UPDATE_'+entityName.toUpperCase()+'_SUCCESS',
+            type: 'UPDATE_'+upperEntityName+'_SUCCESS',
             payload: {
               id: id
             }
@@ -53,8 +53,8 @@ function initDirtyEntityWatcher(entityName, path, debounceTime) {
 }
 
 let debounceTime = 500;
-initDirtyEntityWatcher('food', '/data/foods/', debounceTime);
-initDirtyEntityWatcher('photos', '/data/photos/', debounceTime);
-initDirtyEntityWatcher('users', '/data/users/', debounceTime);
+initDirtyEntityWatcher('food', 'FOOD', '/data/foods/', debounceTime);
+initDirtyEntityWatcher('photos', 'PHOTOS', '/data/photos/', debounceTime);
+initDirtyEntityWatcher('userProfiles', 'USER_PROFILES', '/data/user_profiles/', debounceTime);
 
 export default store;

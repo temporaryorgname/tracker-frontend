@@ -8,6 +8,9 @@ import axios from 'axios';
 import { connect } from "react-redux";
 
 import { 
+  getLoadingStatus
+} from './Utils.js';
+import { 
   foodActions,
   photoActions,
   photoGroupActions
@@ -1259,6 +1262,28 @@ class ConnectedFoodTable extends Component {
         </>
       );
     }
+    let status = null;
+    if (this.props.loadingStatus) {
+      switch (this.props.loadingStatus.status) {
+        case 'loading':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>LOADING</td>
+            </tr>
+          );
+          break;
+        case 'error':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
+            </tr>
+          );
+          break;
+        default:
+          status = null;
+          break;
+      }
+    }
     return (
       <div className='food-table'>
         <div className='controls'>
@@ -1308,6 +1333,7 @@ class ConnectedFoodTable extends Component {
                           onToggleSelected={that.handleToggleSelected}/>
             })
           }
+          { status }
           </tbody>
         </table>
       </div>
@@ -1318,7 +1344,9 @@ const FoodTable = connect(
   function(state, ownProps) {
     let byDate = state.food.by['date'] || {};
     let ids = byDate[ownProps.date] || [];
+    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
     return {
+      loadingStatus,
       ids: ids,
       total: {
         calories: ids.map(

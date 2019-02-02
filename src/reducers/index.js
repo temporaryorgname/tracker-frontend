@@ -247,7 +247,7 @@ const rootReducer = combineReducers({
   bodyweight: createReducer('BODYWEIGHT'),
   bodyweightSummary: bodyweightSummaryReducer,
   loadingStatus: loadingStatusReducer,
-  users: createReducer('USERS'),
+  userProfiles: createReducer('USER_PROFILES'),
   session: sessionReducer
 });
 
