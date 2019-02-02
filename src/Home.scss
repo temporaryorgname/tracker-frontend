@@ -10,4 +10,24 @@
   span {
     font-weight: bold;
   }
+
+  .progress-bar {
+    text-align: center;
+  }
+  svg {
+    width: unset;
+    rect.total {
+      fill: rgba(white,0.5);
+      stroke: black;
+      stroke-width: 1px;
+    }
+    rect.progress{
+      fill: green;
+      stroke: black;
+      stroke-width: 1px;
+    }
+    text {
+      font-size: 16px;
+    }
+  }
 }

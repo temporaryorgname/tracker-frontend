@@ -167,4 +167,3 @@ const UserProfile = connect(
     };
   }
 )(ConnectedUserProfile);
-
