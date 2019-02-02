@@ -5,6 +5,7 @@ import './App.scss';
 
 import { connect } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
+import { userProfileActions } from './actions/Actions.js';
 
 import { HomePage } from './Home.js'
 import { DietPage } from './Diet.js'
@@ -15,7 +16,12 @@ import { DataPage, TagsPage } from './Data.js'
 class ConnectedApp extends Component {
   constructor(props) {
     super(props);
-    props.updateSession();
+    props.fetchSession();
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.props.uid !== prevProps.uid) {
+      this.props.fetchUserProfile(this.props.uid);
+    }
   }
   render() {
     if (this.props.loggedIn) {
@@ -55,7 +61,8 @@ const App = connect(
   function(state, ownProps) {
     if (state.session.uid) {
       return {
-        loggedIn: true
+        loggedIn: true,
+        uid: state.session.uid
       };
     }
     return {
@@ -64,7 +71,8 @@ const App = connect(
   },
   function(dispatch, ownProps) {
     return {
-      updateSession: () => dispatch(updateSession())
+      fetchSession: () => dispatch(updateSession()),
+      fetchUserProfile: (id) => dispatch(userProfileActions['fetchSingle'](id))
     }
   }
 )(ConnectedApp);

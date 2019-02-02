@@ -13,20 +13,32 @@ import {
   bodyweightActions,
   bodyweightSummaryActions
 } from './actions/Actions.js';
-import { getLoadingStatus } from './Utils.js';
+import { parseQueryString, getLoadingStatus } from './Utils.js';
 
 import './Body.scss';
 
 export class BodyStatsPage extends Component {
+  constructor(props) {
+    super(props);
+
+    // If no date is provided, then set it to the current date
+    var queryParams = parseQueryString(this.props.location.search);
+    if (!queryParams['uid']) {
+      queryParams['uid'] = this.props.uid;
+    }
+    this.state = {
+      uid: queryParams['uid']
+    };
+  }
   render() {
     return (
       <div className='body-page-container'>
         <div className='background'>
         </div>
         <h2>Body Stats</h2>
-        <BodyWeightTable />
-        <BodyWeightTimeSeries />
-        <BodyWeightScatterPlot />
+        <BodyWeightTable uid={this.state.uid}/>
+        <BodyWeightTimeSeries uid={this.state.uid} />
+        <BodyWeightScatterPlot uid={this.state.uid} />
       </div>
     );
   }
@@ -77,7 +89,7 @@ class ConnectedBodyWeightTable extends Component {
             <tr>
               <th>Date</th>
               <th className='hide-mobile'>Time</th>
-              <th>Weight</th>
+              <th>Weight ({this.props.units})</th>
               <th></th>
             </tr>
           </thead>
@@ -116,10 +128,12 @@ const BodyWeightTable = connect(
         }
         return -1;
       });
+    let user = state.userProfiles.entities[ownProps.uid] || {};
     return {
       loadingStatus,
-      data
-    }
+      data,
+      units: user.prefered_units
+    };
   },
   function(dispatch, ownProps) {
     return {
