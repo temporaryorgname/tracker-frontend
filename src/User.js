@@ -28,7 +28,11 @@ class ConnectedUserProfile extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      form: {}
+      form: {},
+      profileSuccessMessage: null,
+      profileErrorMessage: null,
+      goalSuccessMessage: null,
+      goalErrorMessage: null
     };
     props.fetchData();
 
@@ -68,12 +72,23 @@ class ConnectedUserProfile extends Component {
       ...this.props.userInfo,
       display_name, country, prefered_units
     };
+    this.setState({
+      profileSuccessMessage: null,
+      profileErrorMessage: null
+    });
     let that = this;
-    this.props.updateUser(user).then(
-      function() {
-        that.props.clearBodyweight();
-      }
-    );
+    this.props.updateUser(user).then(function(response) {
+      that.props.clearBodyweight();
+      that.setState({
+        profileSuccessMessage: response.data.message,
+        profileErrorMessage: null
+      });
+    }).catch(function(error){
+      that.setState({
+        profileSuccessMessage: null,
+        profileErrorMessage: error.response.data.error
+      });
+    });
   }
   handleSaveGoals(event) {
     event.preventDefault();
@@ -84,7 +99,22 @@ class ConnectedUserProfile extends Component {
       ...this.props.userInfo,
       target_weight, target_calories, weight_goal
     };
-    this.props.updateUser(user);
+    this.setState({
+      goalSuccessMessage: null,
+      goalErrorMessage: null
+    });
+    let that = this;
+    this.props.updateUser(user).then(function(response){
+      that.setState({
+        goalSuccessMessage: response.data.message,
+        goalErrorMessage: null
+      });
+    }).catch(function(error){
+      that.setState({
+        goalSuccessMessage: null,
+        goalErrorMessage: error.response.data.error
+      });
+    });
   }
   render() {
     if (!this.props.userInfo) {
@@ -95,6 +125,12 @@ class ConnectedUserProfile extends Component {
         <h2>Account Settings</h2>
         <h3>Profile</h3>
         <form>
+          <div className='success-message'>
+            {this.state.profileSuccessMessage}
+          </div>
+          <div className='error-message'>
+            {this.state.profileErrorMessage}
+          </div>
           <label>
             <span>Display Name</span>
             <input type='text' name='display_name' value={this.state.form.display_name || ''} onChange={this.handleFormChange}/>
@@ -114,6 +150,12 @@ class ConnectedUserProfile extends Component {
         </form>
         <h3>Goals</h3>
         <form>
+          <div className='success-message'>
+            {this.state.goalSuccessMessage}
+          </div>
+          <div className='error-message'>
+            {this.state.goalErrorMessage}
+          </div>
           <label>
             <span>Bodyweight goal</span>
             <select name='weight_goal' value={this.state.form.weight_goal} onChange={this.handleFormChange}>

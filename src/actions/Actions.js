@@ -31,6 +31,7 @@ function createActions(dataType, path, autosortProps) {
               data: response.data
             }
           });
+          return response;
         });
       }
     },
@@ -81,6 +82,7 @@ function createActions(dataType, path, autosortProps) {
               data: response.data
             }
           });
+          return response;
         }).catch(function(error){
           // Set 'error' status
           dispatch({
@@ -91,6 +93,7 @@ function createActions(dataType, path, autosortProps) {
               error: error
             }
           });
+          return error;
         });
       }
     },
@@ -149,6 +152,7 @@ function createActions(dataType, path, autosortProps) {
               id: data.id
             }
           });
+          return response;
         });
       }
     },
@@ -165,6 +169,7 @@ function createActions(dataType, path, autosortProps) {
               filters: [{id: id}]
             }
           });
+          return response;
         });
       }
     },
@@ -181,6 +186,7 @@ function createActions(dataType, path, autosortProps) {
               filters: filters
             }
           });
+          return response;
         });
       }
     },
