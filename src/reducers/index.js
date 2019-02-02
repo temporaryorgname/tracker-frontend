@@ -104,24 +104,38 @@ function createReducer(entityName) {
       case 'DELETE_'+entityName+'_SUCCESS': {
         let filters = action.payload.filters;
         // Remove matching entities from `entities`
+        let deletedIds = [];
         let filteredKeys = Object.keys(state.entities).filter(function(key){
           let entity = state.entities[key];
-          for (let props in filters) {
-            if (entity[props] !== filters[props]) {
-              return true;
+          for (let filter of filters) {
+            let mismatch = Object.keys(filter).filter(prop => entity[prop] !== filter[prop]);
+            if (mismatch.length === 0) {
+              deletedIds.push(key);
+              return false;
             }
           }
-          return false;
+          return true;
         });
         let entities = {};
         filteredKeys.forEach(function(key){
           entities[key] = state.entities[key];
         });
         // Remove matching entity IDs from `by`
-        // TODO
+        let by = {...state.by};
+        Object.keys(state.by).forEach(function(prop){
+          let updatedBy = {...state.by[prop]};
+          for (let id of deletedIds) {
+            let entity = state.entities[id];
+            if (entity[prop] in updatedBy) {
+              updatedBy[entity[prop]] = updatedBy[entity[prop]].filter(x => x !== id);
+            }
+          }
+          by[prop] = updatedBy;
+        });
         return {
           ...state,
-          entities: entities
+          entities: entities,
+          by: by
         };
       }
       case 'CLEAR_'+entityName: {

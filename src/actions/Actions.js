@@ -162,7 +162,7 @@ function createActions(dataType, path, autosortProps) {
           dispatch({
             type: 'DELETE_'+dataType+'_SUCCESS',
             payload: {
-              filters: {id: id}
+              filters: [{id: id}]
             }
           });
         });

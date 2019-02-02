@@ -63,7 +63,7 @@ export const HomePage = connect(
 
     let goalCalories = user.target_calories;
     let avgCalories = count > 0 ? Math.floor(total/count) : 0;
-    let todayCalories = history[0].calories;
+    let todayCalories = history[0].calories || 0;
     let caloriesLeft = goalCalories-todayCalories;
 
     let goalWeight = user.target_weight;
