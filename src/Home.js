@@ -22,7 +22,7 @@ class ConnectedHomePage extends Component {
         <div>
           <h3>Progress Report</h3>
           <div>
-            Here is a dummy progress report with some randomly generated numbers. Your goal is to consume <span>{this.props.goalCalories}</span> Calories per day, and your goal weight is <span>x</span>. Lorem ipsum dolor sit amet and stuff.
+            Here is a dummy progress report with some randomly generated numbers. Your goal is to consume <span>{this.props.goalCalories}</span> Calories per day, and your goal weight is <span>{this.props.goalWeight || 'x'}</span>. Lorem ipsum dolor sit amet and stuff.
           </div>
           <div>
           Average Calories consumed each day in the past week: <span>{this.props.avgCalories}</span> Cals/day.
@@ -61,13 +61,17 @@ export const HomePage = connect(
     let avgCalories = count > 0 ? Math.floor(total/count) : 0;
     let todayCalories = history[0].calories;
     let caloriesLeft = goalCalories-todayCalories;
+
+    let goalWeight = user.target_weight;
+
     return {
       uid: uid,
       name: user.display_name,
       goalCalories: goalCalories,
       todayCalories: todayCalories,
       avgCalories: avgCalories,
-      caloriesLeft: caloriesLeft
+      caloriesLeft: caloriesLeft,
+      goalWeight: goalWeight,
     }
   },
   function(dispatch, ownProps) {

@@ -89,11 +89,11 @@ class ConnectedUserProfile extends Component {
         <form>
           <label>
             <span>Display Name</span>
-            <input type='text' name='display_name' value={this.state.form.display_name} onChange={this.handleFormChange}/>
+            <input type='text' name='display_name' value={this.state.form.display_name || ''} onChange={this.handleFormChange}/>
           </label>
           <label>
             <span>Country</span>
-            <input type='text' name='country' value={this.state.form.country} onChange={this.handleFormChange}/>
+            <input type='text' name='country' value={this.state.form.country || ''} onChange={this.handleFormChange}/>
           </label>
           <label>
             <span>Prefered Units</span>
@@ -117,11 +117,11 @@ class ConnectedUserProfile extends Component {
           </label>
           <label>
             <span>Target weight</span>
-            <input type='text' name='target_weight' value={this.state.form.target_weight} onChange={this.handleFormChange} />
+            <input type='text' name='target_weight' value={this.state.form.target_weight || ''} onChange={this.handleFormChange} />
           </label>
           <label>
             <span>Target Calories</span>
-            <input type='text' name='target_calories' value={this.state.form.target_calories} onChange={this.handleFormChange} />
+            <input type='text' name='target_calories' value={this.state.form.target_calories || ''} onChange={this.handleFormChange} />
           </label>
           <button onClick={this.handleSaveGoals}>Save</button>
         </form>
