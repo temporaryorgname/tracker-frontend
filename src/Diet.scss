@@ -9,7 +9,6 @@
 
   .date .material-icons {
     vertical-align: top;
-    cursor: pointer;
   }
 }
 
@@ -17,13 +16,6 @@
   text-align: center;
   display: inline-block;
   width: 990px;
-
-  i.material-icons {
-    cursor: pointer;
-    &:hover {
-      color: rgba($primary-colour, 0.7);
-    }
-  }
 
   .controls{
     padding: 5px 20px;
@@ -110,10 +102,6 @@
 .gallery {
   i.material-icons {
     margin: 5px;
-    cursor: pointer;
-    &:hover {
-      color: rgba($primary-colour, 0.7);
-    }
   }
   .controls {
     text-align: right;

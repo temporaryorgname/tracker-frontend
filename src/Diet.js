@@ -80,11 +80,11 @@ class ConnectedDietPage extends Component {
         </div>
         <h2>Diet Log</h2>
         <h3 className='date'>
-          <i className='material-icons' onClick={this.prevDate}>navigate_before</i>
+          <i className='material-icons action' onClick={this.prevDate}>navigate_before</i>
           <DatePicker 
             onChange={this.handleDateChange}
             customInput={<span>{this.state.params.date}</span>}/>
-          <i className='material-icons' onClick={this.nextDate}>navigate_next</i>
+          <i className='material-icons action' onClick={this.nextDate}>navigate_next</i>
         </h3>
         <Switch>
           <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
@@ -215,18 +215,18 @@ class ConnectedGallery extends Component {
         <>
           <label>
             <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
-            <i className='material-icons'>add_a_photo</i>
+            <i className='material-icons action'>add_a_photo</i>
           </label>
           <label onClick={this.createGroup}>
-            <i className='material-icons'>create_new_folder</i>
+            <i className='material-icons action'>create_new_folder</i>
           </label>
         </>
       );
       if (this.state.selectedPhotoId || this.state.selectedGroupId) {
         controls = (
           <>
-            <i className='material-icons' onClick={this.handleDelete}>delete</i>
-            <i className='material-icons' onClick={this.newEntry}>playlist_add</i>
+            <i className='material-icons action' onClick={this.handleDelete}>delete</i>
+            <i className='material-icons action' onClick={this.newEntry}>playlist_add</i>
           </>
         );
       }
@@ -327,7 +327,7 @@ class ConnectedGallery extends Component {
           <div className='thumbnail new-thumbnail loading'>
             <label>
               <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
-              <i className='material-icons'>add_a_photo</i>
+              <i className='material-icons action'>add_a_photo</i>
             </label>
           </div>
           <GalleryNutritionTable date={this.props.date} photoId={null}/>
@@ -607,7 +607,7 @@ class ConnectedFileUploadDialog extends Component {
     var that = this;
     return (
       <div className='file-upload-dialog'>
-        <i className="material-icons" onClick={this.toggle}>add_a_photo</i>
+        <i className="material-icons action" onClick={this.toggle}>add_a_photo</i>
         <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-sm">
           <ModalHeader toggle={this.toggle}>Upload Photo</ModalHeader>
           <ModalBody>
@@ -1034,7 +1034,7 @@ class ConnectedFoodRowNewEntry extends Component {
               date={this.props.date}/>
         </td>
         <td className='submit'>
-          <i className='material-icons' onClick={this.addEntry}>save</i>
+          <i className='material-icons action' onClick={this.addEntry}>save</i>
         </td>
       </tr>
     );
@@ -1071,7 +1071,7 @@ class DropdownCheckbox extends Component {
   render() {
     return (
       <label className='dropdown-checkbox'>
-        <i className='material-icons'>
+        <i className='material-icons action'>
           {this.state.checked ? 'arrow_drop_down':'arrow_right'}
         </i>
         <input type='checkbox' onChange={this.toggle}/>
@@ -1249,16 +1249,16 @@ class ConnectedFoodTable extends Component {
     if (this.state.selected.size === 1) {
       controls = (
         <>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
           <FileUploadDialog onUpload={this.handlePhotoUpload} files={[/*TODO*/]}/>
-          <i className='material-icons'>date_range</i>
+          <i className='material-icons action'>date_range</i>
         </>
       );
     } else if (this.state.selected.size > 1) {
       controls = (
         <>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons">delete</i></Link>
-          <i className='material-icons'>date_range</i>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
+          <i className='material-icons action'>date_range</i>
         </>
       );
     }

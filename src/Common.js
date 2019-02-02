@@ -12,7 +12,7 @@ class Checkbox extends Component {
 		return (
 			<div className='checkbox'>
 				<label>
-					<i className='material-icons'>
+					<i className='material-icons action'>
 						{this.props.checked ? 'check_box' : 'check_box_outline_blank'}
 					</i>
 					<input type='checkbox' {...this.props} />
@@ -41,7 +41,7 @@ class Modal extends Component {
     return (
       <div className={className} onClick={this.handleClickOutside} ref={(x)=>(this.ref=x)}>
         <div className='modal'>
-          <div className='close' onClick={this.props.toggle}><i className='material-icons'>close</i></div>
+          <div className='close' onClick={this.props.toggle}><i className='material-icons action'>close</i></div>
           {this.props.children}
         </div>
       </div>

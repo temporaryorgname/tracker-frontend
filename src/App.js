@@ -264,7 +264,9 @@ class Signup extends Component {
       {withCredentials: true}
     ).then(function(response){
       that.setState({ signingUp: false, errors: [] });
-      that.props.history.push('/food');
+      if (that.onSignup) {
+        that.onSignup();
+      }
     }).catch(function(error){
       console.log(error);
       that.setState({
@@ -315,16 +317,34 @@ class Signup extends Component {
   }
 }
 
-class SignupPage extends Component {
+class ConnectedSignupPage extends Component {
+  constructor(props) {
+    super(props);
+    this.handleSuccessfulSignup = this.handleSuccessfulSignup.bind(this);
+  }
+  handleSuccessfulSignup() {
+    this.props.fetchSession();
+    this.props.history.push('/');
+  }
   render() {
     return (
       <main>
         <div className='background'></div>
-        <Signup />
+        <Signup onSignup={this.handleSuccessfulSignup}/>
       </main>
     );
   }
 }
+const SignupPage = connect(
+  function(state, ownProps) {
+    return {};
+  },
+  function(dispatch, ownProps) {
+    return {
+      fetchSession: () => dispatch(updateSession())
+    }
+  }
+)(ConnectedSignupPage);
 
 class ErrorPage404 extends Component {
   render() {
@@ -337,4 +357,3 @@ class ErrorPage404 extends Component {
 }
 
 export default App;
-

@@ -217,6 +217,9 @@ svg {
 
 i.action {
   cursor: pointer;
+  &:hover {
+    color: rgba($primary-colour, 0.7);
+  }
 }
 
 div.success-message {
