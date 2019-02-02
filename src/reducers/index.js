@@ -16,15 +16,15 @@ function createReducer(entityName) {
         let data = action.payload.data;
         let ids = [];
         let entities = {};
-				if (data instanceof Array) {
-					data.forEach(function(x){
-						entities[x.id] = x;
-						ids.push(x.id);
-					});
-				} else {
-					entities[data.id] = data;
-					ids.push(data.id);
-				}
+        if (data instanceof Array) {
+          data.forEach(function(x){
+            entities[x.id] = x;
+            ids.push(x.id);
+          });
+        } else {
+          entities[data.id] = data;
+          ids.push(data.id);
+        }
 
         let filterKeys = Object.keys(filters);
         if (filterKeys.length === 1) {
@@ -124,6 +124,9 @@ function createReducer(entityName) {
           entities: entities
         };
       }
+      case 'CLEAR_'+entityName: {
+        return initialState;
+      }
       default:
         return state;
     }
@@ -137,8 +140,8 @@ export function loadingStatusReducer(state = {}, action) {
       let filters = action.payload.filters;
       let statusTree = state[entityName];
       let newStatus = updateLoadingStatus(
-				statusTree, filters, {status: 'loading'}
-			);
+        statusTree, filters, {status: 'loading'}
+      );
       return {
         ...state,
         [entityName]: newStatus
@@ -149,8 +152,8 @@ export function loadingStatusReducer(state = {}, action) {
       let filters = action.payload.filters;
       let statusTree = state[entityName];
       let newStatus = updateLoadingStatus(
-				statusTree, filters, {status: 'loaded', time: new Date()}
-			);
+        statusTree, filters, {status: 'loaded', time: new Date()}
+      );
       return {
         ...state,
         [entityName]: newStatus
@@ -162,12 +165,23 @@ export function loadingStatusReducer(state = {}, action) {
       let error = action.payload.error;
       let statusTree = state[entityName];
       let newStatus = updateLoadingStatus(
-				statusTree, filters, {status: 'error', error: error, time: new Date()}
-			);
+        statusTree, filters, {status: 'error', error: error, time: new Date()}
+      );
       return {
         ...state,
         [entityName]: newStatus
       };
+    }
+    case 'CLEAR_LOADING_STATUS': {
+      let entityName = action.payload.entityName;
+      let newState = {};
+      Object.keys(state).forEach(function(key){
+        if (key === entityName) {
+          return;
+        }
+        newState[key] = state[key];
+      });
+      return newState;
     }
     default:
       return state;
@@ -177,11 +191,11 @@ export function loadingStatusReducer(state = {}, action) {
 function foodSummaryReducer(state = {history: null}, action) {
   switch (action.type) {
     case 'FETCH_FOOD_SUMMARY_SUCCESS': {
-			let data = action.payload.data;
-			return {
-				...state,
-				history: data
-			}
+      let data = action.payload.data;
+      return {
+        ...state,
+        history: data
+      }
     }
     default:
       return state;
@@ -191,7 +205,7 @@ function foodSummaryReducer(state = {history: null}, action) {
 function bodyweightSummaryReducer(state = {}, action) {
   switch (action.type) {
     case 'FETCH_BODYWEIGHT_SUMMARY_SUCCESS': {
-			return action.payload.data;
+      return action.payload.data;
     }
     default:
       return state;
@@ -217,17 +231,17 @@ function sessionReducer(state = {}, action) {
       };
     }
     case 'LOGIN_SUCCESS': {
-			return {
-				...state,
-				session: {
-					uid: action.payload.id
-				}
-			};
+      return {
+        ...state,
+        session: {
+          uid: action.payload.id
+        }
+      };
     }
     case 'LOGIN_FAILURE': {
-			return {
-				error: action.payload.error
-			};
+      return {
+        error: action.payload.error
+      };
     }
     case 'LOGOUT_SUCCESS': {
       return {};
@@ -239,7 +253,7 @@ function sessionReducer(state = {}, action) {
 
 const rootReducer = combineReducers({
   food: createReducer('FOOD'),
-	foodSummary: foodSummaryReducer,
+  foodSummary: foodSummaryReducer,
   photos: createReducer('PHOTOS'),
   photoGroups: createReducer('PHOTO_GROUPS'),
   tags: createReducer('TAGS'),

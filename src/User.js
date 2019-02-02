@@ -4,7 +4,10 @@ import { connect } from "react-redux";
 
 //import './User.scss';
 import { parseQueryString } from './Utils.js';
-import { userProfileActions } from './actions/Actions.js';
+import { 
+  bodyweightActions,
+  userProfileActions
+} from './actions/Actions.js';
 
 import './User.scss';
 
@@ -65,7 +68,12 @@ class ConnectedUserProfile extends Component {
       ...this.props.userInfo,
       display_name, country, prefered_units
     };
-    this.props.updateUser(user);
+    let that = this;
+    this.props.updateUser(user).then(
+      function() {
+        that.props.clearBodyweight();
+      }
+    );
   }
   handleSaveGoals(event) {
     event.preventDefault();
@@ -163,7 +171,8 @@ const UserProfile = connect(
   function(dispatch, ownProps) {
     return {
       fetchData: () => dispatch(userProfileActions['fetchSingle'](ownProps.uid)),
-      updateUser: (user) => dispatch(userProfileActions['update'](user))
+      updateUser: (user) => dispatch(userProfileActions['updateNow'](user)),
+      clearBodyweight: () => dispatch(bodyweightActions['clear']())
     };
   }
 )(ConnectedUserProfile);

@@ -17,14 +17,14 @@ function createActions(dataType, path, autosortProps) {
       console.log('FETCH '+dataType);
       const ACTION = 'FETCH_'+dataType;
       return function(dispatch, getState) {
-				// Send request
+        // Send request
         return axios.get(
           process.env.REACT_APP_SERVER_ADDRESS+path+'/'+id,
           {
             withCredentials: true
           }
         ).then(function(response){
-					// Update data
+          // Update data
           dispatch({ 
             type: ACTION+'_SUCCESS',
             payload: {
@@ -35,29 +35,29 @@ function createActions(dataType, path, autosortProps) {
       }
     },
     fetchMultiple: function(filters, cache=true) {
-			filters = filters || {};
+      filters = filters || {};
       console.log('FETCH '+dataType);
       const ACTION = 'FETCH_'+dataType;
       return function(dispatch, getState) {
-				// Check if this is already loading/loaded
-				if (filters && cache) {
-					let status = getLoadingStatus(getState().loadingStatus[dataType], filters);
-					// Check if there was an error. (TODO)
-					// If not, then skip sending the request
-					if (status) {
-						console.log('Already loaded. Skipping.');
-						return;
-					}
-				}
-				// Save 'loading' status
+        // Check if this is already loading/loaded
+        if (filters && cache) {
+          let status = getLoadingStatus(getState().loadingStatus[dataType], filters);
+          // Check if there was an error. (TODO)
+          // If not, then skip sending the request
+          if (status) {
+            console.log('Already loaded. Skipping.');
+            return;
+          }
+        }
+        // Save 'loading' status
         dispatch({
           type: 'LOADING_START',
           payload: {
-						entityName: dataType,
+            entityName: dataType,
             filters: filters
           }
         });
-				// Send request
+        // Send request
         return axios.get(
           process.env.REACT_APP_SERVER_ADDRESS+path,
           {
@@ -65,15 +65,15 @@ function createActions(dataType, path, autosortProps) {
             withCredentials: true
           }
         ).then(function(response){
-					// Save 'loaded' status
-					dispatch({
-						type: 'LOADING_SUCCESS',
-						payload: {
-							entityName: dataType,
-							filters: filters
-						}
-					});
-					// Update data
+          // Save 'loaded' status
+          dispatch({
+            type: 'LOADING_SUCCESS',
+            payload: {
+              entityName: dataType,
+              filters: filters
+            }
+          });
+          // Update data
           dispatch({ 
             type: ACTION+'_SUCCESS',
             payload: {
@@ -82,16 +82,16 @@ function createActions(dataType, path, autosortProps) {
             }
           });
         }).catch(function(error){
-					// Set 'error' status
-					dispatch({
-						type: 'LOADING_FAILURE',
-						payload: {
-							entityName: dataType,
-							filters: filters,
-							error: error
-						}
-					});
-				});
+          // Set 'error' status
+          dispatch({
+            type: 'LOADING_FAILURE',
+            payload: {
+              entityName: dataType,
+              filters: filters,
+              error: error
+            }
+          });
+        });
       }
     },
     create: function(newEntity) {
@@ -120,7 +120,7 @@ function createActions(dataType, path, autosortProps) {
               data: {...newEntity, id: response.data.id}
             }
           })
-					return response;
+          return response;
         });
       }
     },
@@ -134,6 +134,24 @@ function createActions(dataType, path, autosortProps) {
         }
       }
     },
+    updateNow: function(data) {
+      console.log('UPDATE '+dataType);
+      console.log(data);
+      return function(dispatch) {
+        return axios.put(
+          process.env.REACT_APP_SERVER_ADDRESS+path+'/'+data.id,
+          data,
+          {withCredentials: true}
+        ).then(function(response){
+          dispatch({
+            type: 'UPDATE_'+dataType+'_SUCCESS',
+            payload: {
+              id: data.id
+            }
+          });
+        });
+      }
+    },
     deleteSingle: function(id) {
       console.log('DELETE '+dataType);
       return function(dispatch) {
@@ -144,7 +162,7 @@ function createActions(dataType, path, autosortProps) {
           dispatch({
             type: 'DELETE_'+dataType+'_SUCCESS',
             payload: {
-							filters: {id: id}
+              filters: {id: id}
             }
           });
         });
@@ -163,6 +181,20 @@ function createActions(dataType, path, autosortProps) {
               filters: filters
             }
           });
+        });
+      }
+    },
+    clear: function() {
+      console.log('CLEAR '+dataType);
+      return function(dispatch) {
+        dispatch({
+          type: 'CLEAR_'+dataType,
+        });
+        dispatch({
+          type: 'CLEAR_LOADING_STATUS',
+          payload: {
+            entityName: dataType
+          }
         });
       }
     }
