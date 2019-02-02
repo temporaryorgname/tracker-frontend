@@ -100,9 +100,7 @@ class ConnectedBodyWeightTable extends Component {
                 <td className='hide-mobile'>{data.time}</td>
                 <td>{data.bodyweight.toFixed(1)}</td>
                 <td>
-                  <Link to='#' onClick={that.getDeleteHandler(data.id)}>
-                    <i className='material-icons'>delete</i>
-                  </Link>
+                  <i className='material-icons action' onClick={that.getDeleteHandler(data.id)}>delete</i>
                 </td>
               </tr>);
             })}

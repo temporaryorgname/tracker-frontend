@@ -215,6 +215,10 @@ svg {
   }
 }
 
+i.action {
+  cursor: pointer;
+}
+
 div.success-message {
   font-size: 10px;
   color: $success-colour;
