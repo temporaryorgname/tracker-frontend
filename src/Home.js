@@ -38,9 +38,6 @@ class ConnectedHomePage extends Component {
             centerText={'Today'}
             leftText={this.props.todayCalories+' Calories consumed'}
             rightText={this.props.caloriesLeft+' Calories left'} />
-          <div>
-            Quick-add calories: <input type='text' />
-          </div>
         </div>
       </main>
     );
