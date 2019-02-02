@@ -116,7 +116,7 @@ class ConnectedUserProfile extends Component {
         <form>
           <label>
             <span>Bodyweight goal</span>
-            <select name='bodyweight_goal' value={this.state.form.bodyweight_goal} onChange={this.handleFormChange}>
+            <select name='weight_goal' value={this.state.form.weight_goal} onChange={this.handleFormChange}>
               <option value='gain'>Gain weight</option>
               <option value='lose'>Lose weight</option>
               <option value='maintain'>Maintain</option>
