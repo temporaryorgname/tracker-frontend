@@ -1,0 +1,30 @@
+main.user-page-container {
+  h3 {
+    text-align: left;
+    margin: 20px;
+  }
+  form {
+    margin: 20px;
+    text-align: left;
+    div {
+      margin-left: 20px;
+    }
+    label {
+      white-space: nowrap;
+      display: block;
+      margin-left: 20px;
+      span {
+        display: inline-block;
+        width: 200px;
+        margin-right: 20px;
+      }
+      input {
+        display: inline-block;
+        max-width: 40%;
+      }
+    }
+    button {
+      margin: 20px;
+    }
+  }
+}

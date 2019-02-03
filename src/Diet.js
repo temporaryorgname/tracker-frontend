@@ -1272,6 +1272,19 @@ class ConnectedFoodTable extends Component {
             </tr>
           );
           break;
+        case 'loaded':
+          if (this.props.ids.length === 0) {
+            status = (
+              <tr className='status'>
+                <td colSpan='999'>
+                  <div>
+                    You have not yet recorded any food for today.
+                  </div>
+                </td>
+              </tr>
+            );
+          }
+          break;
         case 'error':
           status = (
             <tr className='status'>

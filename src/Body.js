@@ -70,6 +70,19 @@ class ConnectedBodyWeightTable extends Component {
             </tr>
           );
           break;
+        case 'loaded':
+          if (this.props.data.length === 0) {
+            status = (
+              <tr className='status'>
+                <td colSpan='999'>
+                  <div>
+                    You have no body weights on record.
+                  </div>
+                </td>
+              </tr>
+            );
+          }
+          break;
         case 'error':
           status = (
             <tr className='status'>

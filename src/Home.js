@@ -14,13 +14,28 @@ class ConnectedHomePage extends Component {
     this.props.fetchUserData(this.props.uid);
   }
   render() {
-    return (
-      <main className='home-page-container'>
-        <div className='background'>
-        </div>
-        <h2>Hello {this.props.name}</h2>
-        <div>
-          <h3>Progress Report</h3>
+    let content = null;
+    if (!this.props.avgCalories) {
+      content = (
+        <>
+          <div>
+            You do not currently have anything recorded for the week.
+            Go to the diet page and enter some stuff.
+            Your progress will show up here as you go.
+          </div>
+          <ProgressBar percentage={0.8}
+            centerText={'Weekly Average'}
+            leftText={'? Calories consumed'}
+            rightText={'? Calories left'} />
+          <ProgressBar percentage={0.6}
+            centerText={'Today'}
+            leftText={'? Calories consumed'}
+            rightText={'? Calories left'} />
+        </>
+      );
+    } else {
+      content = (
+        <>
           <div>
             Your goal is to consume <span>{this.props.goalCalories}</span> Calories per day, and your goal weight is <span>{this.props.goalWeight || 'x'}</span>.
           </div>
@@ -38,6 +53,17 @@ class ConnectedHomePage extends Component {
             centerText={'Today'}
             leftText={this.props.todayCalories+' Calories consumed'}
             rightText={this.props.caloriesLeft+' Calories left'} />
+        </>
+      );
+    }
+    return (
+      <main className='home-page-container'>
+        <div className='background'>
+        </div>
+        <h2>Hello {this.props.name}</h2>
+        <div>
+          <h3>Progress Report</h3>
+          { content }
         </div>
       </main>
     );
@@ -63,7 +89,10 @@ export const HomePage = connect(
 
     let goalCalories = user.target_calories;
     let avgCalories = count > 0 ? Math.floor(total/count) : 0;
-    let todayCalories = history[0].calories || 0;
+    let todayCalories = null;
+    if (history.length > 0) {
+      todayCalories = history[0].calories || 0;
+    }
     let caloriesLeft = goalCalories-todayCalories;
 
     let goalWeight = user.target_weight;
