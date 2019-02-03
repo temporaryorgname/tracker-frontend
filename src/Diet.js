@@ -869,7 +869,7 @@ class QuantityInput extends Component {
     var scale = newVals['val']/oldVals['val'];
 
     // Check if the number is valid
-    if (!isFinite(scale)) {
+    if (!isFinite(scale) || scale === 1) {
       return;
     }
 
@@ -878,24 +878,29 @@ class QuantityInput extends Component {
       this.props.onScale(scale);
     }
   }
-  handleBlur() {
-    this.scaleQuantity()
+  handleBlur(e) {
+    this.scaleQuantity();
+    if (this.props.onBlur) {
+      this.props.onBlur(e);
+    }
   }
-  handleFocus() {
+  handleFocus(e) {
     this.setState({
       startingValue: this.props.value
     });
+    if (this.props.onFocus) {
+      this.props.onFocus(e);
+    }
   }
   render() {
     return (
       <input
           type='text'
-          value={this.props.value}
-          placeholder={this.props.placeholder}
-          onChange={this.props.onChange}
+          name='quantity'
+          {...this.props}
           onBlur={this.handleBlur}
           onFocus={this.handleFocus}
-          name='quantity' />
+          />
     );
   }
 }
@@ -1092,14 +1097,15 @@ class ConnectedFoodRow extends Component {
     };
     this.dropdownCheckbox = React.createRef();
     this.toggleChildren = this.toggleChildren.bind(this);
+    this.handleQuantityScale = this.handleQuantityScale.bind(this);
   }
   getOnUpdateHandler(propName) {
     var that = this;
-    return function(val) {
+    return function(e) {
       // Update entry values
       var updatedEntry = {
         ...that.state.data,
-        [propName]: val
+        [propName]: e.target.value
       }
       that.setState({
         data: updatedEntry
@@ -1111,6 +1117,38 @@ class ConnectedFoodRow extends Component {
     this.setState({
       expanded: visible
     });
+  }
+  handleQuantityScale(scale) {
+    var cals = this.state.data.calories;
+    if (isFinite(cals)) {
+      if (typeof cals === 'string' && cals.length > 0) {
+        cals = parseFloat(cals)*scale;
+        cals = cals.toString();
+      } else {
+        cals *= scale
+      }
+    }
+    var prot = this.state.data.protein;
+    if (isFinite(prot)) {
+      if (typeof prot === 'string' && prot.length > 0) {
+        prot = parseFloat(prot)*scale;
+        prot = prot.toString();
+      } else {
+        prot *= scale
+      }
+    }
+    this.setState({
+      data: {
+        ...this.state.data,
+        calories: cals,
+        protein: prot
+      }
+    });
+  }
+  handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
   }
   render() {
     var selected = this.props.selected.has(this.props.id);
@@ -1125,10 +1163,16 @@ class ConnectedFoodRow extends Component {
                 onChange={this.toggleChildren} />
             }
           </td>
-          <FoodRowCell data-label='Item' value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
-          <FoodRowCell data-label='Qty' value={this.state.data.quantity} onChange={this.getOnUpdateHandler('quantity')} />
-          <FoodRowCell data-label='Cals' value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
-          <FoodRowCell data-label='Prot' value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
+          <FoodRowCell value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
+          <td>
+            <QuantityInput
+                value={this.state.data.quantity}
+                onChange={this.getOnUpdateHandler('quantity')}
+                onKeyPress={this.handleKeyPress}
+                onScale={this.handleQuantityScale}/>
+          </td>
+          <FoodRowCell value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
+          <FoodRowCell value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
           <td className='actions'>
           </td>
           <td className='select'>
@@ -1164,15 +1208,6 @@ const FoodRow = connect(
 )(ConnectedFoodRow);
 
 class FoodRowCell extends Component {
-  constructor(props) {
-    super(props)
-    this.onChange = props.onChange;
-    this.handleChange = this.handleChange.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-  }
-  handleChange(e) {
-    this.onChange(e.target.value);
-  }
   handleKeyPress(e) {
     if (e.key === 'Enter') {
       e.target.blur();
@@ -1183,7 +1218,7 @@ class FoodRowCell extends Component {
       <td>
         <input type='text' 
           value={this.props.value}
-          onChange={this.handleChange}
+          onChange={this.props.onChange}
           onKeyPress={this.handleKeyPress}
           ref={x=>this.ref=x}/>
       </td>
