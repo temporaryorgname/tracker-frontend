@@ -61,6 +61,7 @@ class ConnectedBodyWeightTable extends Component {
     var that = this;
     let status = null;
     if (this.props.loadingStatus) {
+      console.log(this.props.loadingStatus);
       switch (this.props.loadingStatus.status) {
         case 'loading':
           status = (
@@ -72,7 +73,11 @@ class ConnectedBodyWeightTable extends Component {
         case 'error':
           status = (
             <tr className='status'>
-              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
+              <td colSpan='999'>
+                <div className='error-message'>
+                  Error: {this.props.loadingStatus.error}
+                </div>
+              </td>
             </tr>
           );
           break;

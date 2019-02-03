@@ -90,7 +90,7 @@ function createActions(dataType, path, autosortProps) {
             payload: {
               entityName: dataType,
               filters: filters,
-              error: error
+              error: error.response.data.error
             }
           });
           return error;

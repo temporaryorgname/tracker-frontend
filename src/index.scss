@@ -328,6 +328,9 @@ table {
     &:hover {
       background-color: rgba(0,0,0,0.1);
     }
+    &.status td {
+      text-align: center;
+    }
   }
   td, th {
     text-align: left;
