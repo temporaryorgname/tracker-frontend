@@ -109,7 +109,7 @@ export const HomePage = connect(
   },
   function(dispatch, ownProps) {
     return {
-      fetchFoodData: () => dispatch(foodSummaryActions['fetchMultiple']()),
+      fetchFoodData: () => dispatch(foodSummaryActions['fetchMultiple']({},false)),
       fetchUserData: (id) => dispatch(userProfileActions['fetchSingle'](id)),
     };
   }

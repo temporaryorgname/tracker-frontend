@@ -911,11 +911,10 @@ class ConnectedFoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: '',
+      item: '',
       quantity: '',
       calories: '',
       protein: '',
-      photos: [],
       suggestion: {}
     };
     this.addEntry = this.addEntry.bind(this);
@@ -931,19 +930,17 @@ class ConnectedFoodRowNewEntry extends Component {
     var that = this;
     this.props.onSubmit({
       date: this.props.date,
-      name: this.state.name,
+      name: this.state.item,
       quantity: this.state.quantity,
       calories: this.state.calories,
-      protein: this.state.protein,
-      photo_ids: this.state.photos.length > 0 ? this.state.photos : [45,46,47]
+      protein: this.state.protein
     }).then(function(response){
       // Clear form
       that.setState({
-        name: '',
+        item: '',
         quantity: '',
         calories: '',
-        protein: '',
-        photos: []
+        protein: ''
       });
       // Place cursor
       that.nameRef.focus();
@@ -1002,12 +999,12 @@ class ConnectedFoodRowNewEntry extends Component {
         <td></td>
         <td>
           <FoodNameInput 
-              value={this.state.name} 
+              value={this.state.item} 
               onChange={this.onChange}
               onHighlight={this.handleHighlight}
               onSelect={this.handleSelect}
-              name='name'
-              placeholder='name'
+              name='item'
+              placeholder='item'
               ref={x => this.nameRef = x} />
         </td>
         <td>
