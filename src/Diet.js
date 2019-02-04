@@ -16,7 +16,7 @@ import {
   photoGroupActions
 } from './actions/Actions.js';
 
-import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail } from './Common.js';
+import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
@@ -89,6 +89,7 @@ class ConnectedDietPage extends Component {
         <Switch>
           <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
           <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid}/>} />
+          <Route path="/food/editor" render={() => <EntryEditorForm date={this.state.params.date} uid={this.state.params.uid}/>} />
         </Switch>
       </main>
     );
@@ -1212,8 +1213,6 @@ const FoodRow = connect(
     let photo_ids = [];
     if (entry.photo_group_id) {
       let byGroupId = state.photos.by.group_id || {};
-      console.log('byGroupId');
-      console.log(byGroupId);
       photo_ids = byGroupId[entry.photo_group_id];
     } else if (entry.photo_id) {
       photo_ids = [entry.photo_id];
@@ -1457,3 +1456,163 @@ const FoodTable = connect(
   }
 )(ConnectedFoodTable);
 
+class ConnectedEntryEditorForm extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      name: '',
+      quantity: '',
+      calories: '',
+      protein: '',
+      photos: [],
+      suggestion: {}
+    };
+    this.addEntry = this.addEntry.bind(this);
+    this.onChange = this.onChange.bind(this);
+    this.onFileUpload = this.onFileUpload.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.handleHighlight = this.handleHighlight.bind(this);
+    this.handleSelect = this.handleSelect.bind(this);
+    this.handleQuantityScale = this.handleQuantityScale.bind(this);
+  }
+  addEntry(e) {
+    // Submit entry to server
+    var that = this;
+    this.props.onSubmit({
+      date: this.props.date,
+      name: this.state.name,
+      quantity: this.state.quantity,
+      calories: this.state.calories,
+      protein: this.state.protein,
+      photo_ids: this.state.photos.length > 0 ? this.state.photos : [45,46,47]
+    }).then(function(response){
+      // Clear form
+      that.setState({
+        name: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photos: []
+      });
+      // Place cursor
+      that.nameRef.focus();
+    });
+  }
+  onChange(e) {
+    var x = {}
+    x[e.target.name] = e.target.value;
+    this.setState(x);
+  }
+  onFileUpload(photoIds) {
+    console.log('File uploaded');
+    console.log(photoIds);
+    this.setState({
+      photos: photoIds
+    });
+  }
+  handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      this.addEntry(e);
+    }
+  }
+  handleHighlight(entry) {
+    this.setState({
+      suggestion: entry
+    });
+  }
+  handleSelect(entry) {
+    function foo(x) {
+      return (x === null) ? x : x.toString();
+    }
+    this.setState({
+      name: entry.name,
+      quantity: foo(entry.quantity) || this.state.quantity,
+      calories: foo(entry.calories) || this.state.calories,
+      protein:  foo(entry.protein) || this.state.protein,
+    });
+  }
+  handleQuantityScale(scale) {
+    var cals = this.state.calories;
+    if (isFinite(cals) && cals.length > 0) {
+      cals = parseFloat(cals)*scale;
+    }
+    var prot = this.state.protein;
+    if (isFinite(prot) && prot.length > 0) {
+      prot = parseFloat(prot)*scale;
+    }
+    this.setState({
+      calories: cals.toString(),
+      protein: prot.toString()
+    });
+  }
+  render() {
+    return (
+      <div className='entry-editor-form'>
+        <div className='main-entry'>
+          <h3>Entry Details</h3>
+          <label>
+            <span>Date</span>
+            <input type='text' name='date' />
+          </label>
+          <label>
+            <span>Item name</span>
+            <input type='text' name='name'/>
+          </label>
+          <label>
+            <span>Quantity</span>
+            <input type='text' name='quantity'/>
+          </label>
+          <label>
+            <span>Calories</span>
+            <input type='text' name='calories'/>
+          </label>
+          <label>
+            <span>Protein</span>
+            <input type='text' name='protein'/>
+          </label>
+        </div>
+        <div className='children-entries'>
+          <h3>Children Entries</h3>
+          <p>
+            What is contained in this meal? Enter the components and we'll sum it up for you!
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Calories</th>
+                <th>Protein</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Banana</td>
+                <td>1</td>
+                <td>100</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+          <button>New Component</button>
+          <button>Sum</button>
+        </div>
+        <div className='photos'>
+          <h3>Photos</h3>
+          <ThumbnailsList ids={[45,46,47,48,49,50]}/>
+          <button>Upload Photo</button>
+        </div>
+      </div>
+    );
+  }
+}
+const EntryEditorForm = connect(
+  function(state, ownProps) {
+    return {}
+  },
+  function(dispatch, ownProps) {
+    return {
+      onSubmit: data => dispatch(foodActions['create'](data))
+    };
+  }
+)(ConnectedEntryEditorForm);

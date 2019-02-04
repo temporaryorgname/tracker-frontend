@@ -53,6 +53,7 @@ div.autocomplete-input {
   overflow: hidden;
   width: 128px;
   height: 128px;
+  position: relative;
 
   &.selected {
     border-width: 3px;
