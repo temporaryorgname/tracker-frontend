@@ -1034,12 +1034,6 @@ class ConnectedFoodRowNewEntry extends Component {
               onChange={this.onChange}
               name='protein' />
         </td>
-        <td className='actions'>
-          <FileUploadDialog
-              onUpload={this.onFileUpload}
-              files={this.state.photos}
-              date={this.props.date}/>
-        </td>
         <td className='submit'>
           <i className='material-icons action' onClick={this.addEntry}>save</i>
         </td>
@@ -1176,7 +1170,7 @@ class ConnectedFoodRow extends Component {
   render() {
     var selected = this.props.selected.has(this.props.id);
     return (
-      <Fragment>
+      <>
         <tr className='entry'>
           <td>
             {
@@ -1196,14 +1190,12 @@ class ConnectedFoodRow extends Component {
           </td>
           <FoodRowCell value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
           <FoodRowCell value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
-          <td className='actions'>
-          </td>
           <td className='select'>
             <Checkbox checked={selected}
               onChange={()=>this.props.onToggleSelected(this.props.id)} />
           </td>
         </tr>
-      </Fragment>
+      </>
     );
   }
 }
@@ -1381,7 +1373,6 @@ class ConnectedFoodTable extends Component {
             <col className='numbers'/>
             <col className='numbers'/>
             <col className='numbers'/>
-            <col />
             <col className='actions' />
           </colgroup>
           <thead>
@@ -1392,7 +1383,6 @@ class ConnectedFoodTable extends Component {
             <th>Calories</th>
             <th>Protein</th>
             <th></th>
-            <th></th>
           </tr>
           </thead>
           <tbody>
@@ -1402,7 +1392,6 @@ class ConnectedFoodTable extends Component {
             <td></td>
             <td data-label='Cals'>{this.props.total.calories}</td>
             <td data-label='Prot'>{this.props.total.protein}</td>
-            <td></td>
             <td></td>
           </tr>
           <FoodRowNewEntry date={this.props.date} />
