@@ -2,24 +2,24 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { connect } from "react-redux";
 import { 
-  fetchPhotos,
-  fetchPhotoData
-} from './actions/Data.js';
+  photoActions,
+  photoDataActions
+} from './actions/Actions.js';
 import './Common.scss';
 
 class Checkbox extends Component {
-	render() {
-		return (
-			<div className='checkbox'>
-				<label>
-					<i className='material-icons action'>
-						{this.props.checked ? 'check_box' : 'check_box_outline_blank'}
-					</i>
-					<input type='checkbox' {...this.props} />
-				</label>
-			</div>
-		);
-	}
+  render() {
+    return (
+      <div className='checkbox'>
+        <label>
+          <i className='material-icons action'>
+            {this.props.checked ? 'check_box' : 'check_box_outline_blank'}
+          </i>
+          <input type='checkbox' {...this.props} />
+        </label>
+      </div>
+    );
+  }
 }
 
 class Modal extends Component {
@@ -79,8 +79,13 @@ class ModalFooter extends Component {
 class ConnectedFoodPhotoThumbnail extends Component {
   constructor(props) {
     super(props);
-    if (!this.props.data) {
-      this.props.updateData(this.props.fileid);
+    if (this.props.fileid) {
+      this.props.fetchData(this.props.fileid);
+    }
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.props.fileid && prevProps.fileid !== this.props.fileid) {
+      this.props.fetchData(this.props.fileid);
     }
   }
   render() {
@@ -104,13 +109,20 @@ class ConnectedFoodPhotoThumbnail extends Component {
 }
 const FoodPhotoThumbnail = connect(
   function(state, ownProps) {
-    return {
-      data: state.data.photoData[ownProps.fileid]
-    };
+    let data = state.photoData.entities[ownProps.fileid];
+    if (data) {
+      return {
+        data: 'data:image/'+data.format+';base64,'+data.data
+      };
+    } else {
+      return {
+        data: null
+      }
+    }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (id) => dispatch(fetchPhotoData(id))
+      fetchData: (id) => dispatch(photoDataActions['fetchSingle'](id))
     };
   }
 )(ConnectedFoodPhotoThumbnail);
@@ -118,7 +130,7 @@ const FoodPhotoThumbnail = connect(
 class ConnectedThumbnailsList extends Component {
   constructor(props) {
     super(props);
-    props.updateData(props.uid);
+    props.fetchData(props.uid);
     this.handleChangePhoto = this.handleChangePhoto.bind(this);
   }
   handleChangePhoto(photoId) {
@@ -156,16 +168,16 @@ const ThumbnailsList = connect(
     }
     if (ownProps.date) {
       return {
-        ids: state.data.photoIdsByDate[ownProps.date]
+        ids: state.photos.by.date[ownProps.date]
       };
     }
     return {
-      ids: state.data.photoIds
+      ids: Object.keys(state.photos.entities)
     };
   },
   function(dispatch, ownProps) {
     return {
-      updateData: (id) => dispatch(fetchPhotos(id))
+      fetchData: (id) => dispatch(photoActions['fetchSingle'](id))
     };
   }
 )(ConnectedThumbnailsList);

@@ -270,6 +270,7 @@ const rootReducer = combineReducers({
   foodSummary: foodSummaryReducer,
   photos: createReducer('PHOTOS'),
   photoGroups: createReducer('PHOTO_GROUPS'),
+  photoData: createReducer('PHOTO_DATA'),
   tags: createReducer('TAGS'),
   labels: createReducer('LABELS'),
   bodyweight: createReducer('BODYWEIGHT'),

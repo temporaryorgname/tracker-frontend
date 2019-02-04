@@ -583,6 +583,7 @@ class ConnectedFileUploadDialog extends Component {
     });
   }
   loadPrediction(photoId) {
+    return; //TODO
     var that = this;
     axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/predict/"+photoId, {withCredentials: true})
         .then(function(response){
@@ -933,7 +934,7 @@ class ConnectedFoodRowNewEntry extends Component {
       quantity: this.state.quantity,
       calories: this.state.calories,
       protein: this.state.protein,
-      photo_id: this.state.photos.length > 0 ? this.state.photos[0] : null
+      photo_ids: this.state.photos.length > 0 ? this.state.photos : [45,46,47]
     }).then(function(response){
       // Clear form
       that.setState({
@@ -1095,9 +1096,30 @@ class ConnectedFoodRow extends Component {
       dirty: false,
       expanded: false
     };
+
+    if (this.props.data.photo_group_id) {
+      this.props.fetchPhotos(this.props.data.photo_group_id);
+    }
+
     this.dropdownCheckbox = React.createRef();
     this.toggleChildren = this.toggleChildren.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.data !== this.props.data) {
+      // Find the places where it changed. and update the state.
+      // If the value in the state is different from the previous props, it means it was edited by the user, and they probably want to keep the new value.
+      let data = {
+        ...this.state.data
+      };
+      let newProps = this.props.data;
+      Object.keys(this.props.data).forEach(function(key){
+        if (data[key] === prevProps[key]) {
+          data[key] = newProps[key];
+        }
+      });
+      this.setState({data: data});
+    }
   }
   getOnUpdateHandler(propName) {
     var that = this;
@@ -1187,6 +1209,15 @@ class ConnectedFoodRow extends Component {
 const FoodRow = connect(
   function(state, ownProps) {
     var entry = state.food.entities[ownProps.id];
+    let photo_ids = [];
+    if (entry.photo_group_id) {
+      let byGroupId = state.photos.by.group_id || {};
+      console.log('byGroupId');
+      console.log(byGroupId);
+      photo_ids = byGroupId[entry.photo_group_id];
+    } else if (entry.photo_id) {
+      photo_ids = [entry.photo_id];
+    }
     return {
       data: {
         id: entry.id,
@@ -1195,14 +1226,17 @@ const FoodRow = connect(
         quantity: entry.quantity || '',
         calories: entry.calories || '',
         protein: entry.protein || '',
-        photos: entry.photos || [],
+        photo_id: entry.photo_id || null,
+        photo_group_id: entry.photo_group_id || null,
+        photo_ids: photo_ids,
         children: entry.children || []
       }
     }
   },
   function(dispatch, ownProps) {
     return {
-      updateEntry: (id, data) => dispatch(foodActions['update'](data))
+      updateEntry: (id, data) => dispatch(foodActions['update'](data)),
+      fetchPhotos: (group_id) => dispatch(photoActions['fetchMultiple']({group_id}))
     };
   }
 )(ConnectedFoodRow);

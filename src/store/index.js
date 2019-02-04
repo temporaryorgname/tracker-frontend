@@ -57,4 +57,6 @@ initDirtyEntityWatcher('food', 'FOOD', '/data/foods/', debounceTime);
 initDirtyEntityWatcher('photos', 'PHOTOS', '/data/photos/', debounceTime);
 initDirtyEntityWatcher('userProfiles', 'USER_PROFILES', '/data/user_profiles/', debounceTime);
 
+window.store = store;
+
 export default store;
