@@ -3,7 +3,10 @@ import React, { Component } from 'react';
 import { connect } from "react-redux";
 
 //import './User.scss';
-import { parseQueryString } from './Utils.js';
+import {
+  parseQueryString,
+  getLoadingStatus
+} from './Utils.js';
 import { 
   bodyweightActions,
   userProfileActions
@@ -141,12 +144,8 @@ class ConnectedUserProfile extends Component {
     });
   }
   render() {
-    if (!this.props.userInfo) {
-      return null;
-    }
-    return (
-      <div>
-        <h2>Account Settings</h2>
+    let form = (
+      <>
         <h3>Profile</h3>
         <form>
           <div className='success-message'>
@@ -215,13 +214,25 @@ class ConnectedUserProfile extends Component {
           </label>
           <button>Save</button>
         </form>
+      </>
+    );
+    let loadingStatus = (
+      <div>LOADING...</div>
+    );
+    if (this.props.userInfo) {
+      loadingStatus = null;
+    }
+    return (
+      <div>
+        <h2>Account Settings</h2>
+        { loadingStatus || form }
       </div>
     );
   }
 }
 const UserProfile = connect(
   function(state, ownProps) {
-    var uid = ownProps.uid || state.loggedInAs;
+    let uid = ownProps.uid || state.loggedInAs;
     if (!uid) {
       return {};
     }
