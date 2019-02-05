@@ -4,8 +4,7 @@ import { connect } from "react-redux";
 
 //import './User.scss';
 import {
-  parseQueryString,
-  getLoadingStatus
+  parseQueryString
 } from './Utils.js';
 import { 
   bodyweightActions,

@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Link } from "react-router-dom";
 
 import { select } from "d3-selection";
 import { line } from "d3-shape";
