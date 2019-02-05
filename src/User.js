@@ -11,18 +11,36 @@ import {
 
 import './User.scss';
 
-export class UserPage extends Component {
-  render() {
+class ConnectedUserPage extends Component {
+  constructor(props) {
+    super(props);
     var queryParams = parseQueryString(this.props.location.search);
-    console.log(queryParams);
+    if (!queryParams['uid']) {
+      queryParams['uid'] = this.props.uid;
+    }
+    this.state = {
+      params: queryParams
+    };
+  }
+  render() {
     return (
       <main className='user-page-container'>
         <div className='background'></div>
-        <UserProfile uid={queryParams['uid']} />
+        <UserProfile uid={this.state.params['uid']} />
       </main>
     );
   }
 }
+export const UserPage = connect(
+  function(state, ownProps) {
+    return {
+      uid: state.session.uid
+    }
+  },
+  function(dispatch, ownProps) {
+    return {};
+  }
+)(ConnectedUserPage);
 
 class ConnectedUserProfile extends Component {
   constructor(props) {

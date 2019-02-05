@@ -29,11 +29,9 @@ class ConnectedDietPage extends Component {
     var queryParams = parseQueryString(this.props.location.search);
     if (!queryParams['date']) {
       queryParams['date'] = formatDate(new Date());
-      this.props.history.push(dictToQueryString(queryParams));
     }
     if (!queryParams['uid']) {
       queryParams['uid'] = this.props.uid;
-      this.props.history.push(dictToQueryString(queryParams));
     }
     this.state = {
       params: queryParams
