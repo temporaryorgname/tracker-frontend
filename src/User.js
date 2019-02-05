@@ -93,7 +93,13 @@ class ConnectedUserProfile extends Component {
   handleSaveGoals(event) {
     event.preventDefault();
     let target_weight = this.state.form.target_weight;
+    if (target_weight.length === 0) {
+      target_weight = null;
+    }
     let target_calories = this.state.form.target_calories;
+    if (target_calories.length === 0) {
+      target_calories = null;
+    }
     let weight_goal = this.state.form.weight_goal;
     let user = {
       ...this.props.userInfo,

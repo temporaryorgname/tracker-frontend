@@ -34,6 +34,12 @@ class ConnectedHomePage extends Component {
                   Diet
                 </div>
               </Link>
+              <Link to={"/body?uid="+this.props.uid}>
+              <div className='large-button'>
+                <i className='material-icons'>trending_down</i>
+                Weight
+              </div>
+              </Link>
             </div>
             Your progress report will appear here once you have entered some data.
           </div>
