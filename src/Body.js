@@ -12,7 +12,7 @@ import {
   bodyweightActions,
   bodyweightSummaryActions
 } from './actions/Actions.js';
-import { parseQueryString, getLoadingStatus } from './Utils.js';
+import { formatDate, parseQueryString, getLoadingStatus } from './Utils.js';
 
 import './Body.scss';
 
@@ -174,7 +174,7 @@ class ConnectedNewBodyWeightEntryForm extends Component {
     var that = this;
 
     var now = new Date();
-    var nowString = now.getFullYear()+"-"+(now.getMonth()+1)+"-"+now.getDate(); // Need to rebuild it to get rid of time zone funniness
+    var nowString = formatDate(now);
     var timeString = now.getHours()+":"+(now.getMinutes())+":"+now.getSeconds();
     var payload = {
       date: nowString,
