@@ -36,7 +36,9 @@ export class BodyStatsPage extends Component {
         </div>
         <h2>Body Stats</h2>
         <BodyWeightTable uid={this.state.uid}/>
+        <h3>Body Weight History</h3>
         <BodyWeightTimeSeries uid={this.state.uid} />
+        <h3>Body Weight Fluctuations</h3>
         <BodyWeightScatterPlot uid={this.state.uid} />
       </div>
     );

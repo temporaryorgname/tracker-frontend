@@ -33,7 +33,7 @@ class ConnectedHomePage extends Component {
         {bodyweightChangeMessage}
         Over the past week, your body weight has been {this.props.bodyweightChange > 0 ? "increasing" : "decreasing"} at a rate of <span>{this.props.bodyweightChange.toFixed(1)}{this.props.units}/day</span>. </>);
       // Time to reach goal
-      let daysLeft = -(this.props.targetWeight-this.props.avgWeight)/this.props.bodyweightChange;
+      let daysLeft = (this.props.targetWeight-this.props.avgWeight)/this.props.bodyweightChange;
       if (daysLeft > 0) {
         bodyweightChangeMessage = (<>
           {bodyweightChangeMessage}
