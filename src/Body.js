@@ -179,7 +179,7 @@ class ConnectedNewBodyWeightEntryForm extends Component {
     var payload = {
       date: nowString,
       time: timeString,
-      bodyweight: this.state.bodyweight
+      bodyweight: parseFloat(this.state.bodyweight)
     }
     this.props.createWeight(payload)
       .then(function(response){

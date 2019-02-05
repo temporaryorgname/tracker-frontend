@@ -6,10 +6,8 @@
   height: 300px;
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 1024px) {
   .bodyweight-table-container {
-    display: block;
-
     table {
       width: 100%;
       margin: 20px 5px;
@@ -29,7 +27,7 @@
   }
 }
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: 1024px) {
   .body-page-container {
     display: inline-block;
     width: 1000px;
@@ -37,7 +35,7 @@
 
   .bodyweight-table-container {
     display: inline-block;
-    width: 45vw;
+    width: 400px;
 
     table {
       width: 100%;
@@ -45,8 +43,8 @@
   }
 
   .bodyweight-plot-container {
-    display: inline-block;
+    display: block;
     width: 45vw;
-    margin: 5px;
+    margin: auto;
   }
 }
