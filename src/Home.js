@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link} from "react-router-dom";
 import './Home.scss';
 
 import { connect } from "react-redux";
@@ -15,22 +16,62 @@ class ConnectedHomePage extends Component {
   }
   render() {
     let content = null;
-    if (!this.props.avgCalories) {
+    if (!this.props.goalCalories && !this.props.avgCalories) {
       content = (
         <>
-          <div>
-            You do not currently have anything recorded for the week.
-            Go to the diet page and enter some stuff.
-            Your progress will show up here as you go.
+          <div className='empty-view'>
+            Get started by updating your profile and recording what you ate today!
+            <div>
+              <Link to={"/user?uid="+this.props.uid}>
+              <div className='large-button'>
+                <i className='material-icons'>account_circle</i>
+                Profile
+              </div>
+              </Link>
+              <Link to={"/food/table?uid="+this.props.uid}>
+                <div className='large-button'>
+                  <i className='material-icons'>fastfood</i>
+                  Diet
+                </div>
+              </Link>
+            </div>
+            Your progress report will appear here once you have entered some data.
           </div>
-          <ProgressBar percentage={0.8}
-            centerText={'Weekly Average'}
-            leftText={'? Calories consumed'}
-            rightText={'? Calories left'} />
-          <ProgressBar percentage={0.6}
-            centerText={'Today'}
-            leftText={'? Calories consumed'}
-            rightText={'? Calories left'} />
+        </>
+      );
+    } else if (this.props.goalCalories && !this.props.avgCalories) {
+      content = (
+        <>
+          <div className='empty-view'>
+            You do not currently have anything recorded for the week.
+            Go to your diet page and record what you ate today!
+            <div>
+              <Link to={"/food/table?uid="+this.props.uid}>
+                <div className='large-button'>
+                  <i className='material-icons'>fastfood</i>
+                  Diet
+                </div>
+              </Link>
+            </div>
+            Your progress report will appear here once you have entered some data.
+          </div>
+        </>
+      );
+    } else if (!this.props.goalCalories && this.props.avgCalories) {
+      content = (
+        <>
+          <div className='empty-view'>
+            You haven't specified your goals.
+            Update your profile to see your progress relative to your goals.
+            <div>
+              <Link to={"/user?uid="+this.props.uid}>
+              <div className='large-button'>
+                <i className='material-icons'>account_circle</i>
+                Profile
+              </div>
+              </Link>
+            </div>
+          </div>
         </>
       );
     } else {
@@ -73,6 +114,12 @@ export const HomePage = connect(
   function(state, ownProps) {
     let uid = state.session.uid;
 
+    // User profile
+    let user = state.userProfiles.entities[uid] || {};
+    let goalCalories = user.target_calories;
+    let goalWeight = user.target_weight;
+
+    // Compute the amount consumed over the past week
     let total = 0;
     let count = 0;
     let history = state.foodSummary.history;
@@ -85,20 +132,19 @@ export const HomePage = connect(
         count += 1;
       }
     })
-    let user = state.userProfiles.entities[uid] || {};
-
-    let goalCalories = user.target_calories;
     let avgCalories = count > 0 ? Math.floor(total/count) : 0;
+
+    // Compute the amount consumed today
     let todayCalories = null;
     if (history.length > 0) {
       todayCalories = history[0].calories || 0;
     }
     let caloriesLeft = goalCalories-todayCalories;
 
-    let goalWeight = user.target_weight;
-
+    // Return values
     return {
       uid: uid,
+
       name: user.display_name,
       goalCalories: goalCalories,
       todayCalories: todayCalories,
