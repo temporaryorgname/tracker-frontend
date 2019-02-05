@@ -1411,20 +1411,22 @@ const FoodTable = connect(
   function(state, ownProps) {
     let byDate = state.food.by['date'] || {};
     let ids = byDate[ownProps.date] || [];
+    ids = ids.filter(id => state.food.entities[id]); // Filter out deleted entries
     let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
+    let entities = ids.map(id => state.food.entities[id]).filter(x => x);
     return {
       loadingStatus,
       ids: ids,
       total: {
-        calories: ids.map(
-            id => state.food.entities[id].calories
+        calories: entities.map(
+            entity => entity.calories
           ).filter(
             val => val && isFinite(val)
           ).reduce(
             (acc, val) => acc+parseFloat(val), 0
           ),
-        protein: ids.map(
-            id => state.food.entities[id].protein
+        protein: entities.map(
+            entity => entity.protein
           ).filter(
             val => val && isFinite(val)
           ).reduce(
