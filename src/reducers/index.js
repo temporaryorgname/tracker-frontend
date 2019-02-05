@@ -206,10 +206,7 @@ function foodSummaryReducer(state = {history: null}, action) {
   switch (action.type) {
     case 'FETCH_FOOD_SUMMARY_SUCCESS': {
       let data = action.payload.data;
-      return {
-        ...state,
-        history: data
-      }
+      return data;
     }
     default:
       return state;
