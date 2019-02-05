@@ -239,6 +239,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
     this.props.updateData();
   }
   updateSVG(firstRender=false) {
+    window.svg = this.svg;
     // Check if data is loaded
     if (this.props.loadingStatus.status !== 'loaded') {
       return null;
@@ -259,6 +260,11 @@ class ConnectedBodyWeightTimeSeries extends Component {
     // Render data
     var width = this.svg.width.baseVal.value;
     var height = this.svg.height.baseVal.value;
+    if (width < 1 || height < 1) {
+      // FIXME: Hacky fix. Plot would not rerender when moving away from this page and back.
+      setTimeout(this.updateSVG, 1);
+      return;
+    }
     var padding = 45;
     var xScale = scaleTime()
       .domain(extent(data, p => p.date))
@@ -315,7 +321,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
       .attr('transform', 'translate(10,'+((height-padding)/2)+') rotate(-90)')
       .text('Weight');
   }
-  componentWillMount() {
+  componentDidMount() {
     this.updateSVG();
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
@@ -384,6 +390,12 @@ class ConnectedBodyWeightScatterPlot extends Component {
     // Setup
     var width = this.svg.width.baseVal.value;
     var height = this.svg.height.baseVal.value;
+    console.log('updateSVG '+width+' '+height);
+    if (width < 1 || height < 1) {
+      // FIXME: Hacky fix. Plot would not rerender when moving away from this page and back.
+      setTimeout(this.updateSVG, 1);
+      return;
+    }
     var padding = 45;
     var xScale = scaleTime()
       .domain([new Date('0000-01-01 0:00:01'),new Date('0000-01-01 23:59')])
@@ -425,7 +437,7 @@ class ConnectedBodyWeightScatterPlot extends Component {
       .attr('transform', 'translate(10,'+((height-padding)/2)+') rotate(-90)')
       .text('Weight');
   }
-  componentWillMount() {
+  componentDidMount() {
     this.updateSVG();
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
