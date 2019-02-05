@@ -5,7 +5,7 @@
 
   .empty-view {
     display: inline-block;
-    width: 50%;
+    width: 500px;
     color: rgb(50,50,50);
     margin: auto;
 
@@ -30,6 +30,11 @@
     }
   }
 
+  .progress-report {
+    width: 800px;
+    margin: auto;
+  }
+
   input[type='text'] {
     width: 100px;
   }
@@ -40,6 +45,8 @@
 
   .progress-bar {
     text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
   }
   svg {
     width: unset;

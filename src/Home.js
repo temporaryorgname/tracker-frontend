@@ -5,101 +5,118 @@ import './Home.scss';
 import { connect } from "react-redux";
 import { 
   userProfileActions,
-  foodSummaryActions
+  foodSummaryActions,
+  bodyweightSummaryActions
 } from './actions/Actions.js';
 
 class ConnectedHomePage extends Component {
   constructor(props) {
     super(props);
     this.props.fetchFoodData();
-    this.props.fetchUserData(this.props.uid);
+    this.props.fetchBodyData(this.props.uid);
   }
   render() {
     let content = null;
-    if (!this.props.goalCalories && !this.props.avgCalories) {
+    let caloriesChangeMessage = null;
+    if (this.props.caloriesChange) {
+      caloriesChangeMessage = (<>
+        Your Calorie consumption has been {this.props.caloriesChange > 0 ? 'increasing' : 'decreasing'} at a rate of <span>{this.props.caloriesChange.toFixed(1)} Calories/day</span>.
+      </>);
+    }
+    let bodyweightChangeMessage = null;
+    if (this.props.targetWeight && 
+        this.props.avgWeight &&
+        this.props.weightGoal &&
+        this.props.bodyweightChange) {
+      // Rate of change
+      bodyweightChangeMessage = (<>
+        {bodyweightChangeMessage}
+        Over the past week, your body weight has been {this.props.bodyweightChange > 0 ? "increasing" : "decreasing"} at a rate of <span>{this.props.bodyweightChange.toFixed(1)}{this.props.units}/day</span>. </>);
+      // Time to reach goal
+      let daysLeft = -(this.props.targetWeight-this.props.avgWeight)/this.props.bodyweightChange;
+      if (daysLeft > 0) {
+        bodyweightChangeMessage = (<>
+          {bodyweightChangeMessage}
+          At this rate, it will take about <span>{daysLeft.toFixed(0)} days</span> to reach your goal of <span>{this.props.targetWeight.toFixed(1)}{this.props.units}</span>.
+        </>);
+      } else {
+        bodyweightChangeMessage = (<>
+          {bodyweightChangeMessage}
+          Your bodyweight is moving in the wrong direction. :( </>);
+      }
+    }
+    if (!this.props.targetCalories && !this.props.avgCalories) {
       content = (
-        <>
-          <div className='empty-view'>
-            Get started by updating your profile and recording what you ate today!
-            <div>
-              <Link to={"/user?uid="+this.props.uid}>
-              <div className='large-button'>
-                <i className='material-icons'>account_circle</i>
-                Profile
-              </div>
-              </Link>
-              <Link to={"/food/table?uid="+this.props.uid}>
-                <div className='large-button'>
-                  <i className='material-icons'>fastfood</i>
-                  Diet
-                </div>
-              </Link>
-              <Link to={"/body?uid="+this.props.uid}>
-              <div className='large-button'>
-                <i className='material-icons'>trending_down</i>
-                Weight
-              </div>
-              </Link>
+        <div className='empty-view'>
+          Get started by updating your profile and recording what you ate today!
+          <div>
+            <Link to={"/user?uid="+this.props.uid}>
+            <div className='large-button'>
+              <i className='material-icons'>account_circle</i>
+              Profile
             </div>
-            Your progress report will appear here once you have entered some data.
+            </Link>
+            <Link to={"/food/table?uid="+this.props.uid}>
+              <div className='large-button'>
+                <i className='material-icons'>fastfood</i>
+                Diet
+              </div>
+            </Link>
+            <Link to={"/body?uid="+this.props.uid}>
+            <div className='large-button'>
+              <i className='material-icons'>trending_down</i>
+              Weight
+            </div>
+            </Link>
           </div>
-        </>
+          Your progress report will appear here once you have entered some data.
+        </div>
       );
-    } else if (this.props.goalCalories && !this.props.avgCalories) {
+    } else if (this.props.targetCalories && !this.props.avgCalories) {
       content = (
-        <>
-          <div className='empty-view'>
-            You do not currently have anything recorded for the week.
-            Go to your diet page and record what you ate today!
-            <div>
-              <Link to={"/food/table?uid="+this.props.uid}>
-                <div className='large-button'>
-                  <i className='material-icons'>fastfood</i>
-                  Diet
-                </div>
-              </Link>
-            </div>
-            Your progress report will appear here once you have entered some data.
-          </div>
-        </>
-      );
-    } else if (!this.props.goalCalories && this.props.avgCalories) {
-      content = (
-        <>
-          <div className='empty-view'>
-            You haven't specified your goals.
-            Update your profile to see your progress relative to your goals.
-            <div>
-              <Link to={"/user?uid="+this.props.uid}>
+        <div className='empty-view'>
+          You do not currently have anything recorded for the week.
+          Go to your diet page and record what you ate today!
+          <div>
+            <Link to={"/food/table?uid="+this.props.uid}>
               <div className='large-button'>
-                <i className='material-icons'>account_circle</i>
-                Profile
+                <i className='material-icons'>fastfood</i>
+                Diet
               </div>
-              </Link>
-            </div>
+            </Link>
           </div>
-        </>
+          Your progress report will appear here once you have entered some data.
+        </div>
+      );
+    } else if (!this.props.targetCalories && this.props.avgCalories) {
+      content = (
+        <div className='empty-view'>
+          You haven't specified your goals.
+          Update your profile to see your progress relative to your goals.
+          <div>
+            <Link to={"/user?uid="+this.props.uid}>
+            <div className='large-button'>
+              <i className='material-icons'>account_circle</i>
+              Profile
+            </div>
+            </Link>
+          </div>
+        </div>
       );
     } else {
       content = (
         <>
-          <div>
-            Your goal is to consume <span>{this.props.goalCalories}</span> Calories per day, and your goal weight is <span>{this.props.goalWeight || 'x'}</span>.
-          </div>
-          <div>
-          Average Calories consumed each day in the past week: <span>{this.props.avgCalories}</span> Cals/day.
-          </div>
-          <ProgressBar percentage={this.props.avgCalories/this.props.goalCalories}
-            centerText={'Weekly Average'}
-            leftText={this.props.avgCalories+' Calories consumed'}
-            rightText={(this.props.goalCalories-this.props.avgCalories)+' Calories left'} />
-          <div>
-          Calories left for today: <span>{this.props.caloriesLeft || ''}</span> Cals.
-          </div>
-          <ProgressBar percentage={this.props.todayCalories/this.props.goalCalories}
+          <ProgressBar percentage={this.props.todayCalories/this.props.targetCalories}
             centerText={'Today'}
             leftText={this.props.todayCalories+' Calories consumed'}
             rightText={this.props.caloriesLeft+' Calories left'} />
+          <ProgressBar percentage={this.props.avgCalories/this.props.targetCalories}
+            centerText={'Weekly Average'}
+            leftText={this.props.avgCalories+' Calories consumed'}
+            rightText={(this.props.targetCalories-this.props.avgCalories)+' Calories left'} />
+          <div>
+            {bodyweightChangeMessage} {caloriesChangeMessage}
+          </div>
         </>
       );
     }
@@ -108,7 +125,7 @@ class ConnectedHomePage extends Component {
         <div className='background'>
         </div>
         <h2>Hello {this.props.name}</h2>
-        <div>
+        <div className='progress-report'>
           <h3>Progress Report</h3>
           { content }
         </div>
@@ -122,8 +139,9 @@ export const HomePage = connect(
 
     // User profile
     let user = state.userProfiles.entities[uid] || {};
-    let goalCalories = user.target_calories;
-    let goalWeight = user.target_weight;
+    let targetCalories = user.target_calories;
+    let targetWeight = user.target_weight;
+    let weightGoal = user.weight_goal;
 
     // Compute the amount consumed over the past week
     let total = 0;
@@ -145,24 +163,29 @@ export const HomePage = connect(
     if (history.length > 0) {
       todayCalories = history[0].calories || 0;
     }
-    let caloriesLeft = goalCalories-todayCalories;
+    let caloriesLeft = targetCalories-todayCalories;
 
     // Return values
     return {
       uid: uid,
+      units: state.bodyweightSummary.units,
 
       name: user.display_name,
-      goalCalories: goalCalories,
+      targetCalories: targetCalories,
       todayCalories: todayCalories,
       avgCalories: avgCalories,
       caloriesLeft: caloriesLeft,
-      goalWeight: goalWeight,
+      targetWeight: targetWeight,
+      weightGoal: user.weight_goal,
+      caloriesChange: state.foodSummary.calorie_change_per_day,
+      avgWeight: state.bodyweightSummary.avg_weight,
+      bodyweightChange: state.bodyweightSummary.weight_change_per_day
     };
   },
   function(dispatch, ownProps) {
     return {
       fetchFoodData: () => dispatch(foodSummaryActions['fetchMultiple']({},false)),
-      fetchUserData: (id) => dispatch(userProfileActions['fetchSingle'](id)),
+      fetchBodyData: (id) => dispatch(bodyweightSummaryActions['fetchMultiple'](id)),
     };
   }
 )(ConnectedHomePage);
