@@ -33,8 +33,10 @@
     }
 
     .progress-report {
-      width: 800px;
+      max-width: 800px;
       margin: auto;
+      padding: 15px;
+      box-sizing: border-box;
     }
 
     input[type='text'] {
