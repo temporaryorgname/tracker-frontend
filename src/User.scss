@@ -15,7 +15,8 @@ main.user-page-container {
       margin-left: 20px;
       span {
         display: inline-block;
-        width: 200px;
+        width: 50%;
+        max-width: 200px;
         margin-right: 20px;
       }
       input {
