@@ -253,7 +253,8 @@ table {
 
   .background {
     position: fixed;
-    width: inherit;
+    width: 100%;
+    max-width: 1000px;
     top: 0px;
     bottom: 0px;
     background: inherit;
