@@ -112,11 +112,11 @@ class ConnectedUserProfile extends Component {
   }
   handleSaveGoals(event) {
     event.preventDefault();
-    let target_weight = this.state.form.target_weight;
+    let target_weight = this.state.form.target_weight || '';
     if (target_weight.length === 0) {
       target_weight = null;
     }
-    let target_calories = this.state.form.target_calories;
+    let target_calories = this.state.form.target_calories || '';
     if (target_calories.length === 0) {
       target_calories = null;
     }
@@ -181,10 +181,10 @@ class ConnectedUserProfile extends Component {
           <label>
             <span>Bodyweight goal</span>
             <select name='weight_goal' value={this.state.form.weight_goal} onChange={this.handleFormChange}>
+              <option value='none'>None</option>
               <option value='gain'>Gain weight</option>
               <option value='lose'>Lose weight</option>
               <option value='maintain'>Maintain</option>
-              <option value='none'>None</option>
             </select>
           </label>
           <label>
