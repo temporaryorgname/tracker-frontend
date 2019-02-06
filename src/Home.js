@@ -190,18 +190,77 @@ export const HomePage = connect(
   }
 )(ConnectedHomePage);
 
+class ResponsiveSVG extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      width: null,
+    }
+    this.handleResize = this.handleResize.bind(this)
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevState.width !== this.state.width) {
+      if (this.props.onResize) {
+        this.props.onResize(this.state.width);
+      }
+    }
+  }
+  componentDidMount() {
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  }
+  handleResize() {
+    let width = this.state.width;
+    let newWidth = this.svgContainer.getBoundingClientRect().width;
+    if (width !== newWidth) {
+      this.setState({
+        width: newWidth,
+      });
+    }
+  }
+  render() {
+    let children = this.props.children;
+    if (this.state.width === null) {
+      children = null;
+    }
+    return (
+      <div
+        ref={(el) => { this.svgContainer = el }}
+        className="responsive-svg-wrapper">
+        {children}
+      </div>
+    )
+  }
+}
+
 class ProgressBar extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      width: null
+    };
+    this.handleResize = this.handleResize.bind(this);
+  }
+  handleResize(width) {
+    this.setState({
+      width: width
+    });
+  }
   render() {
     let percentage = this.props.percentage;
     let centerText = this.props.centerText;
     let leftText = this.props.leftText;
     let rightText = this.props.rightText;
-    let width = 798;
+    let width = this.state.width-10;
     let height = 25;
     if (percentage >= 0 && percentage <= 1) {
       let progressWidth = percentage*width;
       return (
         <div className='progress-bar'>
+          <ResponsiveSVG onResize={this.handleResize}>
           <svg width={width+2} height={height+2}>
             <rect className='total' x="1" y="1" rx="3" ry="3" width={width} height={height} />
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={progressWidth} height={height} />
@@ -209,6 +268,7 @@ class ProgressBar extends Component {
             <text textAnchor='start' x={6} y={height-6} >{leftText}</text>
             <text textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
           </svg>
+          </ResponsiveSVG>
         </div>
       );
     } else if (percentage > 1) {

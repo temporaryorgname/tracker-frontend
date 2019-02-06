@@ -39,7 +39,7 @@
 .food-table {
   text-align: center;
   display: inline-block;
-  width: 990px;
+  max-width: 750px;
 
   .controls{
     padding: 5px 20px;
@@ -199,15 +199,9 @@
 }
 
 @media only screen and (min-width: 1366px) {
-  main {
-    width: 1000px;
-  }
 }
 
-@media only screen and (max-width: 1366px) {
-  main {
-    width: 750px;
-  }
+@media only screen and (min-width: 500px) and (max-width: 1024px) {
   .food-table {
     width: 100%;
     table {
@@ -222,15 +216,10 @@
   }
 }
 
-@media only screen and (max-width: 768px) {
-  main {
-    width: 100%;
-  }
+// Phones
+@media only screen and (max-width: 480px) {
   i.material-icons {
     font-size: 18px;
-  }
-  input[type='text'] {
-    font-size: 10px;
   }
   .food-table {
     width: 100%;
@@ -247,6 +236,9 @@
     }
     th, td {
       padding: 3px;
+    }
+    input[type='text'] {
+      font-size: 10px;
     }
   }
 }

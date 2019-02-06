@@ -1,41 +1,9 @@
 .body-page-container {
   text-align: center;
-}
-
-.bodyweight-plot-container {
-  height: 300px;
-}
-
-@media only screen and (max-width: 1024px) {
-  .bodyweight-table-container {
-    table {
-      width: 100%;
-      margin: 20px 5px;
-      padding: 20px 0;
-
-      tbody tr:nth-child(n+10) {
-        display: none;
-      }
-    }
-  }
-
-  .bodyweight-plot-container {
-    display: inline-block;
-    width: 90%;
-    margin: 10px 5px;
-    padding: 0;
-  }
-}
-
-@media only screen and (min-width: 1024px) {
-  .body-page-container {
-    display: inline-block;
-    width: 1000px;
-  }
 
   .bodyweight-table-container {
     display: inline-block;
-    width: 500px;
+    max-width: 500px;
 
     table {
       width: 100%;
@@ -43,8 +11,7 @@
   }
 
   .bodyweight-plot-container {
-    display: block;
-    width: 45vw;
-    margin: auto;
+    height: 300px;
+    padding: 20px;
   }
 }

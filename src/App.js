@@ -78,40 +78,53 @@ const App = connect(
 )(ConnectedApp);
 
 class ConnectedNavigation extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      menuVisibile: false
+    }
+    this.toggleMenu = this.toggleMenu.bind(this);
+  }
+  toggleMenu() {
+    this.setState({
+      menuVisibile: !this.state.menuVisibile
+    });
+  }
   render() {
+    let navClasses = ['nav'];
+    if (!this.state.menuVisibile) {
+      navClasses.push('hide-mobile');
+    }
+    navClasses = navClasses.join(' ');
     if (this.props.loggedIn) {
       return (
         <nav>
+          <div className='toggle-menu' onClick={this.toggleMenu}>
+            <i className='material-icons'>menu</i>
+          </div>
           <div className='home'>
             <Link to="/"><i className='material-icons'>home</i></Link>
           </div>
-          <ul className="nav">
-            <li>
-              <Link to={"/food/table?uid="+this.props.uid}>Diet</Link>
-            </li>
-            <li>
-              <Link to={"/body?uid="+this.props.uid}>Body Stats</Link>
-            </li>
-            <li>
-              <Link to="#" onClick={(e) => {e.preventDefault(); this.props.logout();}}>Logout</Link>
-            </li>
-          </ul>
           <div className='user'>
             <Link to={"/user?uid="+this.props.uid}><i className='material-icons'>account_circle</i></Link>
           </div>
+          <ul className={navClasses} onClick={this.toggleMenu}>
+            <Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
+            <Link to={"/body?uid="+this.props.uid}><li>Body Stats</li></Link>
+            <Link to="#" onClick={(e) => {e.preventDefault(); this.props.logout();}}><li>Logout</li></Link>
+          </ul>
         </nav>
       );
     } else {
       return (
         <nav>
-        <ul className="nav">
-          <li className="nav-item">
-            <Link className="nav-link" to="/login">Login</Link>
-          </li>
-          <li className="nav-item">
-            <Link className="nav-link" to="/signup">Sign Up</Link>
-          </li>
-        </ul>
+          <div className='toggle-menu' onClick={this.toggleMenu}>
+            <i className='material-icons'>menu</i>
+          </div>
+          <ul className={navClasses} onClick={this.toggleMenu}>
+            <Link className="nav-link" to="/login"><li>Login</li></Link>
+            <Link className="nav-link" to="/signup"><li>Sign Up</li></Link>
+          </ul>
         </nav>
       );
     }

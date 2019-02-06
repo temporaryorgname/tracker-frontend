@@ -31,7 +31,7 @@ export class BodyStatsPage extends Component {
   }
   render() {
     return (
-      <div className='body-page-container'>
+      <main className='body-page-container'>
         <div className='background'>
         </div>
         <h2>Body Stats</h2>
@@ -40,7 +40,7 @@ export class BodyStatsPage extends Component {
         <BodyWeightTimeSeries uid={this.state.uid} />
         <h3>Body Weight Fluctuations</h3>
         <BodyWeightScatterPlot uid={this.state.uid} />
-      </div>
+      </main>
     );
   }
 }

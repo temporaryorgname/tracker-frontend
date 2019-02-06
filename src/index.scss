@@ -5,122 +5,17 @@ body {
   padding: 0;
   font-family: sans-serif;
   font-size: 16px;
-  background-image: url('images/background.jpeg');
-  background-attachment: fixed;
-  background-size: cover;
-  background-color: #cbbdb0;
   color: $primary-colour;
   text-align: center;
   position:relative;
   min-height:100vh;
 }
 
-.background {
-  position: fixed;
-  width: inherit;
-  top: 0px;
-  bottom: 0px;
-  background: inherit;
-  background-color: #cbbdb0;
-  background-image: url('images/background.jpeg');
-  background-attachment: fixed;
-  background-size: cover;
-  z-index: -1;
-  overflow: hidden;
-
-  &::before {
-    content:'';
-    display:block;
-    background:inherit;
-    width:100%;
-    height:100%;
-    filter: blur(15px);
-  }
-  
-  &::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top:0px;
-    bottom:0px;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.1);
-  }
-}
-
-.background2 {
-  position: fixed;
-  width: inherit;
-  top: 0px;
-  bottom: 0px;
-  background: inherit;
-  background-color: #cbbdb0;
-  background-image: inherit;
-  background-attachment: fixed;
-  background-size: cover;
-  z-index: -1;
-  overflow: hidden;
-
-  &::before {
-    content:'';
-    display:block;
-    background:inherit;
-    width:100%;
-    height:100%;
-    filter: blur(15px);
-  }
-  
-  &::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top:0px;
-    bottom:0px;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.1);
-  }
-}
-
-nav {
-  background: #000;
-  text-align: left;
-  white-space: nowrap;
-  border-bottom: 1px solid;
-  box-shadow: 0px 3px 4px rgba(0, 0, 0, .5);
-  ul {
-    display: inline-block;
-  }
-  div {
-    display: inline-block;
-    text-align: right;
-    margin: 15px;
-    vertical-align: top;
-    &.user {
-      float: right;
-    }
-  }
-  li {
-    display: inline-block;
-    margin: 0.1rem 1rem;
-  }
-  a {
-    text-decoration: none;
-    color: #FFF;
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
-
 main {
   display: inline-block;
   min-height: 100vh;
-}
-
-h2 {
-  margin-top: 100px;
+  width: 100%;
+  max-width: 1000px;
 }
 
 a {
@@ -344,7 +239,93 @@ table {
   display: none;
 }
 
-@media only screen and (max-width: 768px) {
+@media #{$computer-and-tablet} {
+  body {
+    background-image: url('images/background.jpeg');
+    background-attachment: fixed;
+    background-size: cover;
+    background-color: #cbbdb0;
+  }
+
+  h2 {
+    margin-top: 100px;
+  }
+
+  .background {
+    position: fixed;
+    width: inherit;
+    top: 0px;
+    bottom: 0px;
+    background: inherit;
+    background-color: #cbbdb0;
+    background-image: url('images/background.jpeg');
+    background-attachment: fixed;
+    background-size: cover;
+    z-index: -1;
+    overflow: hidden;
+
+    &::before {
+      content:'';
+      display:block;
+      background:inherit;
+      width:100%;
+      height:100%;
+      filter: blur(15px);
+    }
+    
+    &::after {
+      content: '';
+      display: block;
+      position: absolute;
+      top:0px;
+      bottom:0px;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.1);
+    }
+  }
+
+  nav {
+    background: #000;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid;
+    box-shadow: 0px 3px 4px rgba(0, 0, 0, .5);
+    border: 0;
+    color: #FFF;
+    ul {
+      display: inline-block;
+    }
+    div {
+      display: inline-block;
+      text-align: right;
+      margin: 15px;
+      vertical-align: top;
+      &.user {
+        float: right;
+      }
+    }
+    li {
+      display: inline-block;
+      margin: 0.1rem 1rem;
+    }
+    a {
+      text-decoration: none;
+      color: #FFF;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+    .toggle-menu {
+      display: none;
+    }
+  }
+}
+
+@media #{$computer} {
+}
+
+@media #{$tablet} {
   .hide-tablet {
     display: none;
   }
@@ -355,14 +336,49 @@ table {
       width: 80%;
     }
   }
-
-  .background {
-    background-image: none;
-  }
 }
 
-@media only screen and (max-width: 320px) {
+@media #{$mobile} {
   .hide-mobile{
     display: none;
+  }
+
+  nav {
+    background: #000;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid;
+    box-shadow: 0px 3px 4px rgba(0, 0, 0, .5);
+    border: 0;
+    color: #FFF;
+    position: relative;
+    z-index: 1;
+    ul {
+      list-style-type: none;
+      width: 100%;
+      padding: 0px;
+      margin: 0;
+      position: absolute;
+      background-color: black;
+    }
+    div {
+      display: inline-block;
+      text-align: right;
+      margin: 15px;
+      vertical-align: top;
+      &.user {
+        float: right;
+      }
+    }
+    li {
+      margin: 1rem;
+    }
+    a {
+      text-decoration: none;
+      color: #FFF;
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 }
