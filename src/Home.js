@@ -4,7 +4,6 @@ import './Home.scss';
 
 import { connect } from "react-redux";
 import { 
-  userProfileActions,
   foodSummaryActions,
   bodyweightSummaryActions
 } from './actions/Actions.js';

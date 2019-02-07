@@ -795,7 +795,7 @@ class FoodNameInput extends Component {
             this.state.suggestions.map(function(item,index){
               var className = that.state.selected === index ? 'selected' : '';
               return (
-                <tr className={className} key={item.id} onMouseEnter={that.getMouseEnterHandler(index)}>
+                <tr className={className} key={index} onMouseEnter={that.getMouseEnterHandler(index)}>
                   <td className='name'>{item.name}</td>
                   <td className='numbers' data-label='qty'>{item.quantity}</td>
                   <td className='numbers' data-label='cals'>{item.calories}</td>
@@ -893,11 +893,12 @@ class QuantityInput extends Component {
     }
   }
   render() {
+    const {onScale, ...props} = this.props;
     return (
       <input
           type='text'
           name='quantity'
-          {...this.props}
+          {...props}
           onBlur={this.handleBlur}
           onFocus={this.handleFocus}
           />
