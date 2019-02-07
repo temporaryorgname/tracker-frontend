@@ -158,10 +158,16 @@ class ConnectedLoginPrompt extends Component {
   }
   login(e) {
     e.preventDefault(); // Prevent the form from routing the user elsewhere
+    let that = this;
     this.props.login(
       this.state.email,
       this.state.password,
-      this.state.rememberMe);
+      this.state.rememberMe)
+    .then(function(){
+      if (that.props.onLogin) {
+        that.props.onLogin();
+      }
+    });
   }
   handleFormChange(e) {
     var x = {}
@@ -233,16 +239,34 @@ const LoginPrompt = connect(
   }
 )(ConnectedLoginPrompt);
 
-class LoginPage extends Component {
+class ConnectedLoginPage extends Component {
+  constructor(props) {
+    super(props);
+    this.handleLogin = this.handleLogin.bind(this);
+  }
+  handleLogin() {
+    this.props.history.push('/');
+    this.props.fetchSession();
+  }
   render() {
     return (
       <main>
         <div className='background'></div>
-        <LoginPrompt />
+        <LoginPrompt onLogin={this.handleLogin}/>
       </main>
     );
   }
 }
+const LoginPage = connect(
+  function(state, ownProps) {
+    return {};
+  },
+  function(dispatch, ownProps) {
+    return {
+      fetchSession: () => dispatch(updateSession())
+    }
+  }
+)(ConnectedLoginPage);
 
 class Signup extends Component {
   constructor(props) {
