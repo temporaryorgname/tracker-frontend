@@ -45,7 +45,7 @@ export const login = function(email, password, remember){
   }
 }
 
-export const logout = function(email, password){
+export const logout = function(){
   return function(dispatch) {
     dispatch({type: 'LOGOUT_START'});
     return axios.get(

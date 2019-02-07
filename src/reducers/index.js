@@ -262,7 +262,7 @@ function sessionReducer(state = {}, action) {
   }
 }
 
-const rootReducer = combineReducers({
+const combinedReducer = combineReducers({
   food: createReducer('FOOD'),
   foodSummary: foodSummaryReducer,
   photos: createReducer('PHOTOS'),
@@ -276,5 +276,12 @@ const rootReducer = combineReducers({
   userProfiles: createReducer('USER_PROFILES'),
   session: sessionReducer
 });
+
+const rootReducer = function(state, action) {
+  if (action.type === 'LOGOUT_SUCCESS') {
+    return combinedReducer(undefined, action);
+  }
+  return combinedReducer(state, action);
+}
 
 export default rootReducer;
