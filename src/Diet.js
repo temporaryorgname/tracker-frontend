@@ -971,7 +971,7 @@ class ConnectedFoodRowNewEntry extends Component {
       return (x === null) ? x : x.toString();
     }
     this.setState({
-      name: entry.name,
+      item: entry.name,
       quantity: foo(entry.quantity) || this.state.quantity,
       calories: foo(entry.calories) || this.state.calories,
       protein:  foo(entry.protein) || this.state.protein,
