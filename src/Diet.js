@@ -87,7 +87,7 @@ class ConnectedDietPage extends Component {
         <Switch>
           <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
           <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid}/>} />
-          <Route path="/food/editor" render={() => <EntryEditorForm date={this.state.params.date} uid={this.state.params.uid}/>} />
+          <Route path="/food/editor" render={() => <EntryEditorForm date={this.state.params.date} uid={this.state.params.uid} id={this.state.params.id} photo_id={this.state.params.photo_id} group_id={this.state.params.group_id}/>} />
         </Switch>
       </main>
     );
@@ -857,6 +857,13 @@ class QuantityInput extends Component {
       var units = str.substring(val.toString().length).trim();
       return {val: val, units: units}
     }
+    // Ignore empty strings
+    if (this.props.value === null) {
+      return;
+    }
+    if (this.props.value.length === 0) {
+      return;
+    }
     // Split numbers and units
     var oldVals = splitUnits(this.state.startingValue);
     var newVals = splitUnits(this.props.value);
@@ -932,7 +939,8 @@ class ConnectedFoodRowNewEntry extends Component {
       name: this.state.item,
       quantity: this.state.quantity,
       calories: this.state.calories,
-      protein: this.state.protein
+      protein: this.state.protein,
+      photo_ids: []
     }).then(function(response){
       // Clear form
       that.setState({
@@ -1164,7 +1172,8 @@ class ConnectedFoodRow extends Component {
     }
   }
   render() {
-    var selected = this.props.selected.has(this.props.id);
+    let selected = this.props.selected;
+    let that = this;
     return (
       <>
         <tr className='entry'>
@@ -1187,16 +1196,25 @@ class ConnectedFoodRow extends Component {
           <FoodRowCell value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
           <FoodRowCell value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
           <td className='select'>
-            <Checkbox checked={selected}
+            <Checkbox checked={selected.has(that.props.id)}
               onChange={()=>this.props.onToggleSelected(this.props.id)} />
           </td>
         </tr>
+        {this.state.expanded && this.state.data.children.length > 0 && 
+          this.state.data.children.map(function(child){
+            return (<FoodRow data={child} id={child.id} selected={selected} />);
+          })
+        }
       </>
     );
   }
 }
 const FoodRow = connect(
   function(state, ownProps) {
+    if (ownProps.data) {
+      return {};
+    }
+
     var entry = state.food.entities[ownProps.id];
     let photo_ids = [];
     if (entry.photo_group_id) {
@@ -1447,22 +1465,77 @@ class ConnectedEntryEditorForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      id: null,
       name: '',
+      date: this.props.date,
+      time: '',
       quantity: '',
       calories: '',
       protein: '',
-      photos: [],
-      suggestion: {}
+      photo_ids: [],
+      childEntries: [],
+      suggestion: {},
     };
+    this.loadEntryById = this.loadEntryById.bind(this);
+    this.loadEntryByPhotoId = this.loadEntryByPhotoId.bind(this);
+    this.loadEntryByGroupId = this.loadEntryByGroupId.bind(this);
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
+    this.handleChildrenChange = this.handleChildrenChange.bind(this);
+    this.handleNewChild = this.handleNewChild.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleHighlight = this.handleHighlight.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
+    this.uploadFile = this.uploadFile.bind(this);
+
+    if (this.props.id) {
+      this.loadEntryById(this.props.id);
+    } else if (this.props.photo_id) {
+      this.loadEntryByPhotoId(this.props.photo_id);
+    } else if (this.props.group_id) {
+      this.loadEntryByGroupId(this.props.group_id);
+    }
   }
+
+  loadEntryById(id) {
+    const that = this;
+    this.props.fetchFood(id).then(function(response){
+      console.log('loadEntryById');
+      console.log(response.data);
+      let entry = response.data;
+      that.setState({
+        ...entry,
+        childEntries: null
+      });
+    });
+  }
+  loadEntryByPhotoId(photoId) {
+    const that = this;
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+'/data/photos/'+photoId+'/food',
+      { withCredentials: true }
+    ).then(function(response){
+      console.log('loadEntryByPhotoId');
+      console.log(response.data);
+      let entries = response.data;
+      if (entries.length === 0) {
+        return;
+      }
+      let mainEntry = entries.filter(x => x.parent_id === null)[0];
+      let childEntries = entries.filter(x => x.parent_id !== null);
+      that.setState({
+        ...mainEntry,
+        childEntries
+      });
+    });
+  }
+  loadEntryByGroupId(groupId) {
+  }
+
   addEntry(e) {
+    e.preventDefault();
     // Submit entry to server
     var that = this;
     this.props.onSubmit({
@@ -1471,18 +1544,19 @@ class ConnectedEntryEditorForm extends Component {
       quantity: this.state.quantity,
       calories: this.state.calories,
       protein: this.state.protein,
-      photo_ids: this.state.photos.length > 0 ? this.state.photos : [45,46,47]
+      photo_ids: this.state.photo_ids,
+      children: this.state.childEntries
     }).then(function(response){
       // Clear form
       that.setState({
         name: '',
+        time: '',
         quantity: '',
         calories: '',
         protein: '',
-        photos: []
+        photo_ids: [],
+        childEntries: []
       });
-      // Place cursor
-      that.nameRef.focus();
     });
   }
   onChange(e) {
@@ -1496,6 +1570,19 @@ class ConnectedEntryEditorForm extends Component {
     this.setState({
       photos: photoIds
     });
+  }
+  handleChildrenChange(data) {
+    this.setState({
+      childEntries: data
+    })
+  }
+  handleNewChild() {
+    let newEntry = {
+      name: ''
+    };
+    this.setState({
+      childEntries: [...this.state.childEntries, newEntry]
+    })
   }
   handleKeyPress(e) {
     if (e.key === 'Enter') {
@@ -1532,62 +1619,70 @@ class ConnectedEntryEditorForm extends Component {
       protein: prot.toString()
     });
   }
+  uploadFile(event) {
+    let that = this;
+    let target = event.target;
+    this.props.uploadPhoto(target.files)
+    .then(function(response){
+      target.value = "";
+      that.setState({
+        photo_ids: [...that.state.photo_ids, response.data.id]
+      });
+    });
+  }
   render() {
+    let mainEntry = (
+      <div className='main-entry'>
+        <h3>Entry Details</h3>
+        <label>
+          <span>Date</span>
+          <input type='date' name='date' value={this.state.date}/>
+        </label>
+        <label>
+          <span>Time</span>
+          <input type='time' name='date' value={this.state.time} onChange={this.onChange}/>
+        </label>
+        <label>
+          <span>Item name</span>
+          <input type='text' name='name' value={this.state.name} onChange={this.onChange}/>
+        </label>
+        <label>
+          <span>Quantity</span>
+          <input type='text' name='quantity' value={this.state.quantity} onChange={this.onChange}/>
+        </label>
+        <label>
+          <span>Calories</span>
+          <input type='text' name='calories' value={this.state.calories} onChange={this.onChange}/>
+        </label>
+        <label>
+          <span>Protein</span>
+          <input type='text' name='protein' value={this.state.protein} onChange={this.onChange}/>
+        </label>
+        <button onClick={this.addEntry}>{this.state.id ? "Save Entry" : "Create Entry"}</button>
+      </div>
+    );
+    let childEntries = (
+      <div className='children-entries'>
+        <h3>Children Entries</h3>
+        <p> {"What is contained in this meal? Enter the components and we'll sum it up for you!"} </p>
+        <SmallTable data={this.state.childEntries} onChange={this.handleChildrenChange} />
+        <button onClick={this.handleNewChild}>New Component</button>
+        <button>Sum</button>
+      </div>
+    );
+    let photos = (
+      <div className='photos'>
+        <h3>Photos</h3>
+        <ThumbnailsList ids={this.state.photo_ids}/>
+        <input type='file' onChange={this.uploadFile} />
+      </div>
+    );
     return (
       <div className='entry-editor-form'>
-        <div className='main-entry'>
-          <h3>Entry Details</h3>
-          <label>
-            <span>Date</span>
-            <input type='text' name='date' />
-          </label>
-          <label>
-            <span>Item name</span>
-            <input type='text' name='name'/>
-          </label>
-          <label>
-            <span>Quantity</span>
-            <input type='text' name='quantity'/>
-          </label>
-          <label>
-            <span>Calories</span>
-            <input type='text' name='calories'/>
-          </label>
-          <label>
-            <span>Protein</span>
-            <input type='text' name='protein'/>
-          </label>
-        </div>
-        <div className='children-entries'>
-          <h3>Children Entries</h3>
-          <p>
-            What is contained in this meal? Enter the components and we'll sum it up for you!
-          </p>
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-                <th>Calories</th>
-                <th>Protein</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Banana</td>
-                <td>1</td>
-                <td>100</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-          <button>New Component</button>
-          <button>Sum</button>
-        </div>
-        <div className='photos'>
-          <h3>Photos</h3>
-          <ThumbnailsList ids={[45,46,47,48,49,50]}/>
-          <button>Upload Photo</button>
+        {mainEntry}
+        <div>
+          {childEntries}
+          {photos}
         </div>
       </div>
     );
@@ -1595,11 +1690,106 @@ class ConnectedEntryEditorForm extends Component {
 }
 const EntryEditorForm = connect(
   function(state, ownProps) {
-    return {}
+    if (ownProps.id) {
+      // Load entry and associated photo ids
+      return {
+        data: state.food.entities[ownProps.id]
+      };
+    } else if (ownProps.photo_id) {
+      // Check if there's a food entry associated with that photo.
+      // If there is, then load that entry.
+      // If not, then we create a new entry.
+      let byPhotoId = state.food.by.photo_id || {};
+    } else if (ownProps.groupId) {
+      // Check if there's a food entry associated with that photo group.
+      // If there is, then load that entry.
+      // If not, then we create a new entry.
+    } else {
+      // We're just creating a new entry with no preset values.
+    }
+    return {
+      data: null
+    }
   },
   function(dispatch, ownProps) {
     return {
-      onSubmit: data => dispatch(foodActions['create'](data))
+      fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
+      onSubmit: data => dispatch(foodActions['create'](data)),
+      uploadPhoto: (files) => dispatch(
+        photoActions['create'](files, ownProps.date)
+      ),
     };
   }
 )(ConnectedEntryEditorForm);
+
+class SmallTable extends Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+  handleChange(data, index) {
+    if (this.props.onChange) {
+      let updatedData = [
+        ...this.props.data,
+      ];
+      updatedData[index] = data;
+      this.props.onChange(updatedData);
+    }
+  }
+  render() {
+    let that = this;
+    let emptyRow = null;
+    if (this.props.data.length === 0) {
+      emptyRow = (
+        <tr><td colspan='999'>{'There are not child entries to show.'}</td></tr>
+      );
+    }
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Calories</th>
+            <th>Protein</th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.props.data.map(function(datum, index){
+            return <SmallTableRow
+              key={index}
+              data={datum} 
+              onChange={x => that.handleChange(x, index)} />
+          })}
+          {emptyRow}
+        </tbody>
+      </table>
+    );
+  }
+}
+
+class SmallTableRow extends Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+  handleChange(e) {
+    if (this.props.onChange) {
+      let data = {
+        ...this.props.data,
+        [e.target.name]: e.target.value
+      };
+      this.props.onChange(data);
+    }
+  }
+  render() {
+    return (
+      <tr>
+        <td><input type='text' onChange={this.handleChange} name='name' value={this.props.data.name} /></td>
+        <td><input type='text' onChange={this.handleChange} name='quantity' value={this.props.data.quantity} /></td>
+        <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories} /></td>
+        <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein} /></td>
+      </tr>
+    );
+  }
+}
