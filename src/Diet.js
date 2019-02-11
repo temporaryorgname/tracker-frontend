@@ -40,6 +40,7 @@ class ConnectedDietPage extends Component {
     this.handleDateChange = this.handleDateChange.bind(this);
     this.prevDate = this.prevDate.bind(this);
     this.nextDate = this.nextDate.bind(this);
+    this.handleEditEntry = this.handleEditEntry.bind(this);
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.location.search !== this.props.location.search) {
@@ -68,6 +69,13 @@ class ConnectedDietPage extends Component {
     newDate.setDate(newDate.getDate()+2);
     this.handleDateChange(newDate);
   }
+  handleEditEntry(photoId, groupId) {
+    if (photoId) {
+      this.props.history.push('/food/editor?photo_id='+photoId);
+    } else if (groupId) {
+      this.props.history.push('/food/editor?group_id='+groupId);
+    }
+  }
   render() {
     if (!this.state.params.date || !this.state.params.uid) {
       return null;
@@ -86,7 +94,7 @@ class ConnectedDietPage extends Component {
         </h3>
         <Switch>
           <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
-          <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid}/>} />
+          <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid} onEditEntry={this.handleEditEntry}/>} />
           <Route path="/food/editor" render={() => <EntryEditorForm date={this.state.params.date} uid={this.state.params.uid} id={this.state.params.id} photo_id={this.state.params.photo_id} group_id={this.state.params.group_id}/>} />
         </Switch>
       </main>
@@ -124,7 +132,7 @@ class ConnectedGallery extends Component {
     this.handleDragOver = this.handleDragOver.bind(this);
     this.handleDrop = this.handleDrop.bind(this);
     this.handleDragStart = this.handleDragStart.bind(this);
-    this.newEntry = this.newEntry.bind(this);
+    this.editSelected = this.editSelected.bind(this);
   }
   handleSelectPhoto(photoId) {
     photoId = parseInt(photoId);
@@ -191,20 +199,8 @@ class ConnectedGallery extends Component {
     console.log('drag start');
     event.dataTransfer.setData('photoId', photoId);
   }
-  newEntry() {
-    if (this.state.selectedPhotoId) {
-      this.props.createFood({
-        name: 'Food',
-        date: this.props.date,
-        photo_id: this.state.selectedPhotoId
-      });
-    } else if (this.state.selectedGroupId) {
-      this.props.createFood({
-        name: 'Food 2',
-        date: this.props.date,
-        photo_group_id: this.state.selectedGroupId
-      });
-    }
+  editSelected() {
+    this.props.onEditEntry(this.state.selectedPhotoId, this.state.selectedGroupId);
   }
   render() {
     var that = this;
@@ -225,7 +221,7 @@ class ConnectedGallery extends Component {
         controls = (
           <>
             <i className='material-icons action' onClick={this.handleDelete}>delete</i>
-            <i className='material-icons action' onClick={this.newEntry}>playlist_add</i>
+            <i className='material-icons action' onClick={this.editSelected}>create</i>
           </>
         );
       }
@@ -267,6 +263,7 @@ class ConnectedGallery extends Component {
             if (groupId === 'null') { // Object.keys() converts the null key to a string
               return null;
             }
+            groupId = parseInt(groupId);
             var classNames = ['thumbnail', 'group'];
             if (that.state.selectedGroupId === groupId) {
               classNames.push('selected');
@@ -287,21 +284,6 @@ class ConnectedGallery extends Component {
           }
         );
       }
-      // Render nutrition table for selected group or photo
-      let nutritionTable = null;
-      if (this.state.selectedPhotoId) {
-        nutritionTable = (
-          <GalleryNutritionTable
-              date={this.props.date}
-              photoId={this.state.selectedPhotoId}/>
-        );
-      } else if (this.state.selectedGroupId) {
-        nutritionTable = (
-          <GalleryNutritionTable
-              date={this.props.date}
-              groupId={this.state.selectedGroupId}/>
-        );
-      }
       return (
         <div className='gallery' onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
           <div className='controls'>{controls}</div>
@@ -309,7 +291,6 @@ class ConnectedGallery extends Component {
             {thumbnails[null]}
             {groups}
           </div>
-          {nutritionTable}
         </div>
       );
     } else {
@@ -344,7 +325,7 @@ const Gallery = connect(
           return state.photoGroups.entities[id].date === ownProps.date;
         });
       let photoIdsByGroup = null;
-      if (groupIds) {
+      if (groupIds.length > 0) {
         // Init photo IDs by photo group
         photoIdsByGroup = groupIds.reduce(function(acc,id) {
           acc[id] = [];
@@ -1532,6 +1513,23 @@ class ConnectedEntryEditorForm extends Component {
     });
   }
   loadEntryByGroupId(groupId) {
+    const that = this;
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+'/data/photo_groups/'+groupId+'/food',
+      { withCredentials: true }
+    ).then(function(response){
+      console.log('loadEntryByGroupId');
+      console.log(response.data);
+      let entries = response.data;
+      if (entries.length === 0) {
+        return;
+      }
+      let mainEntry = entries.filter(x => x.parent_id === null)[0];
+      that.setState({
+        ...mainEntry,
+        childEntries: mainEntry['children']
+      });
+    });
   }
 
   addEntry(e) {
