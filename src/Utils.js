@@ -32,9 +32,12 @@ export const parseQueryString = function(query) {
     }, {});
 }
 
-export const dictToQueryString = function(query) {
+export const dictToQueryString = function(query, keys=null) {
   var output = [];
   for (var k in query) {
+    if (keys && keys.indexOf(k) === -1) {
+      continue;
+    }
     if (query.hasOwnProperty(k)) {
       output.push([k,query[k]].join('='))
     }

@@ -47,7 +47,9 @@ class ConnectedDietPage extends Component {
       var queryParams = parseQueryString(this.props.location.search);
       if (!queryParams['date']) {
         queryParams['date'] = formatDate(new Date());
-        this.props.history.push(dictToQueryString(queryParams));
+      }
+      if (!queryParams['uid']) {
+        queryParams['uid'] = this.props.uid;
       }
       this.setState({
         params: queryParams
@@ -70,20 +72,31 @@ class ConnectedDietPage extends Component {
     this.handleDateChange(newDate);
   }
   handleEditEntry(photoId, groupId) {
+    let params = {date: this.state.params.date};
     if (photoId) {
-      this.props.history.push('/food/editor?photo_id='+photoId);
+      params['photo_id'] = photoId;
     } else if (groupId) {
-      this.props.history.push('/food/editor?group_id='+groupId);
+      params['group_id'] = groupId;
     }
+    this.props.history.push('/food/editor'+dictToQueryString(params));
   }
   render() {
     if (!this.state.params.date || !this.state.params.uid) {
       return null;
     }
+    let links = (
+      <>
+        <Link to={'/food/table'+dictToQueryString(this.state.params, ['uid','date'])}>Table</Link>
+        <Link to={'/food/photos'+dictToQueryString(this.state.params, ['uid','date'])}>Photos</Link>
+        <Link to={'/food/editor'+dictToQueryString(this.state.params, ['uid','date'])}>Editor</Link>
+      </>
+    );
+    links = null;
     return (
       <main className='diet-page-container'>
         <div className='background'>
         </div>
+        {links}
         <h2>Diet Log</h2>
         <h3 className='date'>
           <i className='material-icons action' onClick={this.prevDate}>navigate_before</i>
@@ -133,6 +146,12 @@ class ConnectedGallery extends Component {
     this.handleDrop = this.handleDrop.bind(this);
     this.handleDragStart = this.handleDragStart.bind(this);
     this.editSelected = this.editSelected.bind(this);
+  }
+  componentDidUpdate(prevProps) {
+    if (prevProps.date !== this.props.date) {
+      this.props.fetchPhotos(this.props.uid);
+      this.props.fetchGroups();
+    }
   }
   handleSelectPhoto(photoId) {
     photoId = parseInt(photoId);
@@ -310,7 +329,6 @@ class ConnectedGallery extends Component {
               <i className='material-icons action'>add_a_photo</i>
             </label>
           </div>
-          <GalleryNutritionTable date={this.props.date} photoId={null}/>
         </div>
       );
     }
@@ -384,159 +402,6 @@ const Gallery = connect(
     };
   }
 )(ConnectedGallery);
-
-class ConnectedGalleryNutritionTable extends Component {
-  constructor(props) {
-    super(props);
-    // TODO: Check if data is already loaded
-    this.props.fetchFood();
-
-    this.newEntry = this.newEntry.bind(this);
-    this.renderLoading = this.renderLoading.bind(this);
-    this.renderData = this.renderData.bind(this);
-  }
-  newEntry() {
-    if (this.props.photoId) {
-      this.props.createFood({
-        name: 'Food',
-        date: this.props.date,
-        photo_id: this.props.photoId
-      });
-    } else if (this.props.groupId) {
-      this.props.createFood({
-        name: 'Food 2',
-        date: this.props.date,
-        photo_group_id: this.props.groupId
-      });
-    }
-  }
-  render() {
-    if (this.props.entries) {
-      return this.renderData();
-    } else {
-      return this.renderLoading();
-    }
-  }
-  renderData() {
-    var entries = this.props.entries.map(function(entry){
-      return (
-        <div className='entry' key={entry.id}>
-          <div className='values'>
-            <div>{entry.name}</div>
-            <div><span>QTY:</span> {entry.quantity}</div>
-            <div><span>CALS:</span> {entry.calories}</div>
-            <div><span>PROT:</span> {entry.protein}</div>
-          </div>
-        </div>
-      );
-    })
-    return (
-      <div className='gallery-nutrition-table-container'>
-        <div className='table'>
-          {entries}
-          <div className='new-entry' onClick={this.newEntry}>
-            New Entry
-          </div>
-        </div>
-      </div>
-    );
-  }
-  renderLoading() {
-    return (
-      <div className='gallery-nutrition-table-container'>
-        {this.props.entries}
-        <div className='table loading'>
-          <div className='entry'>
-            <div className='values'>
-              <div>Example item</div>
-              <div><span>QTY:</span> 100g</div>
-              <div><span>CALS:</span> 500</div>
-              <div><span>PROT:</span> 15</div>
-            </div>
-          </div>
-          <div className='entry'>
-            <div className='values'>
-              <div>Another example</div>
-              <div><span>QTY:</span> 1 cup</div>
-              <div><span>CALS:</span> 150</div>
-              <div><span>PROT:</span> 0</div>
-            </div>
-          </div>
-          <div className='entry'>
-            <div className='values'>
-              <div>Parent entry</div>
-              <div><span>QTY:</span> -</div>
-              <div><span>CALS:</span> 500</div>
-              <div><span>PROT:</span> 15</div>
-            </div>
-            <div className='entry'>
-              <div className='values'>
-              <div>Child entry</div>
-              <div><span>QTY:</span> 2</div>
-              <div><span>CALS:</span> 50</div>
-              <div><span>PROT:</span> 1</div>
-              </div>
-            </div>
-            <div className='entry'>
-              <div className='values'>
-              <div>Child entry</div>
-              <div><span>QTY:</span> 2</div>
-              <div><span>CALS:</span> 50</div>
-              <div><span>PROT:</span> 1</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-}
-const GalleryNutritionTable = connect(
-  function(state, ownProps) {
-    var photoId = ownProps.photoId;
-    var groupId = ownProps.groupId;
-    var date = ownProps.date;
-    var entriesByDate = state.food.by.date || {};
-    entriesByDate = entriesByDate[date];
-    if (!entriesByDate) {
-      return {
-        entries: null
-      };
-    }
-
-    var entries;
-    if (photoId) {
-      entries = entriesByDate
-        .filter(id => parseInt(state.food.entities[id].photo_id) === parseInt(photoId))
-        .map(id => state.food.entities[id]);
-    } else if (groupId) {
-      entries = entriesByDate
-        .filter(function(id) {
-          let food = state.food.entities[id];
-          // Check if the entry is associated with the current group
-          if (parseInt(food.photo_group_id) === parseInt(groupId)) {
-            return true;
-          }
-          // Check if the entry is associated with a photo in the current group
-          var photo = state.photos.entities[food.photo_id];
-          if (photo && parseInt(photo.group_id) === parseInt(groupId)) {
-            return true;
-          }
-          return false;
-        })
-        .map(id => state.food.entities[id]);
-    }
-    return {
-      entries: entries
-    };
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchFood: () => dispatch(foodActions['fetchMultiple']({date: ownProps.date})),
-      createFood: (data) => dispatch(foodActions['create'](data))
-    };
-  }
-)(ConnectedGalleryNutritionTable);
 
 class ConnectedFileUploadDialog extends Component {
   constructor(props) {
@@ -1448,7 +1313,6 @@ class ConnectedEntryEditorForm extends Component {
     this.state = {
       id: null,
       name: '',
-      date: this.props.date,
       time: '',
       quantity: '',
       calories: '',
@@ -1477,6 +1341,18 @@ class ConnectedEntryEditorForm extends Component {
       this.loadEntryByPhotoId(this.props.photo_id);
     } else if (this.props.group_id) {
       this.loadEntryByGroupId(this.props.group_id);
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.id !== this.props.id || prevProps.photo_id !== this.props.photo_id || prevProps.group_id !== this.props.group_id) {
+      if (this.props.id) {
+        this.loadEntryById(this.props.id);
+      } else if (this.props.photo_id) {
+        this.loadEntryByPhotoId(this.props.photo_id);
+      } else if (this.props.group_id) {
+        this.loadEntryByGroupId(this.props.group_id);
+      }
     }
   }
 
@@ -1634,7 +1510,7 @@ class ConnectedEntryEditorForm extends Component {
         <h3>Entry Details</h3>
         <label>
           <span>Date</span>
-          <input type='date' name='date' value={this.state.date}/>
+          <input type='date' name='date' value={this.props.date}/>
         </label>
         <label>
           <span>Time</span>
@@ -1665,7 +1541,6 @@ class ConnectedEntryEditorForm extends Component {
         <p> {"What is contained in this meal? Enter the components and we'll sum it up for you!"} </p>
         <SmallTable data={this.state.childEntries} onChange={this.handleChildrenChange} />
         <button onClick={this.handleNewChild}>New Component</button>
-        <button>Sum</button>
       </div>
     );
     let photos = (
