@@ -193,7 +193,12 @@ class ConnectedGallery extends Component {
     });
   }
   uploadFile(event) {
-    this.props.uploadPhoto(event.target.files);
+    let that = this;
+    this.props.uploadPhoto(
+      event.target.files
+    ).then(function(response){
+      that.props.fetchPhotos(that.props.uid, false);
+    });
   }
   createGroup() {
     this.props.createGroup();
@@ -223,163 +228,187 @@ class ConnectedGallery extends Component {
   }
   render() {
     var that = this;
-    if (this.props.groups) {
-      // Render controls
-      let controls = (
-        <>
-          <label>
-            <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
-            <i className='material-icons action'>add_a_photo</i>
-          </label>
-          <label onClick={this.createGroup}>
-            <i className='material-icons action'>create_new_folder</i>
-          </label>
-        </>
-      );
-      if (this.state.selectedPhotoId || this.state.selectedGroupId) {
-        controls = (
-          <>
-            <i className='material-icons action' onClick={this.handleDelete}>delete</i>
-            <i className='material-icons action' onClick={this.editSelected}>create</i>
-          </>
-        );
-      }
-      // Render thumbnails
-      var thumbnails = {};
-      for (var k in this.props.groups) {
-        if (k === 'null') {
-          thumbnails[k] = this.props.groups[k].map(function(photoId){
-            return (
-              <div className='photo-viewer-thumbnail'
-                  key={photoId}
-                  onClick={()=>that.handleSelectPhoto(photoId)}
-                  onDragStart={(e) => that.handleDragStart(e,photoId)}
-                  draggable>
-                <FoodPhotoThumbnail fileid={photoId}
-                    selected={that.state.selectedPhotoId === photoId}/>
-              </div>
-            );
-          });
-        } else {
-          thumbnails[k] = this.props.groups[k].map(function(photoId){
-            return (
-              <div className='photo-viewer-thumbnail'
-                  key={photoId}
-                  onDragStart={(e) => that.handleDragStart(e,photoId)}
-                  draggable>
-                <FoodPhotoThumbnail fileid={photoId} />
-              </div>
-            );
-          });
-        }
-      }
-      // Render groups
-      let groups = null;
-      if (this.props.groups) {
-        let noThumbnails = <i className='material-icons'>folder</i>
-        groups = Object.keys(this.props.groups).map(
-          function(groupId){
-            if (groupId === 'null') { // Object.keys() converts the null key to a string
-              return null;
-            }
-            groupId = parseInt(groupId);
-            var classNames = ['thumbnail', 'group'];
-            if (that.state.selectedGroupId === groupId) {
-              classNames.push('selected');
-            }
-            classNames = classNames.join(' ');
-            let groupThumbnails = thumbnails[groupId];
-            if (groupThumbnails.length === 0) {
-              groupThumbnails = noThumbnails;
-            }
-            return (
-              <div className={classNames}
-                  onClick={()=>that.handleSelectGroup(groupId)}
-                  onDragOver={that.handleDragOver}
-                  onDrop={(e)=>that.handleDrop(e,groupId)}>
-                {groupThumbnails}
-              </div>
-            );
-          }
-        );
-      }
-      return (
-        <div className='gallery' onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
-          <div className='controls'>{controls}</div>
-          <div className='thumbnails'>
-            {thumbnails[null]}
-            {groups}
-          </div>
-        </div>
-      );
-    } else {
+    if (!this.props.photosLoadingStatus || !this.props.groupsLoadingStatus) {
       return (
         <div>
-          <div className='thumbnail loading'></div>
-          <div className='thumbnail group loading'>
-            <div className='thumbnail loading'></div>
-            <div className='thumbnail loading'></div>
-            <div className='thumbnail loading'></div>
-          </div>
-          <div className='thumbnail loading'></div>
-          <div className='thumbnail loading'></div>
-          <div className='thumbnail new-thumbnail loading'>
+          Waiting to load
+        </div>
+      );
+    } else if (this.props.photosLoadingStatus.status === 'loading' || this.props.groupsLoadingStatus.status === 'loading') {
+      return (
+        <div>
+          LOADING...
+        </div>
+      );
+    } else if (this.props.photosLoadingStatus.status === 'error' || this.props.groupsLoadingStatus.status === 'error') {
+      return (
+        <div className='error-message'>
+          {this.props.photosLoadingStatus.error || this.props.groupsLoadingStatus.error}
+        </div>
+      );
+    } else if (this.props.photosLoadingStatus.status === 'loaded' && this.props.groupsLoadingStatus.status === 'loaded') {
+      if (Object.keys(this.props.photos).length > 0) {
+        // Render controls
+        let controls = (
+          <>
             <label>
               <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
               <i className='material-icons action'>add_a_photo</i>
             </label>
+            <label onClick={this.createGroup}>
+              <i className='material-icons action'>create_new_folder</i>
+            </label>
+          </>
+        );
+        if (this.state.selectedPhotoId || this.state.selectedGroupId) {
+          controls = (
+            <>
+              <i className='material-icons action' onClick={this.handleDelete}>delete</i>
+              <i className='material-icons action' onClick={this.editSelected}>create</i>
+            </>
+          );
+        }
+        // Render thumbnails
+        var thumbnails = {};
+        for (var k in this.props.groups) {
+          if (k === 'null') {
+            thumbnails[k] = this.props.groups[k].map(function(photoId){
+              return (
+                <div className='photo-viewer-thumbnail'
+                    key={photoId}
+                    onClick={()=>that.handleSelectPhoto(photoId)}
+                    onDragStart={(e) => that.handleDragStart(e,photoId)}
+                    draggable>
+                  <FoodPhotoThumbnail fileid={photoId}
+                      selected={that.state.selectedPhotoId === photoId}/>
+                </div>
+              );
+            });
+          } else {
+            thumbnails[k] = this.props.groups[k].map(function(photoId){
+              return (
+                <div className='photo-viewer-thumbnail'
+                    key={photoId}
+                    onDragStart={(e) => that.handleDragStart(e,photoId)}
+                    draggable>
+                  <FoodPhotoThumbnail fileid={photoId} />
+                </div>
+              );
+            });
+          }
+        }
+        // Render groups
+        let groups = null;
+        if (this.props.groups) {
+          let noThumbnails = <i className='material-icons'>folder</i>
+          groups = Object.keys(this.props.groups).map(
+            function(groupId){
+              if (groupId === 'null') { // Object.keys() converts the null key to a string
+                return null;
+              }
+              groupId = parseInt(groupId);
+              var classNames = ['thumbnail', 'group'];
+              if (that.state.selectedGroupId === groupId) {
+                classNames.push('selected');
+              }
+              classNames = classNames.join(' ');
+              let groupThumbnails = thumbnails[groupId];
+              if (groupThumbnails.length === 0) {
+                groupThumbnails = noThumbnails;
+              }
+              return (
+                <div className={classNames}
+                    key={groupId}
+                    onClick={()=>that.handleSelectGroup(groupId)}
+                    onDragOver={that.handleDragOver}
+                    onDrop={(e)=>that.handleDrop(e,groupId)}>
+                  {groupThumbnails}
+                </div>
+              );
+            }
+          );
+        }
+        return (
+          <div className='gallery' onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
+            <div className='controls'>{controls}</div>
+            <div className='thumbnails'>
+              {thumbnails[null]}
+              {groups}
+            </div>
           </div>
-        </div>
-      );
+        );
+      } else {
+        return (
+          <div className='gallery empty-view'>
+            <div>There are no photos to show.</div>
+            <label>
+              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+              <div className='large-button'>
+                <i className='material-icons'>add_a_photo</i>
+                Upload Photo
+              </div>
+            </label>
+          </div>
+        );
+      }
     }
   }
 }
 const Gallery = connect(
   function(state, ownProps) {
-    console.log(state.photoGroups.entities);
-    if (ownProps.date) {
-      var groupIds = Object.keys(state.photoGroups.entities)
-        .filter(function(id) {
-          return state.photoGroups.entities[id].date === ownProps.date;
-        });
-      let photoIdsByGroup = null;
-      if (groupIds.length > 0) {
-        // Init photo IDs by photo group
-        photoIdsByGroup = groupIds.reduce(function(acc,id) {
-          acc[id] = [];
-          return acc;
-        }, {null: []});
-        // Populate with photo IDs
-        var photoIds = Object.keys(state.photos.entities)
-          .filter(function(id) {
-            return state.photos.entities[id].date === ownProps.date;
-          });
-        var photos = {};
-        photoIds.forEach(function(photoId){
-          // Add photo ID to the appropriate group
-          var photo = state.photos.entities[photoId];
-          photoIdsByGroup[photo.group_id].push(parseInt(photoId));
-          // Add photo to the dictionary of photos
-          photos[photoId] = state.photos.entities[photoId];
-        });
-      }
-      return {
-        groups: photoIdsByGroup,
-        photos: photos
-      };
+    let photos = {};
+    let photoIdsByGroup = {};
+    let photosLoadingStatus = getLoadingStatus(
+      state.loadingStatus['PHOTOS'],
+      {user_id: ownProps.uid, date: ownProps.date}
+    );
+    let groupsLoadingStatus = getLoadingStatus(
+      state.loadingStatus['PHOTO_GROUPS'],
+      {user_id: ownProps.uid, date: ownProps.date}
+    );
+    let photosReady = photosLoadingStatus && photosLoadingStatus.status === 'loaded';
+    let groupsReady = groupsLoadingStatus && groupsLoadingStatus.status === 'loaded';
+    if (photosReady && groupsReady) {
+      // Get all photos for the given date
+      let photoIds = Object.keys(
+        state.photos.entities
+      ).filter(function(id) {
+        return state.photos.entities[id].date === ownProps.date;
+      });
+      // Get all photo groups for the given date
+      let groupIds = Object.keys(
+        state.photoGroups.entities
+      ).filter(function(id){
+        return state.photoGroups.entities[id].date === ownProps.date;
+      });
+      // Populate with groups
+      groupIds.forEach(function(groupId){
+        photoIdsByGroup[groupId] = [];
+      });
+      photoIdsByGroup[null] = [];
+      // Populate photo by ID and photo ID by group
+      photoIds.forEach(function(photoId){
+        let photo = state.photos.entities[photoId];
+        // Add photo ID to the appropriate group
+        photoIdsByGroup[photo.group_id].push(parseInt(photoId));
+        // Add photo to the dictionary of photos
+        photos[photoId] = photo;
+      });
     }
     return {
-      groups: {},
-      photos: {}
-    }
+      photosLoadingStatus,
+      groupsLoadingStatus,
+      groups: photoIdsByGroup,
+      photos: photos
+    };
   },
   function(dispatch, ownProps) {
     return {
-      fetchPhotos: (uid) => dispatch(
-        photoActions['fetchMultiple']({user_id: uid, date: ownProps.date})
+      fetchPhotos: () => dispatch(
+        photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date})
       ),
       fetchGroups: () => dispatch(
-        photoGroupActions['fetchMultiple']({date: ownProps.date})
+        photoGroupActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date})
       ),
       updatePhoto: (data) => dispatch(
         photoActions['update'](data)

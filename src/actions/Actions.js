@@ -66,20 +66,20 @@ function createActions(dataType, path, autosortProps) {
             withCredentials: true
           }
         ).then(function(response){
-          // Save 'loaded' status
-          dispatch({
-            type: 'LOADING_SUCCESS',
-            payload: {
-              entityName: dataType,
-              filters: filters
-            }
-          });
           // Update data
           dispatch({ 
             type: ACTION+'_SUCCESS',
             payload: {
               filters: filters,
               data: response.data
+            }
+          });
+          // Save 'loaded' status
+          dispatch({
+            type: 'LOADING_SUCCESS',
+            payload: {
+              entityName: dataType,
+              filters: filters
             }
           });
           return response;
