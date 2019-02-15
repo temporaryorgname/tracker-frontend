@@ -7,6 +7,9 @@ import {
   foodSummaryActions,
   bodyweightSummaryActions
 } from './actions/Actions.js';
+import {
+  formatDate
+} from './Utils.js';
 
 class ConnectedHomePage extends Component {
   constructor(props) {
@@ -149,8 +152,10 @@ export const HomePage = connect(
     if (history === null) {
       return {uid};
     }
+    let today = new Date(formatDate(new Date()));
     history.forEach(function(x){
-      if (x.calories) {
+      // Ignore food consumption from today, so it doesn't artificially lower the average
+      if (new Date(x.date) < today && x.calories) {
         total += x.calories;
         count += 1;
       }
