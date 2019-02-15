@@ -710,7 +710,9 @@ class FoodNameInput extends Component {
     }
     return (
       <div className='food-name-input'>
+        <form autocomplete='off' onSubmit={e => e.preventDefault()}>
         {inputField}
+        </form>
         {s}
       </div>
     );
