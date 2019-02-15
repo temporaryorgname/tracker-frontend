@@ -1,6 +1,10 @@
 import axios from 'axios';
 import { 
-  getLoadingStatus
+  getLoadingStatus,
+  formatString,
+  extractPlaceholders,
+  splitDict,
+  dictToQueryString
 } from '../Utils.js';
 
 function createActions(dataType, path, autosortProps) {
@@ -207,14 +211,179 @@ function createActions(dataType, path, autosortProps) {
   }
 }
 
+function createActions2(dataType, path) {
+  // Process path. If it should start with a / but not end with one.
+  if (!path.startsWith('/')) {
+    path = '/'+path;
+  }
+  let pathParamKeys = extractPlaceholders(path);
+
+  return {
+    get: function(params, cache=true) {
+      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
+      console.log('FETCH '+dataType);
+      const ACTION = 'FETCH_'+dataType;
+      return function(dispatch, getState) {
+        // Check if this is already loading/loaded
+        if (params && cache) {
+          let status = getLoadingStatus(getState().loadingStatus[dataType], params);
+          // Check if there was an error. (TODO)
+          // If not, then skip sending the request
+          if (status) {
+            console.log('Already loaded. Skipping.');
+            return;
+          }
+        }
+        // Save 'loading' status
+        dispatch({
+          type: 'LOADING_START',
+          payload: {
+            entityName: dataType,
+            params: params,
+            filters: params //TODO: Here for backwards compatibility. Remove later.
+          }
+        });
+        // Send request
+        return axios.get(
+          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
+          {
+            withCredentials: true
+          }
+        ).then(function(response){
+          // Update data
+          dispatch({ 
+            type: ACTION+'_SUCCESS',
+            payload: {
+              data: response.data
+            }
+          });
+          // Save 'loaded' status
+          dispatch({
+            type: 'LOADING_SUCCESS',
+            payload: {
+              entityName: dataType,
+              params: params,
+              filters: params //TODO: Here for backwards compatibility. Remove later.
+            }
+          });
+          return response;
+        }).catch(function(error){
+          // Set 'error' status
+          dispatch({
+            type: 'LOADING_FAILURE',
+            payload: {
+              entityName: dataType,
+              params: params,
+              filters: params, //TODO: Here for backwards compatibility. Remove later.
+              error: error.response.data.error
+            }
+          });
+          return error;
+        });
+      }
+    },
+    post: function(params, newEntity) {
+      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
+      console.log('CREATE '+dataType);
+      // Check what kind of entity we're creating
+      // If it's a JSON object, then send as application/json
+      // If it's a FormData (probably a file), send as multipart/form-data
+      let contentType = 'application/json';
+      if (newEntity.constructor.name === 'FormData') {
+        contentType = 'multipart/form-data';
+      }
+      return function(dispatch) {
+        return axios.post(
+          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
+          newEntity,
+          {
+            headers: {
+              'Content-Type': contentType
+            },
+            withCredentials: true
+          }
+        ).then(function(response){
+          dispatch({
+            type: 'CREATE_'+dataType+'_SUCCESS',
+            payload: {
+              data: {...newEntity, id: response.data.id}
+            }
+          })
+          return response;
+        });
+      }
+    },
+    put: function(params, data) {
+      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
+      console.log('UPDATE '+dataType);
+      console.log(data);
+      return function(dispatch) {
+        return axios.put(
+          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
+          data,
+          {withCredentials: true}
+        ).then(function(response){
+          dispatch({
+            type: 'UPDATE_'+dataType+'_SUCCESS',
+            payload: {
+              id: data.id,
+              params: params,
+              filters: params //TODO: Here for backwards compatibility. Remove later.
+            }
+          });
+          return response;
+        });
+      }
+    },
+    delete: function(params) {
+      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
+      console.log('DELETE '+dataType);
+      return function(dispatch) {
+        return axios.delete(
+          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
+          {withCredentials: true}
+        ).then(function(response) {
+          dispatch({
+            type: 'DELETE_'+dataType+'_SUCCESS',
+            payload: {
+              params: params,
+              filters: params //TODO: Here for backwards compatibility. Remove later.
+            }
+          });
+          return response;
+        });
+      }
+    },
+    clear: function() {
+      console.log('CLEAR '+dataType);
+      return function(dispatch) {
+        dispatch({
+          type: 'CLEAR_'+dataType,
+        });
+        dispatch({
+          type: 'CLEAR_LOADING_STATUS',
+          payload: {
+            entityName: dataType
+          }
+        });
+      }
+    }
+  }
+}
+
 export const userProfileActions = createActions('USER_PROFILES', '/data/user_profiles');
+
 export const foodActions = createActions('FOOD', '/data/foods');
+export const foodListActions = createActions('FOOD', '/data/foods');
 export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
+
 export const photoActions = createActions('PHOTOS', '/data/photos');
 export const photoGroupActions = createActions('PHOTO_GROUPS', '/data/photo_groups');
 export const photoDataActions = createActions('PHOTO_DATA', '/data/photo_data');
+
 export const tagActions = createActions('TAGS', '/data/tags');
 export const labelActions = createActions('LABELS', '/data/labels');
+
 export const bodyweightActions = createActions('BODYWEIGHT', '/data/body/weights');
 export const bodyweightSummaryActions = createActions('BODYWEIGHT_SUMMARY', '/data/body/weights/summary');
 
@@ -229,3 +398,7 @@ photoActions['create'] = (function(){
     return createPhoto(formData);
   }
 })()
+
+export const getPhotosByPhotoGroupId = createActions2('PHOTOS', '/data/photo_groups/{id}/photos')['get'];
+export const getFoodByPhotoGroupId = createActions2('FOOD', '/data/photo_groups/{id}/food')['get'];
+export const getFoodByPhotoId = createActions2('FOOD', '/data/photos/{id}/food')['get'];

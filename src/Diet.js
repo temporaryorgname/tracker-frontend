@@ -13,7 +13,9 @@ import {
 import { 
   foodActions,
   photoActions,
-  photoGroupActions
+  photoGroupActions,
+  getFoodByPhotoGroupId,
+  getPhotosByPhotoGroupId
 } from './actions/Actions.js';
 
 import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
@@ -1407,6 +1409,7 @@ class ConnectedEntryEditorForm extends Component {
       console.log(response.data);
       let entries = response.data;
       if (entries.length === 0) {
+        that.newEntryByPhotoId(photoId);
         return;
       }
       let mainEntry = entries.filter(x => x.parent_id === null)[0];
@@ -1419,14 +1422,12 @@ class ConnectedEntryEditorForm extends Component {
   }
   loadEntryByGroupId(groupId) {
     const that = this;
-    axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+'/data/photo_groups/'+groupId+'/food',
-      { withCredentials: true }
+    this.props.fetchFoodByGroupId(
+      groupId
     ).then(function(response){
-      console.log('loadEntryByGroupId');
-      console.log(response.data);
       let entries = response.data;
       if (entries.length === 0) {
+        that.newEntryByGroupId(groupId);
         return;
       }
       let mainEntry = entries.filter(x => x.parent_id === null)[0];
@@ -1436,13 +1437,35 @@ class ConnectedEntryEditorForm extends Component {
       });
     });
   }
+  newEntryByPhotoId(photoId) {
+    this.setState({
+      photo_ids: [photoId]
+    });
+  }
+  newEntryByGroupId(groupId) {
+    let that = this;
+    this.props.fetchPhotosByGroupId(
+      groupId
+    ).then(function(response){
+      let photos = response.data;
+      that.setState({
+        photo_ids: photos.map(p => p.id)
+      });
+    });
+  }
 
   addEntry(e) {
     e.preventDefault();
     // Submit entry to server
-    var that = this;
-    this.props.onSubmit({
+    let onSubmit = this.props.createFoodEntry;
+    if (this.state.id) {
+      onSubmit = this.props.updateFoodEntry;
+    }
+    let that = this;
+    onSubmit({
+      id: this.state.id,
       date: this.props.date,
+      time: this.state.time,
       name: this.state.name,
       quantity: this.state.quantity,
       calories: this.state.calories,
@@ -1452,6 +1475,7 @@ class ConnectedEntryEditorForm extends Component {
     }).then(function(response){
       // Clear form
       that.setState({
+        id: null,
         name: '',
         time: '',
         quantity: '',
@@ -1543,7 +1567,7 @@ class ConnectedEntryEditorForm extends Component {
         </label>
         <label>
           <span>Time</span>
-          <input type='time' name='date' value={this.state.time} onChange={this.onChange}/>
+          <input type='time' name='time' value={this.state.time} onChange={this.onChange}/>
         </label>
         <label>
           <span>Item name</span>
@@ -1616,7 +1640,12 @@ const EntryEditorForm = connect(
   function(dispatch, ownProps) {
     return {
       fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
-      onSubmit: data => dispatch(foodActions['create'](data)),
+      fetchphotos: groupId => dispatch(photoActions['fetchMultiple']({group_id: groupId})),
+      fetchGroup: id => dispatch(photoGroupActions['fetchSingle'](id)),
+      fetchFoodByGroupId: id => dispatch(getFoodByPhotoGroupId({id: id})),
+      fetchPhotosByGroupId: id => dispatch(getPhotosByPhotoGroupId({id: id})),
+      createFoodEntry: data => dispatch(foodActions['create'](data)),
+      updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
       uploadPhoto: (files) => dispatch(
         photoActions['create'](files, ownProps.date)
       ),

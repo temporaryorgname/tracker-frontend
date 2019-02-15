@@ -5,7 +5,15 @@ import renderer from 'react-test-renderer';
 import { 
   getLoadingStatus,
   updateLoadingStatus,
+  formatString,
+  extractPlaceholders,
+  splitDict
 } from '../Utils.js';
+
+//////////////////////////////////////////////////
+// updateLoadingStatus
+// getLoadingStatus
+//////////////////////////////////////////////////
 
 test('updateLoadingStatus empty tree', () => {
   let tree = updateLoadingStatus(null, {a: 0}, 'loading');
@@ -190,4 +198,156 @@ test('getLoadingStatus one item (object)', () => {
 
   status = getLoadingStatus(tree, {b: 0});
   expect(status).toEqual(null);
+});
+
+//////////////////////////////////////////////////
+// formatString
+//////////////////////////////////////////////////
+
+test('formatString no input', () => {
+  let input = 'This is a string';
+  let output = formatString(input, {});
+  expect(output).toEqual(input);
+
+  input = '';
+  output = formatString(input, {});
+  expect(output).toEqual(input);
+});
+
+test('formatString one value', () => {
+  let input = 'This {verb} a string';
+
+  let output = formatString(input, {verb: 'is'});
+  expect(output).toEqual('This is a string');
+
+  output = formatString(input, {verb: 'is', adjective: 'red'});
+  expect(output).toEqual('This is a string');
+
+  output = formatString(input, {});
+  expect(output).toEqual('This {verb} a string');
+});
+
+test('formatString two values', () => {
+  let input = 'This {verb} a {noun}';
+
+  let output = formatString(input, {verb: 'is'});
+  expect(output).toEqual('This is a {noun}');
+
+  output = formatString(input, {verb: 'is', adjective: 'red'});
+  expect(output).toEqual('This is a {noun}');
+
+  output = formatString(input, {verb: 'is', noun: 'string'});
+  expect(output).toEqual('This is a string');
+});
+
+//////////////////////////////////////////////////
+// extractPlaceholders
+//////////////////////////////////////////////////
+
+test('extractPlaceholders no input', () => {
+  let input = '';
+  let output = extractPlaceholders(input);
+  expect(output.size).toEqual(0);
+});
+
+test('extractPlaceholders no placeholders', () => {
+  let input = 'asdf asdf asdf';
+  let output = extractPlaceholders(input);
+  expect(output.size).toEqual(0);
+
+  input = '{}';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(0);
+
+  input = 'asdf asdf {} asdf';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(0);
+
+  input = 'asdf asdf {} asdf {}';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(0);
+});
+
+test('extractPlaceholders 1 placeholder', () => {
+  let input = '{asdf}';
+  let output = extractPlaceholders(input);
+  expect(output.size).toEqual(1);
+  expect(output.has('asdf')).toBeTruthy();
+
+  input = '{asdf} asdf asdf';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(1);
+  expect(output.has('asdf')).toBeTruthy();
+
+  input = 'asf {asdf} asdf';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(1);
+  expect(output.has('asdf')).toBeTruthy();
+
+  input = 'asf asdf {asdf}';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(1);
+  expect(output.has('asdf')).toBeTruthy();
+
+  input = 'asf {asdf} {asdf}';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(1);
+  expect(output.has('asdf')).toBeTruthy();
+});
+
+test('extractPlaceholders 2 placeholders', () => {
+  let input = '{asdf}{qwer}';
+  let output = extractPlaceholders(input);
+  expect(output.size).toEqual(2);
+  expect(output.has('asdf')).toBeTruthy();
+  expect(output.has('qwer')).toBeTruthy();
+
+  input = '{asdf} asdf {qwer}';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(2);
+  expect(output.has('asdf')).toBeTruthy();
+  expect(output.has('qwer')).toBeTruthy();
+
+  input = 'asf {asdf} {qwer} asdf';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(2);
+  expect(output.has('asdf')).toBeTruthy();
+  expect(output.has('qwer')).toBeTruthy();
+
+  input = '{qwer}{qwer}{asdf}asf {} asdf {asdf}';
+  output = extractPlaceholders(input);
+  expect(output.size).toEqual(2);
+  expect(output.has('asdf')).toBeTruthy();
+  expect(output.has('qwer')).toBeTruthy();
+});
+
+//////////////////////////////////////////////////
+// splitDict
+//////////////////////////////////////////////////
+
+test('splitDict empty input', () => {
+  let input = {};
+  let output = splitDict(input, []);
+  expect(output[0]).toEqual({});
+  expect(output[1]).toEqual({});
+});
+
+test('splitDict', () => {
+  let output = null;
+
+  output = splitDict({a: 0, b: 0}, ['a']);
+  expect(output[0]).toEqual({a: 0});
+  expect(output[1]).toEqual({b: 0});
+
+  output = splitDict({a: 0}, ['a']);
+  expect(output[0]).toEqual({a: 0});
+  expect(output[1]).toEqual({});
+
+  output = splitDict({b: 0}, ['a']);
+  expect(output[0]).toEqual({});
+  expect(output[1]).toEqual({b: 0});
+
+  output = splitDict({a: 0, b: 1, c: 2, d: 3}, ['a', 'd']);
+  expect(output[0]).toEqual({a: 0, d: 3});
+  expect(output[1]).toEqual({b: 1, c: 2});
 });

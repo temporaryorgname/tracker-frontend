@@ -1,3 +1,4 @@
+// Date utils
 export const formatDate = function(inputDate) {
   if (typeof(inputDate) === 'string') {
     return inputDate;
@@ -15,6 +16,7 @@ export const formatDate = function(inputDate) {
   return dateString;
 }
 
+// Dict utils
 export const parseQueryString = function(query) {
   if (query.length <= 1) {
     return {};
@@ -31,7 +33,6 @@ export const parseQueryString = function(query) {
       return acc;
     }, {});
 }
-
 export const dictToQueryString = function(query, keys=null) {
   var output = [];
   for (var k in query) {
@@ -45,6 +46,42 @@ export const dictToQueryString = function(query, keys=null) {
   return '?'+output.join('&');
 }
 
+export const splitDict = function(dict, keys) {
+  // Split a dictionary into two, the first containing the keys in `keys`, and the second containing the rest
+  keys = new Set(keys);
+  let outputWithKey = {};
+  let outputWithoutKey = {};
+  Object.keys(dict).forEach(function(k){
+    if (keys.has(k)) {
+      outputWithKey[k] = dict[k];
+    } else {
+      outputWithoutKey[k] = dict[k];
+    }
+  });
+  return [outputWithKey, outputWithoutKey];
+}
+
+// String utils
+export const formatString = function(string, values) {
+  return Object.keys(values).reduce(function(acc,key){
+    return acc.replace('{'+key+'}', values[key]);
+  }, string);
+}
+export const extractPlaceholders = function(string) {
+  // Find all placeholders between braces and return them as a set
+  let pattern = new RegExp('\{([^\{\}]+)\}','g');
+  let output = new Set();
+  while (true) {
+    let match = pattern.exec(string);
+    if (!match) {
+      return output;
+    }
+    output.add(match[1]);
+  }
+  return output;
+}
+
+// Postgresql data type utils
 export const stringifyPolygon = function(polygon) {
   console.log('Stringifying');
   console.log(polygon);
@@ -86,6 +123,7 @@ export const parseBox = function(box) {
   );
 }
 
+// Store reducer utils
 class StatusTreeNode {
   constructor(key, children) {
     this.key = key;
