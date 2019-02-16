@@ -7,7 +7,8 @@ import {
   updateLoadingStatus,
   formatString,
   extractPlaceholders,
-  splitDict
+  splitDict,
+  dictEqual
 } from '../Utils.js';
 
 //////////////////////////////////////////////////
@@ -350,4 +351,45 @@ test('splitDict', () => {
   output = splitDict({a: 0, b: 1, c: 2, d: 3}, ['a', 'd']);
   expect(output[0]).toEqual({a: 0, d: 3});
   expect(output[1]).toEqual({b: 1, c: 2});
+});
+
+//////////////////////////////////////////////////
+// dictEqual
+//////////////////////////////////////////////////
+
+test('dictEqual empty dict', () => {
+  let output = dictEqual({}, {});
+  expect(output).toBeTruthy();
+});
+
+test('dictEqual flat', () => {
+  let output = null;
+
+  output = dictEqual({a: 1}, {a: 1});
+  expect(output).toBeTruthy();
+
+  output = dictEqual({a: 1, b: 2}, {a: 1, b: 2});
+  expect(output).toBeTruthy();
+
+  output = dictEqual({a: 1}, {a: 1, b: 2});
+  expect(output).toBeFalsy();
+
+  output = dictEqual({a: 1, b: 1}, {a: 1, b: 2});
+  expect(output).toBeFalsy();
+});
+
+test('dictEqual nested', () => {
+  let output = null;
+
+  output = dictEqual({a: 1, b: {}}, {a: 1, b: {}});
+  expect(output).toBeTruthy();
+
+  output = dictEqual({a: 1, b: 2, c: {d: 3, e: 4}}, {a: 1, b: 2, c: {d: 3, e: 4}});
+  expect(output).toBeTruthy();
+
+  output = dictEqual({a: 1, b: 2, c: {d: 3}}, {a: 1, b: 2, c: {d: 3, e: 4}});
+  expect(output).toBeFalsy();
+
+  output = dictEqual({a: 1, b: 2, c: {d: 3, e: 3}}, {a: 1, b: 2, c: {d: 3, e: 4}});
+  expect(output).toBeFalsy();
 });

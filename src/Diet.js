@@ -8,7 +8,8 @@ import axios from 'axios';
 import { connect } from "react-redux";
 
 import { 
-  getLoadingStatus
+  getLoadingStatus,
+  dictEqual
 } from './Utils.js';
 import { 
   foodActions,
@@ -998,6 +999,9 @@ class ConnectedFoodRow extends Component {
       });
       this.setState({data: data});
     }
+    if (!dictEqual(prevState.data,this.state.data)) {
+      this.props.updateEntry(this.props.id, this.state.data);
+    }
   }
   getOnUpdateHandler(propName) {
     var that = this;
@@ -1010,7 +1014,6 @@ class ConnectedFoodRow extends Component {
       that.setState({
         data: updatedEntry
       });
-      that.props.updateEntry(that.props.id, updatedEntry);
     }
   }
   toggleChildren(visible) {
@@ -1027,8 +1030,7 @@ class ConnectedFoodRow extends Component {
       } else {
         cals *= scale
       }
-    }
-    var prot = this.state.data.protein;
+    } var prot = this.state.data.protein;
     if (isFinite(prot)) {
       if (typeof prot === 'string' && prot.length > 0) {
         prot = parseFloat(prot)*scale;

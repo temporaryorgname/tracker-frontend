@@ -61,6 +61,29 @@ export const splitDict = function(dict, keys) {
   return [outputWithKey, outputWithoutKey];
 }
 
+export const dictEqual = function(dict1, dict2) {
+  if (typeof dict1 !== 'object' && typeof dict2 !== 'object') {
+    return dict1 === dict2;
+  }
+  if (dict1 === null || dict2 === null) {
+    return dict1 === dict2;
+  }
+  let keys1 = Object.keys(dict1);
+  let keys2 = Object.keys(dict2);
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+  for (let k of keys1) {
+    if (keys2.indexOf(k) === -1) {
+      return false;
+    }
+    if (!dictEqual(dict1[k],dict2[k])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // String utils
 export const formatString = function(string, values) {
   return Object.keys(values).reduce(function(acc,key){
