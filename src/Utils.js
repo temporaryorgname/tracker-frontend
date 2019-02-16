@@ -92,7 +92,7 @@ export const formatString = function(string, values) {
 }
 export const extractPlaceholders = function(string) {
   // Find all placeholders between braces and return them as a set
-  let pattern = new RegExp('\{([^\{\}]+)\}','g');
+  let pattern = new RegExp('{([^{}]+)}','g');
   let output = new Set();
   while (true) {
     let match = pattern.exec(string);
@@ -101,7 +101,6 @@ export const extractPlaceholders = function(string) {
     }
     output.add(match[1]);
   }
-  return output;
 }
 
 // Postgresql data type utils

@@ -1152,13 +1152,6 @@ class ConnectedFoodTable extends Component {
     this.state = {
       selected: new Set()
     };
-    //this.state.children = [
-    //  {"id":1,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[]},
-    //  {"id":2,"date":"2018-08-26","name":"asdf","quantity":"","calories":1,"protein":9,"photos":[], "children": 
-    //    [{"id":3,"date":"2018-08-26","name":"child item","quantity":"","calories":1,"protein":9,"photos":[]},
-    //    {"id":4,"date":"2018-08-26","name":"child item 2","quantity":"","calories":1,"protein":9,"photos":[]}],
-    //  }
-    //];
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
     this.handlePhotoUpload = this.handlePhotoUpload.bind(this);
@@ -1629,7 +1622,6 @@ const EntryEditorForm = connect(
       // Check if there's a food entry associated with that photo.
       // If there is, then load that entry.
       // If not, then we create a new entry.
-      let byPhotoId = state.food.by.photo_id || {};
     } else if (ownProps.groupId) {
       // Check if there's a food entry associated with that photo group.
       // If there is, then load that entry.
