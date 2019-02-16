@@ -1081,7 +1081,7 @@ class ConnectedFoodRow extends Component {
         </tr>
         {this.state.expanded && this.state.data.children.length > 0 && 
           this.state.data.children.map(function(child){
-            return (<FoodRow data={child} id={child.id} selected={selected} />);
+            return (<FoodRow data={child} id={child.id} selected={selected} onToggleSelected={that.props.onToggleSelected}/>);
           })
         }
       </>
