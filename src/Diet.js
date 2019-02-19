@@ -150,7 +150,7 @@ class ConnectedGallery extends Component {
     this.handleDragStart = this.handleDragStart.bind(this);
     this.editSelected = this.editSelected.bind(this);
   }
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.date !== this.props.date) {
       this.props.fetchPhotos(this.props.uid);
       this.props.fetchGroups();
@@ -211,7 +211,6 @@ class ConnectedGallery extends Component {
   }
   handleDragOver(event) {
     event.preventDefault();
-    console.log('drag over');
   }
   handleDrop(event, groupId) {
     event.stopPropagation();
@@ -220,16 +219,20 @@ class ConnectedGallery extends Component {
       ...this.props.photos[photoId],
       group_id: groupId
     });
-    console.log('drop '+photoId+' '+groupId);
   }
   handleDragStart(event, photoId) {
-    console.log('drag start');
     event.dataTransfer.setData('photoId', photoId);
   }
   editSelected() {
     this.props.onEditEntry(this.state.selectedPhotoId, this.state.selectedGroupId);
   }
   render() {
+    const {
+      selectedPhotoId = this.state.selectedPhotoId,
+      selectedGroupId = this.state.selectedGroupId,
+      onSelectPhoto = this.state.handleSelectPhoto,
+      onSelectGroup = this.state.handleSelectGroup
+    } = this.props;
     var that = this;
     if (!this.props.photosLoadingStatus || !this.props.groupsLoadingStatus) {
       return (
@@ -279,11 +282,11 @@ class ConnectedGallery extends Component {
               return (
                 <div className='photo-viewer-thumbnail'
                     key={photoId}
-                    onClick={()=>that.handleSelectPhoto(photoId)}
+                    onClick={()=>onSelectPhoto(selectedPhotoId === photoId ? null : photoId)}
                     onDragStart={(e) => that.handleDragStart(e,photoId)}
                     draggable>
-                  <FoodPhotoThumbnail fileid={photoId}
-                      selected={that.state.selectedPhotoId === photoId}/>
+                  <FoodPhotoThumbnail photoId={photoId}
+                      selected={selectedPhotoId === photoId}/>
                 </div>
               );
             });
@@ -294,7 +297,7 @@ class ConnectedGallery extends Component {
                     key={photoId}
                     onDragStart={(e) => that.handleDragStart(e,photoId)}
                     draggable>
-                  <FoodPhotoThumbnail fileid={photoId} />
+                  <FoodPhotoThumbnail photoId={photoId} />
                 </div>
               );
             });
@@ -311,7 +314,7 @@ class ConnectedGallery extends Component {
               }
               groupId = parseInt(groupId);
               var classNames = ['thumbnail', 'group'];
-              if (that.state.selectedGroupId === groupId) {
+              if (selectedGroupId === groupId) {
                 classNames.push('selected');
               }
               classNames = classNames.join(' ');
@@ -322,7 +325,7 @@ class ConnectedGallery extends Component {
               return (
                 <div className={classNames}
                     key={groupId}
-                    onClick={()=>that.handleSelectGroup(groupId)}
+                    onClick={()=>onSelectGroup(selectedGroupId === groupId ? null : groupId)}
                     onDragOver={that.handleDragOver}
                     onDrop={(e)=>that.handleDrop(e,groupId)}>
                   {groupThumbnails}
@@ -492,7 +495,7 @@ class ConnectedFileUploadDialog extends Component {
             <div className='thumbnails'>
               {
                 this.props.files.map(function(file){
-                  return <FoodPhotoThumbnail key={file} fileid={file}/>
+                  return <FoodPhotoThumbnail key={file} photoId={file}/>
                 })
               }
             </div>
@@ -839,8 +842,6 @@ class ConnectedFoodRowNewEntry extends Component {
     this.setState(x);
   }
   onFileUpload(photoIds) {
-    console.log('File uploaded');
-    console.log(photoIds);
     this.setState({
       photos: photoIds
     });
@@ -1165,7 +1166,6 @@ class ConnectedFoodTable extends Component {
   }
   handleToggleSelected(entryId) {
     /* Callback to be triggered when an entry has been selected. */
-    console.log(entryId);
     var setCopy = new Set(this.state.selected);
     if (this.state.selected.has(entryId)){
       setCopy.delete(entryId);
@@ -1339,14 +1339,18 @@ class ConnectedEntryEditorForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      id: null,
-      name: '',
-      time: '',
-      quantity: '',
-      calories: '',
-      protein: '',
-      photo_ids: [],
-      childEntries: [],
+      data: {
+        id: null,
+        name: '',
+        time: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photo_ids: [],
+        photo_id: null,
+        photo_group_id: null,
+        children: [],
+      },
       suggestion: {},
     };
     this.loadEntryById = this.loadEntryById.bind(this);
@@ -1357,11 +1361,11 @@ class ConnectedEntryEditorForm extends Component {
     this.onFileUpload = this.onFileUpload.bind(this);
     this.handleChildrenChange = this.handleChildrenChange.bind(this);
     this.handleNewChild = this.handleNewChild.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-    this.handleHighlight = this.handleHighlight.bind(this);
-    this.handleSelect = this.handleSelect.bind(this);
-    this.handleQuantityScale = this.handleQuantityScale.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
+
+    this.renderMainEntry = this.renderMainEntry.bind(this);
+    this.renderChildEntries = this.renderChildEntries.bind(this);
+    this.renderPhotos = this.renderPhotos.bind(this);
 
     if (this.props.id) {
       this.loadEntryById(this.props.id);
@@ -1370,84 +1374,120 @@ class ConnectedEntryEditorForm extends Component {
     } else if (this.props.group_id) {
       this.loadEntryByGroupId(this.props.group_id);
     }
+    this.props.fetchFoodByDate(this.props.date);
+    this.props.fetchPhotosByDate(this.props.date);
   }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.id !== this.props.id || prevProps.photo_id !== this.props.photo_id || prevProps.group_id !== this.props.group_id) {
-      if (this.props.id) {
-        this.loadEntryById(this.props.id);
-      } else if (this.props.photo_id) {
-        this.loadEntryByPhotoId(this.props.photo_id);
-      } else if (this.props.group_id) {
-        this.loadEntryByGroupId(this.props.group_id);
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    let foodStatusChanged = prevProps.foodLoadingStatus !== this.props.foodLoadingStatus;
+    let photoStatusChanged = prevProps.photoLoadingStatus !== this.props.photoLoadingStatus;
+    // Load food entry
+    if (prevProps.id !== this.props.id || 
+        prevProps.photo_id !== this.props.photo_id || 
+        prevProps.group_id !== this.props.group_id ||
+        foodStatusChanged || photoStatusChanged) {
+      let foodLoadingStatus = this.props.foodLoadingStatus || {};
+      if (foodLoadingStatus.status === 'loaded') {
+        if (this.props.id) {
+          this.loadEntryById(this.props.id);
+        } else if (this.props.photo_id) {
+          this.loadEntryByPhotoId(this.props.photo_id);
+        } else if (this.props.group_id) {
+          this.loadEntryByGroupId(this.props.group_id);
+        }
       }
+      return; // Prevent multiple setState calls in one update cycle
+    }
+    // Load photos
+    if (prevState.data.photo_id !== this.state.data.photo_id ||
+        prevState.data.photo_group_id !== this.state.data.photo_group_id ||
+        foodStatusChanged || photoStatusChanged ||
+        prevProps.photos !== this.props.photos) {
+      let photoLoadingStatus = this.props.photoLoadingStatus || {};
+      if (photoLoadingStatus.status === 'loaded') {
+        let photoIds = [];
+        if (this.state.data.photo_id) {
+          photoIds = [this.state.data.photo_id];
+        } else if (this.state.data.photo_group_id) {
+          photoIds = Object.keys(this.props.photos).filter(
+            id => this.props.photos[id].group_id == this.state.data.photo_group_id
+          );
+        }
+        this.setState({
+          data: {
+            ...this.state.data,
+            photo_ids: photoIds
+          }
+        });
+      }
+    }
+    // Load food/photo data
+    if (prevProps.date !== this.props.date) {
+      this.props.fetchFoodByDate(this.props.date);
+      this.props.fetchPhotosByDate(this.props.date);
     }
   }
 
   loadEntryById(id) {
-    const that = this;
-    this.props.fetchFood(id).then(function(response){
-      console.log('loadEntryById');
-      console.log(response.data);
-      let entry = response.data;
-      that.setState({
-        ...entry,
-        childEntries: null
-      });
+    this.setState({
+      data: {...this.props.food[id]}
     });
   }
   loadEntryByPhotoId(photoId) {
-    const that = this;
-    axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+'/data/photos/'+photoId+'/food',
-      { withCredentials: true }
-    ).then(function(response){
-      console.log('loadEntryByPhotoId');
-      console.log(response.data);
-      let entries = response.data;
-      if (entries.length === 0) {
-        that.newEntryByPhotoId(photoId);
+    for(let [k,v] of Object.entries(this.props.food)) {
+      if (v.photo_id === parseInt(photoId)) {
+        this.setState({
+          data: {...v}
+        });
         return;
       }
-      let mainEntry = entries.filter(x => x.parent_id === null)[0];
-      let childEntries = entries.filter(x => x.parent_id !== null);
-      that.setState({
-        ...mainEntry,
-        childEntries
-      });
-    });
+    }
   }
   loadEntryByGroupId(groupId) {
-    const that = this;
-    this.props.fetchFoodByGroupId(
-      groupId
-    ).then(function(response){
-      let entries = response.data;
-      if (entries.length === 0) {
-        that.newEntryByGroupId(groupId);
+    let that = this;
+    for(let [k,v] of Object.entries(this.props.food)) {
+      if (v.photo_group_id === parseInt(groupId)) {
+        this.setState({
+          data: {...v}
+        });
         return;
       }
-      let mainEntry = entries.filter(x => x.parent_id === null)[0];
-      that.setState({
-        ...mainEntry,
-        childEntries: mainEntry['children']
-      });
-    });
+    }
   }
   newEntryByPhotoId(photoId) {
     this.setState({
-      photo_ids: [photoId]
+      data: {
+        id: null,
+        name: '',
+        time: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photo_ids: [photoId],
+        photo_id: photoId,
+        photo_group_id: null,
+        children: [],
+      }
     });
   }
   newEntryByGroupId(groupId) {
-    let that = this;
-    this.props.fetchPhotosByGroupId(
-      groupId
-    ).then(function(response){
-      let photos = response.data;
-      that.setState({
-        photo_ids: photos.map(p => p.id)
-      });
+    groupId = parseInt(groupId);
+    let photoIds = Object.keys(this.props.photos).filter(
+      id => this.props.photos[id].group_id === groupId
+    );
+    this.setState({
+      data: {
+        id: null,
+        name: '',
+        time: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photo_ids: photoIds,
+        photo_id: null,
+        photo_group_id: groupId,
+        children: [],
+      }
     });
   }
 
@@ -1460,37 +1500,40 @@ class ConnectedEntryEditorForm extends Component {
     }
     let that = this;
     onSubmit({
-      id: this.state.id,
+      id: this.state.data.id,
       date: this.props.date,
-      time: this.state.time,
-      name: this.state.name,
-      quantity: this.state.quantity,
-      calories: this.state.calories,
-      protein: this.state.protein,
-      photo_ids: this.state.photo_ids,
-      children: this.state.childEntries
+      time: this.state.data.time,
+      name: this.state.data.name,
+      quantity: this.state.data.quantity,
+      calories: this.state.data.calories,
+      protein: this.state.data.protein,
+      photo_ids: this.state.data.photo_ids,
+      children: this.state.data.children
     }).then(function(response){
       // Clear form
       that.setState({
-        id: null,
-        name: '',
-        time: '',
-        quantity: '',
-        calories: '',
-        protein: '',
-        photo_ids: [],
-        childEntries: []
+        data: {
+          id: null,
+          name: '',
+          time: '',
+          quantity: '',
+          calories: '',
+          protein: '',
+          photo_ids: [],
+          children: []
+        }
       });
     });
   }
   onChange(e) {
-    var x = {}
-    x[e.target.name] = e.target.value;
-    this.setState(x);
+    this.setState({
+      data: {
+        ...this.state.data,
+        [e.target.name]: e.target.value
+      }
+    });
   }
   onFileUpload(photoIds) {
-    console.log('File uploaded');
-    console.log(photoIds);
     this.setState({
       photos: photoIds
     });
@@ -1508,41 +1551,6 @@ class ConnectedEntryEditorForm extends Component {
       childEntries: [...this.state.childEntries, newEntry]
     })
   }
-  handleKeyPress(e) {
-    if (e.key === 'Enter') {
-      this.addEntry(e);
-    }
-  }
-  handleHighlight(entry) {
-    this.setState({
-      suggestion: entry
-    });
-  }
-  handleSelect(entry) {
-    function foo(x) {
-      return (x === null) ? x : x.toString();
-    }
-    this.setState({
-      name: entry.name,
-      quantity: foo(entry.quantity) || this.state.quantity,
-      calories: foo(entry.calories) || this.state.calories,
-      protein:  foo(entry.protein) || this.state.protein,
-    });
-  }
-  handleQuantityScale(scale) {
-    var cals = this.state.calories;
-    if (isFinite(cals) && cals.length > 0) {
-      cals = parseFloat(cals)*scale;
-    }
-    var prot = this.state.protein;
-    if (isFinite(prot) && prot.length > 0) {
-      prot = parseFloat(prot)*scale;
-    }
-    this.setState({
-      calories: cals.toString(),
-      protein: prot.toString()
-    });
-  }
   uploadFile(event) {
     let that = this;
     let target = event.target;
@@ -1554,8 +1562,9 @@ class ConnectedEntryEditorForm extends Component {
       });
     });
   }
-  render() {
-    let mainEntry = (
+
+  renderMainEntry() {
+    return (
       <div className='main-entry'>
         <h3>Entry Details</h3>
         <label>
@@ -1564,82 +1573,107 @@ class ConnectedEntryEditorForm extends Component {
         </label>
         <label>
           <span>Time</span>
-          <input type='time' name='time' value={this.state.time} onChange={this.onChange}/>
+          <input type='time' name='time' value={this.state.data.time} onChange={this.onChange}/>
         </label>
         <label>
           <span>Item name</span>
-          <input type='text' name='name' value={this.state.name} onChange={this.onChange}/>
+          <input type='text' name='name' value={this.state.data.name} onChange={this.onChange}/>
         </label>
         <label>
           <span>Quantity</span>
-          <input type='text' name='quantity' value={this.state.quantity} onChange={this.onChange}/>
+          <input type='text' name='quantity' value={this.state.data.quantity} onChange={this.onChange}/>
         </label>
         <label>
           <span>Calories</span>
-          <input type='text' name='calories' value={this.state.calories} onChange={this.onChange}/>
+          <input type='text' name='calories' value={this.state.data.calories} onChange={this.onChange}/>
         </label>
         <label>
           <span>Protein</span>
-          <input type='text' name='protein' value={this.state.protein} onChange={this.onChange}/>
+          <input type='text' name='protein' value={this.state.data.protein} onChange={this.onChange}/>
         </label>
-        <button onClick={this.addEntry}>{this.state.id ? "Save Entry" : "Create Entry"}</button>
+        <button onClick={this.addEntry}>{this.state.data.id ? "Save Entry" : "Create Entry"}</button>
       </div>
     );
-    let childEntries = (
+  }
+  renderChildEntries() {
+    return (
       <div className='children-entries'>
         <h3>Children Entries</h3>
         <p> {"What is contained in this meal? Enter the components and we'll sum it up for you!"} </p>
-        <SmallTable data={this.state.childEntries} onChange={this.handleChildrenChange} />
+        <SmallTable data={this.state.data.children} onChange={this.handleChildrenChange} />
         <button onClick={this.handleNewChild}>New Component</button>
       </div>
     );
-    let photos = (
+  }
+  renderPhotos() {
+    return (
       <div className='photos'>
         <h3>Photos</h3>
-        <ThumbnailsList ids={this.state.photo_ids}/>
+        <ThumbnailsList ids={this.state.data.photo_ids}/>
         <input type='file' onChange={this.uploadFile} />
       </div>
     );
+  }
+  render() {
+    let gallery = (
+      <Gallery date={this.props.date}
+          uid={this.props.uid}
+          selectedPhotoId={this.state.data.photo_id}
+          selectedGroupId={this.state.data.photo_group_id}
+          onSelectPhoto={id => this.setState({
+            data: {...this.state.data, photo_id: id, photo_group_id: null}
+          })}
+          onSelectGroup={id => this.setState({
+            data: {...this.state.data, photo_id: null, photo_group_id: id}
+          })}/>
+    );
     return (
       <div className='entry-editor-form'>
-        {mainEntry}
+        {this.renderMainEntry()}
         <div>
-          {childEntries}
-          {photos}
+          {this.renderChildEntries()}
+          {this.renderPhotos()}
         </div>
+        {gallery}
       </div>
     );
   }
 }
 const EntryEditorForm = connect(
   function(state, ownProps) {
-    if (ownProps.id) {
-      // Load entry and associated photo ids
-      return {
-        data: state.food.entities[ownProps.id]
-      };
-    } else if (ownProps.photo_id) {
-      // Check if there's a food entry associated with that photo.
-      // If there is, then load that entry.
-      // If not, then we create a new entry.
-    } else if (ownProps.groupId) {
-      // Check if there's a food entry associated with that photo group.
-      // If there is, then load that entry.
-      // If not, then we create a new entry.
-    } else {
-      // We're just creating a new entry with no preset values.
-    }
+    let date = ownProps.date;
+    // Diet
+    let food= Object.keys(state.food.entities).filter(
+      id => state.food.entities[id].date === date
+    ).map(
+      id => state.food.entities[id]
+    ).reduce(
+      (acc, entity) => ({...acc, [entity.id]: entity}),
+      {}
+    );
+    let foodLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
+    // Photos
+    let photos = Object.keys(state.photos.entities).filter(
+      id => state.photos.entities[id].date === date
+    ).map(
+      id => state.photos.entities[id]
+    ).reduce(
+      (acc, entity) => ({...acc, [entity.id]: entity}),
+      {}
+    );
+    let photoLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
+
     return {
-      data: null
+      food,
+      photos,
+      foodLoadingStatus,
+      photoLoadingStatus
     }
   },
   function(dispatch, ownProps) {
     return {
-      fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
-      fetchphotos: groupId => dispatch(photoActions['fetchMultiple']({group_id: groupId})),
-      fetchGroup: id => dispatch(photoGroupActions['fetchSingle'](id)),
-      fetchFoodByGroupId: id => dispatch(getFoodByPhotoGroupId({id: id})),
-      fetchPhotosByGroupId: id => dispatch(getPhotosByPhotoGroupId({id: id})),
+      fetchFoodByDate: date => dispatch(foodActions['fetchMultiple']({date})),
+      fetchPhotosByDate: date => dispatch(photoActions['fetchMultiple']({date})),
       createFoodEntry: data => dispatch(foodActions['create'](data)),
       updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
       uploadPhoto: (files) => dispatch(

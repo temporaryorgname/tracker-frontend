@@ -79,13 +79,15 @@ class ModalFooter extends Component {
 class ConnectedFoodPhotoThumbnail extends Component {
   constructor(props) {
     super(props);
-    if (this.props.fileid) {
-      this.props.fetchData(this.props.fileid);
+    if (this.props.photoId && !this.props.data) {
+      //this.props.fetchData(this.props.photoId);
     }
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.fileid && prevProps.fileid !== this.props.fileid) {
-      this.props.fetchData(this.props.fileid);
+    if (this.props.photoId &&
+        prevProps.photoId !== this.props.photoId && 
+        !this.props.data) {
+      //this.props.fetchData(this.props.photoId);
     }
   }
   render() {
@@ -109,10 +111,11 @@ class ConnectedFoodPhotoThumbnail extends Component {
 }
 const FoodPhotoThumbnail = connect(
   function(state, ownProps) {
-    let data = state.photoData.entities[ownProps.fileid];
+    let photo = state.photos.entities[ownProps.photoId] || {};
+    let data = photo.file;
     if (data) {
       return {
-        data: 'data:image/'+data.format+';base64,'+data.data
+        data: 'data:image/'+data.format+';base64,'+data.content
       };
     } else {
       return {
@@ -122,7 +125,7 @@ const FoodPhotoThumbnail = connect(
   },
   function(dispatch, ownProps) {
     return {
-      fetchData: (id) => dispatch(photoDataActions['fetchSingle'](id))
+      fetchData: (id) => dispatch(photoActions['fetchSingle'](id))
     };
   }
 )(ConnectedFoodPhotoThumbnail);
@@ -152,7 +155,7 @@ class ConnectedThumbnailsList extends Component {
             <div className='photo-viewer-thumbnail'
                 key={photoId}
                 onClick={()=>that.handleChangePhoto(photoId)}>
-              <FoodPhotoThumbnail fileid={photoId} />
+              <FoodPhotoThumbnail photoId={photoId} />
             </div>
           );
         })
