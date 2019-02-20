@@ -1111,7 +1111,7 @@ class ConnectedFoodRow extends Component {
         </tr>
         {this.state.expanded && this.state.data.children.length > 0 && 
           this.state.data.children.map(function(child){
-            return (<FoodRow data={child} id={child.id} selected={selected} onToggleSelected={that.props.onToggleSelected}/>);
+            return (<FoodRow key={child.id} data={child} id={child.id} selected={selected} onToggleSelected={that.props.onToggleSelected}/>);
           })
         }
       </>
@@ -1213,10 +1213,6 @@ class ConnectedFoodTable extends Component {
         });
         that.props.updateData(that.props.date);
       });
-  }
-  handlePhotoUpload(photoId) {
-    console.log('Photo Uploaded');
-    console.log(photoId);
   }
   render() {
     var that = this;
@@ -1366,9 +1362,11 @@ class ConnectedEntryEditorForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      data: null,
+      data: props.selectedEntry || null,
       suggestion: {},
-      selectingPhoto: false
+      selectingPhoto: false,
+      successMessage: null,
+      errorMessage: null
     };
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -1393,8 +1391,6 @@ class ConnectedEntryEditorForm extends Component {
     let dateChanged = prevProps.date !== this.props.date;
     // Load food entry
     if (!this.state.data && prevProps.selectedEntry !== this.props.selectedEntry) {
-      console.log('Selected entry changed');
-      console.log(this.props.selectedEntry);
       this.setState({
         data: {...this.props.selectedEntry}
       });
@@ -1402,7 +1398,6 @@ class ConnectedEntryEditorForm extends Component {
     }
     // Clear photos if the date changed
     if (dateChanged) {
-      console.log('Date changed');
       this.setState({
         data: {
           ...this.state.data,
@@ -1487,7 +1482,12 @@ class ConnectedEntryEditorForm extends Component {
           photo_id: null,
           photo_group_id: null,
           children: []
-        }
+        },
+        successMessage: 'Entry created successfully!'
+      });
+    }).catch(function(error){
+      that.setState({
+        errorMessage: error.repsonse.data.error
       });
     });
   }
@@ -1496,21 +1496,29 @@ class ConnectedEntryEditorForm extends Component {
       data: {
         ...this.state.data,
         [e.target.name]: e.target.value
-      }
+      },
+      successMessage: null,
+      errorMessage: null
     });
   }
   handleChildrenChange(data) {
     this.setState({
-      childEntries: data
-    })
+      data: {
+        ...this.state.data,
+        children: data
+      }
+    });
   }
   handleNewChild() {
     let newEntry = {
       name: ''
     };
     this.setState({
-      childEntries: [...this.state.childEntries, newEntry]
-    })
+      data: {
+        ...this.state.data,
+        children: [...this.state.data.children, newEntry]
+      }
+    });
   }
   uploadFile(event) {
     let that = this;
@@ -1654,6 +1662,8 @@ class ConnectedEntryEditorForm extends Component {
     if (this.state.data) {
       return (
         <div className='entry-editor-form'>
+          <div className='success-message'>{this.state.successMessage}</div>
+          <div className='error-message'>{this.state.errorMessage}</div>
           {this.renderMainEntry()}
           <div>
             {this.renderChildEntries()}

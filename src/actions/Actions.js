@@ -122,12 +122,26 @@ function createActions(dataType, path, autosortProps) {
           }
         ).then(function(response){
           if (contentType === 'application/json') {
-            dispatch({
-              type: 'CREATE_'+dataType+'_SUCCESS',
-              payload: {
-                data: {...newEntity, id: response.data.id}
+            if (response.data.entities) {
+              for (let entity of response.data.entities) {
+                dispatch({
+                  type: 'CREATE_'+dataType+'_SUCCESS',
+                  payload: {
+                    data: entity
+                  }
+                });
               }
-            });
+            } else {
+              dispatch({
+                type: 'CREATE_'+dataType+'_SUCCESS',
+                payload: {
+                  data: {
+                    ...newEntity,
+                    id: response.data.id || response.data.ids[0]
+                  }
+                }
+              });
+            }
           }
           return response;
         });
