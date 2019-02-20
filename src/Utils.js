@@ -65,7 +65,7 @@ export const dictEqual = function(dict1, dict2) {
   if (typeof dict1 !== 'object' && typeof dict2 !== 'object') {
     return dict1 === dict2;
   }
-  if (dict1 === null || dict2 === null) {
+  if (!dict1 || !dict2) {
     return dict1 === dict2;
   }
   let keys1 = Object.keys(dict1);

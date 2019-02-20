@@ -121,12 +121,14 @@ function createActions(dataType, path, autosortProps) {
             withCredentials: true
           }
         ).then(function(response){
-          dispatch({
-            type: 'CREATE_'+dataType+'_SUCCESS',
-            payload: {
-              data: {...newEntity, id: response.data.id}
-            }
-          })
+          if (contentType === 'application/json') {
+            dispatch({
+              type: 'CREATE_'+dataType+'_SUCCESS',
+              payload: {
+                data: {...newEntity, id: response.data.id}
+              }
+            });
+          }
           return response;
         });
       }
