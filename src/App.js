@@ -28,7 +28,9 @@ class ConnectedApp extends Component {
       return (
         <Router>
           <div className="App container-fluid">
-            <Navigation loggedIn={this.props.loggedIn}/>
+            <NavigationBar loggedIn={this.props.loggedIn}
+                uid={this.props.uid}
+                logout={this.props.logout}/>
             <Switch>
               <Route path="/food" component={DietPage} />
               <Route path="/body" component={BodyStatsPage} />
@@ -45,7 +47,7 @@ class ConnectedApp extends Component {
       return (
         <Router>
           <div className="App container-fluid">
-            <Navigation loggedIn={this.props.loggedIn}/>
+            <NavigationBar loggedIn={this.props.loggedIn}/>
             <Switch>
               <Route path="/login" component={LoginPage} />
               <Route path="/signup" component={SignupPage} />
@@ -71,13 +73,14 @@ const App = connect(
   },
   function(dispatch, ownProps) {
     return {
+      logout: () => dispatch(logout()),
       fetchSession: () => dispatch(updateSession()),
       fetchUserProfile: (id) => dispatch(userProfileActions['fetchSingle'](id))
     }
   }
 )(ConnectedApp);
 
-class ConnectedNavigation extends Component {
+class NavigationBar extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -130,18 +133,6 @@ class ConnectedNavigation extends Component {
     }
   }
 }
-const Navigation = connect(
-  function(state, ownProps) {
-    return {
-      uid: state.session.uid
-    };
-  },
-  function(dispatch, ownProps) {
-    return {
-      logout: () => dispatch(logout())
-    };
-  }
-)(ConnectedNavigation);
 
 class ConnectedLoginPrompt extends Component {
   constructor(props) {

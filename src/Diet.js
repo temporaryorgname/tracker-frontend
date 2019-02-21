@@ -1182,7 +1182,6 @@ class ConnectedFoodTable extends Component {
     };
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
-    this.handlePhotoUpload = this.handlePhotoUpload.bind(this);
 
     this.props.updateData(this.props.date);
   }
