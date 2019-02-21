@@ -9,7 +9,6 @@
 
   .empty-view {
     display: inline-block;
-    width: 500px;
     color: rgb(50,50,50);
     margin: auto;
 
@@ -175,48 +174,55 @@
   }
 }
 
-@media only screen and (min-width: 1366px) {
-}
-
-@media only screen and (min-width: 500px) and (max-width: 1024px) {
-  .food-table {
-    width: 100%;
-    table {
+@media #{$computer-and-tablet} {
+  .diet-page-container {
+    .food-table {
       width: 100%;
+      table {
+        width: 100%;
+      }
+      col.numbers {
+        width: 10px;
+      }
+      col.item {
+        width: 100%;
+      }
     }
-    col.numbers {
-      width: 10px;
-    }
-    col.item {
-      width: 100%;
+    .empty-view {
+      width: 500px;
     }
   }
 }
 
 // Phones
-@media only screen and (max-width: 480px) {
-  i.material-icons {
-    font-size: 18px;
-  }
-  .food-table {
-    width: 100%;
-    font-size: 10px;
-    table {
+@media #{$mobile} {
+  .diet-page-container {
+    i.material-icons {
+      font-size: 18px;
+    }
+    .food-table {
       width: 100%;
-      padding: 10px;
-      box-sizing: border-box;
-    }
-    col.numbers {
-      width: 10px;
-    }
-    col.item {
-      width: 100%;
-    }
-    th, td {
-      padding: 3px;
-    }
-    input[type='text'] {
       font-size: 10px;
+      table {
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      col.numbers {
+        width: 10px;
+      }
+      col.item {
+        width: 100%;
+      }
+      th, td {
+        padding: 3px;
+      }
+      input[type='text'] {
+        font-size: 10px;
+      }
+    }
+    .empty-view {
+      width: 100%;
     }
   }
 }
