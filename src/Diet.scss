@@ -39,26 +39,54 @@
 
   .entry-editor-form {
     > div {
+      box-sizing: border-box;
       display: inline-block;
-      width: 470px;
-      margin: 10px;
+      //width: 470px;
+      width: 100%;
+      padding: 10px;
       vertical-align: top;
     }
     .main-entry {
       label {
         text-align: left;
         display: block;
+        position: relative;
         span {
           display: inline-block;
-          width: 100px;
-          text-align: right;
-          padding-right: 20px;
+          text-align: left;
+          padding: 0 10px;
           margin: 9px 0;
+          position: absolute;
+          top: 0;
+          left: 10px;
+          font-size: 10px;
+          background-color: white;
         }
         input[type='text'] {
           width: 300px;
           display: inline-block;
+          height: 2rem;
+          margin: 1rem 0;
         }
+        input[type='date'], input[type='time'] {
+          height: 3rem;
+          margin: 1rem 0;
+        }
+      }
+    }
+    .children-entries {
+      table {
+        display: block;
+        overflow-x: scroll;
+      }
+    }
+    .autocomplete {
+      .search-table {
+        overflow: scroll;
+      }
+      .selected {
+        background-color: black;
+        color: white;
       }
     }
   }
@@ -118,13 +146,16 @@
   .food-name-input {
     position: relative;
 
-    table {
+    .table {
       position: absolute;
       z-index: 1;
-      top: 35px;
+      top: 100%;
       left: 0;
-      background-color: rgba(255,255,255,.8);
+      background-color: white;
       box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: scroll;
 
       tbody {
         white-space: nowrap;
@@ -144,7 +175,7 @@
         cursor: pointer;
 
         &.selected {
-          background-color: $background-colour;
+          background-color: rgba(0,0,0,0.1);
         }
       }
     }

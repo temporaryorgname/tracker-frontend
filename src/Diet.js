@@ -585,7 +585,7 @@ class FoodNameInput extends Component {
       clearTimeout(this.loadSuggestionsTimeout);
       this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
     }
-    if (prevState.selected !== this.state.selected) {
+    if (this.props.onHighlight && prevState.selected !== this.state.selected) {
       if (this.state.selected === -1) {
         this.props.onHighlight({});
       } else if (this.props.onHighlight) {
@@ -651,7 +651,7 @@ class FoodNameInput extends Component {
     this.handleSelect();
   }
   loadSuggestions() {
-    if (this.props.value.length === 0) {
+    if (!this.props.value || this.props.value.length === 0) {
       this.setState({
         suggestions: [],
         loading: true
@@ -663,7 +663,7 @@ class FoodNameInput extends Component {
         .then(function(response){
           window.result = response;
           that.setState({
-            suggestions: response.data,
+            suggestions: response.data.history,
             loading: false
           });
         })
@@ -730,7 +730,7 @@ class FoodNameInput extends Component {
       </table>
     );
     var s = null;
-    if (this.props.value.length > 0 && this.state.focused) {
+    if (this.props.value && this.props.value.length > 0 && this.state.focused) {
       if (this.state.loading) {
         s = loadingSuggestions;
       } else if (this.state.suggestions.length > 0) {
@@ -744,7 +744,9 @@ class FoodNameInput extends Component {
         <form autocomplete='off' onSubmit={e => e.preventDefault()}>
         {inputField}
         </form>
-        {s}
+        <div className='table'>
+          {s}
+        </div>
       </div>
     );
   }
@@ -1362,10 +1364,13 @@ class ConnectedEntryEditorForm extends Component {
     super(props);
     this.state = {
       data: props.selectedEntry || null,
-      suggestion: {},
       selectingPhoto: false,
       successMessage: null,
-      errorMessage: null
+      errorMessage: null,
+      searchString: '',
+      searchLoading: false,
+      searchResults: {},
+      searchSelectedEntry: null
     };
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -1374,9 +1379,17 @@ class ConnectedEntryEditorForm extends Component {
     this.uploadFile = this.uploadFile.bind(this);
 
     this.renderMainEntry = this.renderMainEntry.bind(this);
+    this.renderAutocompleteTable = this.renderAutocompleteTable.bind(this);
     this.renderChildEntries = this.renderChildEntries.bind(this);
     this.renderPhotos = this.renderPhotos.bind(this);
     this.renderPhotoSelector = this.renderPhotoSelector.bind(this);
+
+    this.openAutocomplete = this.openAutocomplete.bind(this);
+    this.closeAutocomplete = this.closeAutocomplete.bind(this);
+    this.handleAutocompleteMainEntry = this.handleAutocompleteMainEntry.bind(this);
+    this.handleAutocompleteChildren = this.handleAutocompleteChildren.bind(this);
+    this.search = this.search.bind(this);
+    this.handleSearchSelect = this.handleSearchSelect.bind(this);
 
     if (!this.selectedEntry) {
       this.props.fetchFoodByDate(this.props.date);
@@ -1531,6 +1544,78 @@ class ConnectedEntryEditorForm extends Component {
     });
   }
 
+  openAutocomplete() {
+    this.setState({
+      showAutocompleteTable: true
+    });
+  }
+  closeAutocomplete() {
+    this.setState({
+      showAutocompleteTable: false
+    });
+  }
+  handleAutocompleteMainEntry(entryData) {
+    this.setState({
+      data: {
+        ...this.state.data,
+        ...entryData
+      },
+      showAutocompleteTable: false
+    });
+  }
+  handleAutocompleteChildren() {
+    let [key,index] = this.state.searchSelectedEntry;
+    let entryData = this.state.searchResults[key][index];
+    this.setState({
+      data: {
+        ...this.state.data,
+        children: [
+          ...this.state.data.children,
+          entryData
+        ]
+      },
+      showAutocompleteTable: false
+    });
+  }
+  search() {
+    if (!this.state.searchString || this.state.searchString.length === 0) {
+      this.setState({
+        searchLoading: true,
+        searchResults: {}
+      });
+      return;
+    }
+    var that = this;
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.state.searchString),
+      {withCredentials: true}
+    ).then(function(response){
+      that.setState({
+        searchResults: response.data,
+        searchLoading: false
+      });
+    }).catch(function(error){
+      console.error(error);
+    });
+  }
+  handleSearchSelect(key, index) {
+    if (this.state.searchSelectedEntry) {
+      if (this.state.searchSelectedEntry[0] === key && this.state.searchSelectedEntry[1] === index) {
+        this.setState({
+          searchSelectedEntry: null
+        });
+      } else {
+        this.setState({
+          searchSelectedEntry: [key, index]
+        });
+      }
+    } else {
+      this.setState({
+        searchSelectedEntry: [key, index]
+      });
+    }
+  }
+
   renderMainEntry() {
     if (this.state.data) {
       return (
@@ -1546,7 +1631,7 @@ class ConnectedEntryEditorForm extends Component {
           </label>
           <label>
             <span>Item name</span>
-            <input type='text' name='name' value={this.state.data.name || undefined} onChange={this.onChange}/>
+            <FoodNameInput name='name' value={this.state.data.name || undefined} onChange={this.onChange} onSelect={this.handleAutocompleteMainEntry} />
           </label>
           <label>
             <span>Quantity</span>
@@ -1572,6 +1657,74 @@ class ConnectedEntryEditorForm extends Component {
       );
     }
   }
+  renderAutocompleteTable() {
+    let loadingMessage = null;
+    if (this.state.searchLoading) {
+      loadingMessage = (<tr><td colSpan='999'>LOADING...</td></tr>);
+    }
+    let resultsBySection = {};
+    let that = this;
+    if (this.state.searchResults) {
+      let entries = Object.entries(this.state.searchResults);
+      console.log(entries);
+      for (let [key,vals] of entries) {
+        resultsBySection[key] = vals.map(function(val, index){
+          let isSelected = (that.state.searchSelectedEntry &&
+              that.state.searchSelectedEntry[0] === key &&
+              that.state.searchSelectedEntry[1] === index);
+          return (<tr key={index} onClick={() => that.handleSearchSelect(key,index)} className={isSelected ? 'selected' : ''}>
+            <td>{val.date}</td>
+            <td>{val.name}</td>
+            <td>{val.quantity}</td>
+            <td>{val.calories}</td>
+            <td>{val.protein}</td>
+          </tr>);
+        });
+      }
+    }
+    let results = null;
+    if (resultsBySection['recent']) {
+      results = (<>
+        {results}
+        <tr><td colSpan='999'>Recent</td></tr>
+        {resultsBySection['recent']}
+      </>);
+    }
+    if (resultsBySection['history']) {
+      results = (<>
+        {results}
+        <tr><td colSpan='999'>History</td></tr>
+        {resultsBySection['history']}
+      </>);
+    }
+    return (
+      <div className='autocomplete'>
+        <div className='search'>
+          <input type='text' value={this.state.searchString} onChange={(e)=>{this.setState({searchString: e.target.value})}} />
+          <button onClick={this.search}>Search</button>
+        </div>
+        <div className='search-table'>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Calories</th>
+                <th>Protein</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingMessage}
+              {results}
+            </tbody>
+          </table>
+        </div>
+        <button onClick={this.closeAutocomplete}>Cancel</button>
+        <button onClick={this.handleAutocompleteChildren}>Add</button>
+      </div>
+    );
+  }
   renderChildEntries() {
     if (this.state.data) {
       return (
@@ -1580,6 +1733,7 @@ class ConnectedEntryEditorForm extends Component {
           <p> {"What is contained in this meal? Enter the components and we'll sum it up for you!"} </p>
           <SmallTable data={this.state.data.children} onChange={this.handleChildrenChange} />
           <button onClick={this.handleNewChild}>New Component</button>
+          <button onClick={this.openAutocomplete}>Search</button>
         </div>
       );
     } else {
@@ -1659,17 +1813,27 @@ class ConnectedEntryEditorForm extends Component {
   }
   render() {
     if (this.state.data) {
-      return (
-        <div className='entry-editor-form'>
-          <div className='success-message'>{this.state.successMessage}</div>
-          <div className='error-message'>{this.state.errorMessage}</div>
-          {this.renderMainEntry()}
-          <div>
-            {this.renderChildEntries()}
-            {this.state.selectingPhoto ? this.renderPhotoSelector() : this.renderPhotos()}
+      if (this.state.showAutocompleteTable) {
+        return (
+          <div className='entry-editor-form'>
+            <div className='success-message'>{this.state.successMessage}</div>
+            <div className='error-message'>{this.state.errorMessage}</div>
+            {this.renderAutocompleteTable()}
           </div>
-        </div>
-      );
+        );
+      } else {
+        return (
+          <div className='entry-editor-form'>
+            <div className='success-message'>{this.state.successMessage}</div>
+            <div className='error-message'>{this.state.errorMessage}</div>
+            {this.renderMainEntry()}
+            <div>
+              {this.renderChildEntries()}
+              {this.state.selectingPhoto ? this.renderPhotoSelector() : this.renderPhotos()}
+            </div>
+          </div>
+        );
+      }
     } else {
       return (
         <div className='entry-editor-form'>
@@ -1846,7 +2010,7 @@ class SmallTableRow extends Component {
   render() {
     return (
       <tr>
-        <td><input type='text' onChange={this.handleChange} name='name' value={this.props.data.name} /></td>
+        <td><FoodNameInput onChange={this.handleChange} name='name' value={this.props.data.name} /></td>
         <td><input type='text' onChange={this.handleChange} name='quantity' value={this.props.data.quantity} /></td>
         <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories} /></td>
         <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein} /></td>
