@@ -744,9 +744,7 @@ class FoodNameInput extends Component {
         <form autocomplete='off' onSubmit={e => e.preventDefault()}>
         {inputField}
         </form>
-        <div className='table'>
-          {s}
-        </div>
+        {s && <div className='table'> {s} </div>}
       </div>
     );
   }

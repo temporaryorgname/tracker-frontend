@@ -222,6 +222,31 @@
     .empty-view {
       width: 500px;
     }
+    .entry-editor-form {
+      > div {
+        width: 470px;
+      }
+      .main-entry {
+        label {
+          span {
+            background-color: inherit;
+          }
+          input {
+            background-color: rgba(0,0,0,0);
+            &[type='date'], &[type='time'] {
+              border: none;
+              border-bottom: 1px solid rgba(0,0,0,0.4);
+              height: 2rem;
+            }
+          }
+        }
+      }
+      .children-entries {
+        table {
+          overflow-x: auto;
+        }
+      }
+    }
   }
 }
 
