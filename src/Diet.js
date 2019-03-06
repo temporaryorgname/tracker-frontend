@@ -1719,7 +1719,7 @@ class ConnectedEntryEditorForm extends Component {
           </table>
         </div>
         <button onClick={this.closeAutocomplete}>Cancel</button>
-        <button onClick={this.handleAutocompleteChildren}>Add</button>
+        {this.state.searchSelectedEntry ? <button onClick={this.handleAutocompleteChildren}>Add</button> : <button className='disabled'>Add</button>}
       </div>
     );
   }

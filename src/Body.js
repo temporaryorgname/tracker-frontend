@@ -326,9 +326,7 @@ class ConnectedBodyWeightTimeSeries extends Component {
     this.updateSVG();
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.data !== prevProps.data) {
-      this.updateSVG();
-    }
+    this.updateSVG();
   }
   render() {
     // Convert the data to numerical form

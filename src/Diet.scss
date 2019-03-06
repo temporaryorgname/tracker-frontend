@@ -81,6 +81,12 @@
       }
     }
     .autocomplete {
+      .search {
+        white-space: nowrap;
+        input {
+          width: auto;
+        }
+      }
       .search-table {
         overflow: scroll;
       }
@@ -155,7 +161,7 @@
       box-shadow: 0 2px 5px 0 rgba(0,0,0,.5);
       max-width: 100%;
       box-sizing: border-box;
-      overflow: scroll;
+      overflow-x: scroll;
 
       tbody {
         white-space: nowrap;
@@ -245,6 +251,17 @@
         table {
           overflow-x: auto;
         }
+      }
+      .autocomplete {
+        width: auto;
+        .search-table {
+          overflow: auto;
+        }
+      }
+    }
+    .food-name-input {
+      .table {
+        max-width: unset;
       }
     }
   }

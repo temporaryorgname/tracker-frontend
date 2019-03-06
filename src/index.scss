@@ -79,6 +79,11 @@ input[type=button], input[type=submit], button {
   &:focus {
     background-color: $focus-colour;
   }
+
+  &.disabled {
+    color: rgb(128,128,128);
+    cursor: initial;
+  }
 }
 
 svg {
@@ -232,6 +237,10 @@ table {
     margin: 10px;
     padding: 5px 20px;
     border: 0;
+    &[colspan='999'] {
+      text-align: center;
+      background-color: rgba(0,0,0,0.4);
+    }
   }
 }
 
