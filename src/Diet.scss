@@ -140,6 +140,16 @@
         }
       }
     }
+    td {
+      white-space: nowrap;
+      .indentation {
+        display: inline-block;
+        width: 1rem;
+        &:after {
+          content: '-';
+        }
+      }
+    }
 
     .react-datepicker-popper {
       z-index: 2;

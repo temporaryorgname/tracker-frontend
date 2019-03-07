@@ -1172,6 +1172,12 @@ class FoodRow extends Component {
     ).reduce(
       (a, b) => a+b, 0
     );
+    let indentation = null;
+    for (let i = 0; i < (this.props.depth || 0); i++) {
+      indentation = (
+        <><div className='indentation'/></>
+      );
+    }
     let that = this;
     return (
       <>
@@ -1184,7 +1190,10 @@ class FoodRow extends Component {
                 onChange={this.toggleChildren} />
             }
           </td>
-          <FoodRowCell value={this.props.data.name} onChange={this.getOnChangeHandler('name')} />
+          <td>
+            {indentation}
+            <input type='text' value={this.props.data.name} onChange={this.getOnChangeHandler('name')} onKeyPress={this.handleKeyPress} />
+          </td>
           <td>
             <QuantityInput
                 value={this.props.data.quantity || ''}
@@ -1209,7 +1218,8 @@ class FoodRow extends Component {
                 data={child}
                 selected={selected}
                 onToggleSelected={that.props.onToggleSelected}
-                onChange={that.handleChildrenChange}/>);
+                onChange={that.handleChildrenChange}
+                depth={1}/>);
           })
         }
       </>
