@@ -1162,6 +1162,16 @@ class FoodRow extends Component {
   }
   render() {
     let selected = this.props.selected;
+    let childrenCalories = this.props.data.children.map(
+      child => child.calories
+    ).reduce(
+      (a, b) => a+b, 0
+    );
+    let childrenProtein = this.props.data.children.map(
+      child => child.protein
+    ).reduce(
+      (a, b) => a+b, 0
+    );
     let that = this;
     return (
       <>
@@ -1182,8 +1192,12 @@ class FoodRow extends Component {
                 onKeyPress={this.handleKeyPress}
                 onScale={this.handleQuantityScale}/>
           </td>
-          <FoodRowCell value={this.props.data.calories} onChange={this.getOnChangeHandler('calories')} />
-          <FoodRowCell value={this.props.data.protein} onChange={this.getOnChangeHandler('protein')} />
+          <FoodRowCell value={this.props.data.calories}
+            onChange={this.getOnChangeHandler('calories')}
+            placeholder={childrenCalories || ''}/>
+          <FoodRowCell value={this.props.data.protein}
+            onChange={this.getOnChangeHandler('protein')}
+            placeholder={childrenProtein || ''}/>
           <td className='select'>
             <Checkbox checked={selected.has(this.props.data.id)}
               onChange={()=>this.props.onToggleSelected(this.props.data.id)} />
@@ -1213,9 +1227,8 @@ class FoodRowCell extends Component {
     return (
       <td>
         <input type='text' 
-          value={this.props.value || ''}
-          onChange={this.props.onChange}
-          onKeyPress={this.handleKeyPress}/>
+          onKeyPress={this.handleKeyPress}
+          {...this.props} />
       </td>
     );
   }
