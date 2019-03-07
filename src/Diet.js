@@ -740,6 +740,7 @@ class ConnectedFoodTable extends Component {
     };
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
+    this.handleChangeDate = this.handleChangeDate.bind(this);
 
     this.props.fetchData(this.props.date);
   }
@@ -762,6 +763,11 @@ class ConnectedFoodTable extends Component {
   }
   deleteSelectedEntries(event) {
     event.preventDefault();
+    let count = this.state.selected.size;
+    let confirmDelete = window.confirm('Are you sure you want to delete the '+count+' selected entries?');
+    if (!confirmDelete) {
+      return;
+    }
     var that = this;
     this.props.deleteEntry(Array.from(this.state.selected).map(id => {return {id: id}}))
       .then(function(response) {
@@ -771,6 +777,27 @@ class ConnectedFoodTable extends Component {
         that.props.fetchData(that.props.date);
       });
   }
+  handleChangeDate(e) {
+    let newDate = e.target.value;
+    let confirmMove = window.confirm('Are you sure you want to move the selected entry to '+newDate+'?');
+    if (confirmMove) {
+      let that = this;
+      let ids = Array.from(this.state.selected).forEach(function(id){
+        for (var entry of that.props.entries) {
+          if (entry.id === id) {
+            break;
+          }
+        }
+        that.props.updateData({
+          ...entry,
+          date: newDate
+        });
+      });
+      this.setState({
+        selected: new Set()
+      });
+    }
+  }
   render() {
     var that = this;
     let controls = null;
@@ -778,14 +805,20 @@ class ConnectedFoodTable extends Component {
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <i className='material-icons action'>date_range</i>
+          <label>
+            <i className='material-icons action'>date_range</i>
+            <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
+          </label>
         </>
       );
     } else if (this.state.selected.size > 1) {
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <i className='material-icons action'>date_range</i>
+          <label>
+            <i className='material-icons action'>date_range</i>
+            <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
+          </label>
         </>
       );
     }

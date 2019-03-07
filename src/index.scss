@@ -117,6 +117,7 @@ svg {
 
 i.action {
   cursor: pointer;
+  margin: 5px;
   &:hover {
     color: rgba($primary-colour, 0.7);
   }
