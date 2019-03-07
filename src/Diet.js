@@ -993,56 +993,42 @@ class DropdownCheckbox extends Component {
   }
 }
 
-class ConnectedFoodRow extends Component {
+class FoodRow extends Component {
   constructor(props) {
     super(props);
     this.state = { // Keep a copy of the data
-      data: {
-        ...props.data
-      },
-      dirty: false,
       expanded: false
     };
 
-    if (this.props.data.photo_group_id) {
-      this.props.fetchPhotos(this.props.data.photo_group_id);
-    }
-
+    this.getOnChangeHandler = this.getOnChangeHandler.bind(this);
+    this.handleChildrenChange = this.handleChildrenChange.bind(this);
     this.dropdownCheckbox = React.createRef();
     this.toggleChildren = this.toggleChildren.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
   }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.data !== this.props.data) {
-      // Find the places where it changed. and update the state.
-      // If the value in the state is different from the previous props, it means it was edited by the user, and they probably want to keep the new value.
-      let data = {
-        ...this.state.data
-      };
-      let newProps = this.props.data;
-      Object.keys(this.props.data).forEach(function(key){
-        if (data[key] === prevProps[key]) {
-          data[key] = newProps[key];
-        }
-      });
-      this.setState({data: data});
-    }
-    if (!dictEqual(prevState.data,this.state.data)) {
-      this.props.updateEntry(this.props.id, this.state.data);
-    }
-  }
-  getOnUpdateHandler(propName) {
-    var that = this;
+  getOnChangeHandler(propName) {
+    let that = this;
+    let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
     return function(e) {
       // Update entry values
-      var updatedEntry = {
-        ...that.state.data,
+      let updatedEntry = {
+        ...that.props.data,
         [propName]: e.target.value
       }
-      that.setState({
-        data: updatedEntry
-      });
+      onChange(updatedEntry);
     }
+  }
+  handleChildrenChange(entry) {
+    let that = this;
+    let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
+    let otherChildren = that.props.data.children.filter(child => child.id !== entry.id);
+    onChange({
+      ...that.props.data,
+      children: [
+        ...otherChildren,
+        entry
+      ] 
+    });
   }
   toggleChildren(visible) {
     this.setState({
@@ -1088,72 +1074,40 @@ class ConnectedFoodRow extends Component {
         <tr className='entry'>
           <td>
             {
-              this.state.data.children.length > 0 && 
+              this.props.data.children.length > 0 && 
               <DropdownCheckbox 
                 ref={this.dropdownCheckbox}
                 onChange={this.toggleChildren} />
             }
           </td>
-          <FoodRowCell value={this.state.data.name} onChange={this.getOnUpdateHandler('name')} />
+          <FoodRowCell value={this.props.data.name} onChange={this.getOnChangeHandler('name')} />
           <td>
             <QuantityInput
-                value={this.state.data.quantity}
-                onChange={this.getOnUpdateHandler('quantity')}
+                value={this.props.data.quantity}
+                onChange={this.getOnChangeHandler('quantity')}
                 onKeyPress={this.handleKeyPress}
                 onScale={this.handleQuantityScale}/>
           </td>
-          <FoodRowCell value={this.state.data.calories} onChange={this.getOnUpdateHandler('calories')} />
-          <FoodRowCell value={this.state.data.protein} onChange={this.getOnUpdateHandler('protein')} />
+          <FoodRowCell value={this.props.data.calories} onChange={this.getOnChangeHandler('calories')} />
+          <FoodRowCell value={this.props.data.protein} onChange={this.getOnChangeHandler('protein')} />
           <td className='select'>
-            <Checkbox checked={selected.has(that.props.id)}
-              onChange={()=>this.props.onToggleSelected(this.props.id)} />
+            <Checkbox checked={selected.has(this.props.data.id)}
+              onChange={()=>this.props.onToggleSelected(this.props.data.id)} />
           </td>
         </tr>
-        {this.state.expanded && this.state.data.children.length > 0 && 
-          this.state.data.children.map(function(child){
-            return (<FoodRow key={child.id} data={child} id={child.id} selected={selected} onToggleSelected={that.props.onToggleSelected}/>);
+        {this.state.expanded && this.props.data.children.length > 0 && 
+          this.props.data.children.map(function(child){
+            return (<FoodRow key={child.id} 
+                data={child}
+                selected={selected}
+                onToggleSelected={that.props.onToggleSelected}
+                onChange={that.handleChildrenChange}/>);
           })
         }
       </>
     );
   }
 }
-const FoodRow = connect(
-  function(state, ownProps) {
-    if (ownProps.data) {
-      return {};
-    }
-
-    var entry = state.food.entities[ownProps.id];
-    let photo_ids = [];
-    if (entry.photo_group_id) {
-      let byGroupId = state.photos.by.group_id || {};
-      photo_ids = byGroupId[entry.photo_group_id];
-    } else if (entry.photo_id) {
-      photo_ids = [entry.photo_id];
-    }
-    return {
-      data: {
-        id: entry.id,
-        date: entry.date || '',
-        name: entry.name || '',
-        quantity: entry.quantity || '',
-        calories: entry.calories || '',
-        protein: entry.protein || '',
-        photo_id: entry.photo_id || null,
-        photo_group_id: entry.photo_group_id || null,
-        photo_ids: photo_ids,
-        children: entry.children || []
-      }
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      updateEntry: (id, data) => dispatch(foodActions['update'](data)),
-      fetchPhotos: (group_id) => dispatch(photoActions['fetchMultiple']({group_id}))
-    };
-  }
-)(ConnectedFoodRow);
 
 class FoodRowCell extends Component {
   handleKeyPress(e) {
@@ -1183,11 +1137,11 @@ class ConnectedFoodTable extends Component {
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
 
-    this.props.updateData(this.props.date);
+    this.props.fetchData(this.props.date);
   }
   componentDidUpdate(prevProps) {
     if (prevProps.date !== this.props.date) {
-      this.props.updateData(this.props.date);
+      this.props.fetchData(this.props.date);
     }
   }
   handleToggleSelected(entryId) {
@@ -1210,7 +1164,7 @@ class ConnectedFoodTable extends Component {
         that.setState({
           selected: new Set()
         });
-        that.props.updateData(that.props.date);
+        that.props.fetchData(that.props.date);
       });
   }
   render() {
@@ -1243,7 +1197,7 @@ class ConnectedFoodTable extends Component {
           );
           break;
         case 'loaded':
-          if (this.props.ids.length === 0) {
+          if (this.props.entries.length === 0) {
             status = (
               <tr className='status'>
                 <td colSpan='999'>
@@ -1306,11 +1260,12 @@ class ConnectedFoodTable extends Component {
           </tr>
           <FoodRowNewEntry date={this.props.date} />
           {
-            this.props.ids.map(function(id){
-              return <FoodRow key={id}
-                          id={id}
+            this.props.entries.map(function(entry){
+              return <FoodRow key={entry.id}
+                          data={entry}
                           selected={that.state.selected}
-                          onToggleSelected={that.handleToggleSelected}/>
+                          onToggleSelected={that.handleToggleSelected}
+                          onChange={that.props.updateData}/>
             })
           }
           { status }
@@ -1322,36 +1277,38 @@ class ConnectedFoodTable extends Component {
 }
 const FoodTable = connect(
   function(state, ownProps) {
-    let byDate = state.food.by['date'] || {};
-    let ids = byDate[ownProps.date] || [];
-    ids = ids.filter(id => state.food.entities[id]); // Filter out deleted entries
     let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
-    let entities = ids.map(id => state.food.entities[id]).filter(x => x);
+    let entities = Object.values(state.food.entities).filter(
+      entity => entity && entity.date === ownProps.date
+    );
+    let entitiesWithoutParent = entities.filter(entity => !entity.parent_id);
+    function computeTotal(entities, property) {
+      return entities.map(function(entity) {
+        if (entity[property]) {
+          return entity[property];
+        } else {
+          return computeTotal(entity.children, property);
+        }
+      }).filter(
+        val => val && isFinite(val)
+      ).reduce(
+        (acc, val) => acc+parseFloat(val), 0
+      );
+    }
     return {
       loadingStatus,
-      ids: ids,
+      entries: entitiesWithoutParent,
       total: {
-        calories: entities.map(
-            entity => entity.calories
-          ).filter(
-            val => val && isFinite(val)
-          ).reduce(
-            (acc, val) => acc+parseFloat(val), 0
-          ),
-        protein: entities.map(
-            entity => entity.protein
-          ).filter(
-            val => val && isFinite(val)
-          ).reduce(
-            (acc, val) => acc+parseFloat(val), 0
-          )
+        calories: computeTotal(entitiesWithoutParent, 'calories'),
+        protein: computeTotal(entitiesWithoutParent, 'protein'),
       },
       dirty: state.food.dirtyEntities.size > 0
     }
   },
   function(dispatch, ownProps) {
     return {
-      updateData: date => dispatch(foodActions['fetchMultiple']({date: date})),
+      fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
+      updateData: entry => dispatch(foodActions['update'](entry)),
       deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids))
     };
   }
