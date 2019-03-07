@@ -1917,6 +1917,7 @@ class SmallTableRow extends Component {
   constructor(props) {
     super(props);
     this.handleChange = this.handleChange.bind(this);
+    this.handleScale = this.handleScale.bind(this);
   }
   handleChange(e) {
     if (this.props.onChange) {
@@ -1927,13 +1928,20 @@ class SmallTableRow extends Component {
       this.props.onChange(data);
     }
   }
+  handleScale(scale) {
+    this.props.onChange({
+      ...this.props.data,
+      calories: this.props.data.calories*scale,
+      protein: this.props.data.protein*scale
+    })
+  }
   render() {
     return (
       <tr>
-        <td><FoodNameInput onChange={this.handleChange} name='name' value={this.props.data.name} /></td>
-        <td><input type='text' onChange={this.handleChange} name='quantity' value={this.props.data.quantity} /></td>
-        <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories} /></td>
-        <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein} /></td>
+        <td><FoodNameInput onChange={this.handleChange} name='name' value={this.props.data.name || ''} /></td>
+        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale}/></td>
+        <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories || ''} /></td>
+        <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein || ''} /></td>
       </tr>
     );
   }
