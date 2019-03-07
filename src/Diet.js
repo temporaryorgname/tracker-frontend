@@ -127,6 +127,272 @@ export const DietPage = connect(
   }
 )(ConnectedDietPage);
 
+class FoodNameInput extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      suggestions: [],
+      loading: false,
+      focused: false,
+      selected: -1
+    }
+    this.ref = React.createRef();
+    this.loadSuggestions = this.loadSuggestions.bind(this);
+    this.loadSuggestionsTimeout = null;
+    this.handleSelect = this.handleSelect.bind(this);
+    this.handleFocus = this.handleFocus.bind(this);
+    this.handleBlur = this.handleBlur.bind(this);
+    this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.focus = this.focus.bind(this);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.value !== this.props.value) {
+      clearTimeout(this.loadSuggestionsTimeout);
+      this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
+    }
+    if (this.props.onHighlight && prevState.selected !== this.state.selected) {
+      if (this.state.selected === -1) {
+        this.props.onHighlight({});
+      } else if (this.props.onHighlight) {
+        this.props.onHighlight(this.state.suggestions[this.state.selected]);
+      }
+    }
+  }
+  handleSelect() {
+    // Check if the selection is valid
+    if (this.state.selected === -1) {
+      return;
+    }
+    // Call event handlers
+    if (this.props.onSelect) {
+      this.props.onSelect(this.state.suggestions[this.state.selected]);
+    }
+    // Clear search results and selection
+    this.setState({
+      selected: -1,
+      suggestions: []
+    });
+  }
+  handleBlur() {
+    this.setState({
+      focused: false
+    });
+  }
+  handleFocus() {
+    this.setState({
+      focused: true
+    });
+  }
+  handleKeyDown(event) {
+    var UP = 38;
+    var DOWN = 40;
+    if (event.keyCode === DOWN) {
+      this.setState({
+        selected: (this.state.selected+2)%(this.state.suggestions.length+1)-1
+      });
+    } else if (event.keyCode === UP) {
+      this.setState({
+        selected: (this.state.selected+this.state.suggestions.length+1)%(this.state.suggestions.length+1)-1
+      });
+    }
+  }
+  handleKeyPress(event) {
+    var RETURN = 13;
+    if ((event.keyCode || event.which || event.charCode) === RETURN && this.state.selected !== -1) {
+      this.handleSelect();
+      // Prevent the key press from affecting other things (e.g. form submission).
+      event.stopPropagation();
+    }
+  }
+  getMouseEnterHandler(index) {
+    var that = this;
+    return function(event) {
+      that.setState({
+        selected: index
+      });
+    }
+  }
+  handleMouseDown(event) {
+    this.handleSelect();
+  }
+  loadSuggestions() {
+    if (!this.props.value || this.props.value.length === 0) {
+      this.setState({
+        suggestions: [],
+        loading: true
+      });
+      return;
+    }
+    var that = this;
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.props.value), {withCredentials: true})
+        .then(function(response){
+          window.result = response;
+          that.setState({
+            suggestions: response.data.history,
+            loading: false
+          });
+        })
+        .catch(function(error){
+          console.error(error);
+        });
+  }
+  focus() {
+    this.ref.current.focus();
+  }
+  render() {
+    var that = this;
+    var inputField = (<input
+              autocomplate='off'
+              type='text'
+              value={this.props.value}
+              onKeyDown={this.handleKeyDown}
+              onKeyPress={this.handleKeyPress}
+              onChange={this.props.onChange}
+              onFocus={this.handleFocus}
+              onBlur={this.handleBlur}
+              name={this.props.name}
+              placeholder={this.props.placeholder}
+              ref={this.ref} />);
+    var suggestions = (
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Cals</th>
+            <th>Prot</th>
+          </tr>
+        </thead>
+        <tbody onMouseDown={this.handleSelect}>
+          {
+            this.state.suggestions.map(function(item,index){
+              var className = that.state.selected === index ? 'selected' : '';
+              return (
+                <tr className={className} key={index} onMouseEnter={that.getMouseEnterHandler(index)}>
+                  <td className='name'>{item.name}</td>
+                  <td className='numbers' data-label='qty'>{item.quantity}</td>
+                  <td className='numbers' data-label='cals'>{item.calories}</td>
+                  <td className='numbers' data-label='prot'>{item.protein}</td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    );
+    var loadingSuggestions = (
+      <table>
+        <thead>
+          <tr>
+            <th>name</th>
+            <th>cals</th>
+            <th>prot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td className='loading' colSpan='3'><div className='loader'></div></td></tr>
+        </tbody>
+      </table>
+    );
+    var s = null;
+    if (this.props.value && this.props.value.length > 0 && this.state.focused) {
+      if (this.state.loading) {
+        s = loadingSuggestions;
+      } else if (this.state.suggestions.length > 0) {
+        s = suggestions;
+      } else {
+        s = null;
+      }
+    }
+    return (
+      <div className='food-name-input'>
+        <form autoComplete='off' onSubmit={e => e.preventDefault()}>
+        {inputField}
+        </form>
+        {s && <div className='table'> {s} </div>}
+      </div>
+    );
+  }
+}
+
+class QuantityInput extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      focused: false,
+      startingValue: this.props.value
+    };
+    this.scaleQuantity = this.scaleQuantity.bind(this);
+    this.handleFocus = this.handleFocus.bind(this);
+    this.handleBlur = this.handleBlur.bind(this);
+  }
+  scaleQuantity() {
+    function splitUnits(str) {
+      var val = parseFloat(str);
+      var units = str.substring(val.toString().length).trim();
+      return {val: val, units: units}
+    }
+    // Ignore empty strings
+    if (this.props.value === null) {
+      return;
+    }
+    if (this.props.value.length === 0) {
+      return;
+    }
+    // Split numbers and units
+    var oldVals = splitUnits(this.state.startingValue);
+    var newVals = splitUnits(this.props.value);
+
+    // Check if the quantities use the same units
+    if (oldVals['units'] !== newVals['units']) {
+      return;
+    }
+
+    var scale = newVals['val']/oldVals['val'];
+
+    // Check if the number is valid
+    if (!isFinite(scale) || scale === 1) {
+      return;
+    }
+
+    // Callback
+    if (this.props.onScale) {
+      this.props.onScale(scale);
+    }
+  }
+  handleBlur(e) {
+    this.scaleQuantity();
+    if (this.props.onBlur) {
+      this.props.onBlur(e);
+    }
+  }
+  handleFocus(e) {
+    this.setState({
+      startingValue: this.props.value
+    });
+    if (this.props.onFocus) {
+      this.props.onFocus(e);
+    }
+  }
+  render() {
+    const {onScale, ...props} = this.props;
+    return (
+      <input
+          type='text'
+          name='quantity'
+          {...props}
+          onBlur={this.handleBlur}
+          onFocus={this.handleFocus}
+          />
+    );
+  }
+}
+
+//////////////////////////////////////////////////
+// Photos
+//////////////////////////////////////////////////
+
 class ConnectedGallery extends Component {
   constructor(props) {
     super(props);
@@ -462,267 +728,194 @@ const Gallery = connect(
   }
 )(ConnectedGallery);
 
-class FoodNameInput extends Component {
-  constructor(props) {
-    super(props);
+//////////////////////////////////////////////////
+// Table
+//////////////////////////////////////////////////
+
+class ConnectedFoodTable extends Component {
+  constructor(props){
+    super(props)
     this.state = {
-      suggestions: [],
-      loading: false,
-      focused: false,
-      selected: -1
-    }
-    this.ref = React.createRef();
-    this.loadSuggestions = this.loadSuggestions.bind(this);
-    this.loadSuggestionsTimeout = null;
-    this.handleSelect = this.handleSelect.bind(this);
-    this.handleFocus = this.handleFocus.bind(this);
-    this.handleBlur = this.handleBlur.bind(this);
-    this.handleKeyDown = this.handleKeyDown.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-    this.focus = this.focus.bind(this);
+      selected: new Set()
+    };
+    this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
+    this.handleToggleSelected = this.handleToggleSelected.bind(this);
+
+    this.props.fetchData(this.props.date);
   }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.value !== this.props.value) {
-      clearTimeout(this.loadSuggestionsTimeout);
-      this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
-    }
-    if (this.props.onHighlight && prevState.selected !== this.state.selected) {
-      if (this.state.selected === -1) {
-        this.props.onHighlight({});
-      } else if (this.props.onHighlight) {
-        this.props.onHighlight(this.state.suggestions[this.state.selected]);
-      }
+  componentDidUpdate(prevProps) {
+    if (prevProps.date !== this.props.date) {
+      this.props.fetchData(this.props.date);
     }
   }
-  handleSelect() {
-    // Check if the selection is valid
-    if (this.state.selected === -1) {
-      return;
+  handleToggleSelected(entryId) {
+    /* Callback to be triggered when an entry has been selected. */
+    var setCopy = new Set(this.state.selected);
+    if (this.state.selected.has(entryId)){
+      setCopy.delete(entryId);
+    } else {
+      setCopy.add(entryId);
     }
-    // Call event handlers
-    if (this.props.onSelect) {
-      this.props.onSelect(this.state.suggestions[this.state.selected]);
-    }
-    // Clear search results and selection
     this.setState({
-      selected: -1,
-      suggestions: []
+      selected: setCopy
     });
   }
-  handleBlur() {
-    this.setState({
-      focused: false
-    });
-  }
-  handleFocus() {
-    this.setState({
-      focused: true
-    });
-  }
-  handleKeyDown(event) {
-    var UP = 38;
-    var DOWN = 40;
-    if (event.keyCode === DOWN) {
-      this.setState({
-        selected: (this.state.selected+2)%(this.state.suggestions.length+1)-1
-      });
-    } else if (event.keyCode === UP) {
-      this.setState({
-        selected: (this.state.selected+this.state.suggestions.length+1)%(this.state.suggestions.length+1)-1
-      });
-    }
-  }
-  handleKeyPress(event) {
-    var RETURN = 13;
-    if ((event.keyCode || event.which || event.charCode) === RETURN && this.state.selected !== -1) {
-      this.handleSelect();
-      // Prevent the key press from affecting other things (e.g. form submission).
-      event.stopPropagation();
-    }
-  }
-  getMouseEnterHandler(index) {
+  deleteSelectedEntries(event) {
+    event.preventDefault();
     var that = this;
-    return function(event) {
-      that.setState({
-        selected: index
-      });
-    }
-  }
-  handleMouseDown(event) {
-    this.handleSelect();
-  }
-  loadSuggestions() {
-    if (!this.props.value || this.props.value.length === 0) {
-      this.setState({
-        suggestions: [],
-        loading: true
-      });
-      return;
-    }
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.props.value), {withCredentials: true})
-        .then(function(response){
-          window.result = response;
-          that.setState({
-            suggestions: response.data.history,
-            loading: false
-          });
-        })
-        .catch(function(error){
-          console.error(error);
+    this.props.deleteEntry(Array.from(this.state.selected).map(id => {return {id: id}}))
+      .then(function(response) {
+        that.setState({
+          selected: new Set()
         });
-  }
-  focus() {
-    this.ref.current.focus();
+        that.props.fetchData(that.props.date);
+      });
   }
   render() {
     var that = this;
-    var inputField = (<input
-              autocomplate='off'
-              type='text'
-              value={this.props.value}
-              onKeyDown={this.handleKeyDown}
-              onKeyPress={this.handleKeyPress}
-              onChange={this.props.onChange}
-              onFocus={this.handleFocus}
-              onBlur={this.handleBlur}
-              name={this.props.name}
-              placeholder={this.props.placeholder}
-              ref={this.ref} />);
-    var suggestions = (
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Cals</th>
-            <th>Prot</th>
-          </tr>
-        </thead>
-        <tbody onMouseDown={this.handleSelect}>
-          {
-            this.state.suggestions.map(function(item,index){
-              var className = that.state.selected === index ? 'selected' : '';
-              return (
-                <tr className={className} key={index} onMouseEnter={that.getMouseEnterHandler(index)}>
-                  <td className='name'>{item.name}</td>
-                  <td className='numbers' data-label='qty'>{item.quantity}</td>
-                  <td className='numbers' data-label='cals'>{item.calories}</td>
-                  <td className='numbers' data-label='prot'>{item.protein}</td>
-                </tr>
-              );
-            })
+    let controls = null;
+    if (this.state.selected.size === 1) {
+      controls = (
+        <>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
+          <i className='material-icons action'>date_range</i>
+        </>
+      );
+    } else if (this.state.selected.size > 1) {
+      controls = (
+        <>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
+          <i className='material-icons action'>date_range</i>
+        </>
+      );
+    }
+    let status = null;
+    if (this.props.loadingStatus) {
+      switch (this.props.loadingStatus.status) {
+        case 'loading':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>LOADING</td>
+            </tr>
+          );
+          break;
+        case 'loaded':
+          if (this.props.entries.length === 0) {
+            status = (
+              <tr className='status'>
+                <td colSpan='999'>
+                  <div>
+                    You have not yet recorded any food for today.
+                  </div>
+                </td>
+              </tr>
+            );
           }
-        </tbody>
-      </table>
-    );
-    var loadingSuggestions = (
-      <table>
-        <thead>
-          <tr>
-            <th>name</th>
-            <th>cals</th>
-            <th>prot</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td className='loading' colSpan='3'><div className='loader'></div></td></tr>
-        </tbody>
-      </table>
-    );
-    var s = null;
-    if (this.props.value && this.props.value.length > 0 && this.state.focused) {
-      if (this.state.loading) {
-        s = loadingSuggestions;
-      } else if (this.state.suggestions.length > 0) {
-        s = suggestions;
-      } else {
-        s = null;
+          break;
+        case 'error':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
+            </tr>
+          );
+          break;
+        default:
+          status = null;
+          break;
       }
     }
     return (
-      <div className='food-name-input'>
-        <form autoComplete='off' onSubmit={e => e.preventDefault()}>
-        {inputField}
-        </form>
-        {s && <div className='table'> {s} </div>}
+      <div className='food-table'>
+        <div className='controls'>
+          <div className='table-controls'>
+          </div>
+          <div className='entry-controls'>
+            {controls}
+          </div>
+        </div>
+        <table className="Food cards">
+          <colgroup>
+            <col className='expand' />
+            <col className='item'/>
+            <col className='numbers'/>
+            <col className='numbers'/>
+            <col className='numbers'/>
+            <col className='actions' />
+          </colgroup>
+          <thead>
+          <tr>
+            <td>{this.props.dirty ? <i className='material-icons spin' alt='Saving changes...'>autorenew</i> : <i className='material-icons' alt='Changes saved'>check</i>}</td>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Calories</th>
+            <th>Protein</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr className='total'>
+            <td></td>
+            <th>Total</th>
+            <td></td>
+            <td data-label='Cals'>{this.props.total.calories}</td>
+            <td data-label='Prot'>{this.props.total.protein}</td>
+            <td></td>
+          </tr>
+          <FoodRowNewEntry date={this.props.date} />
+          {
+            this.props.entries.map(function(entry){
+              return <FoodRow key={entry.id}
+                          data={entry}
+                          selected={that.state.selected}
+                          onToggleSelected={that.handleToggleSelected}
+                          onChange={that.props.updateData}/>
+            })
+          }
+          { status }
+          </tbody>
+        </table>
       </div>
     );
   }
 }
-
-class QuantityInput extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      focused: false,
-      startingValue: this.props.value
-    };
-    this.scaleQuantity = this.scaleQuantity.bind(this);
-    this.handleFocus = this.handleFocus.bind(this);
-    this.handleBlur = this.handleBlur.bind(this);
-  }
-  scaleQuantity() {
-    function splitUnits(str) {
-      var val = parseFloat(str);
-      var units = str.substring(val.toString().length).trim();
-      return {val: val, units: units}
-    }
-    // Ignore empty strings
-    if (this.props.value === null) {
-      return;
-    }
-    if (this.props.value.length === 0) {
-      return;
-    }
-    // Split numbers and units
-    var oldVals = splitUnits(this.state.startingValue);
-    var newVals = splitUnits(this.props.value);
-
-    // Check if the quantities use the same units
-    if (oldVals['units'] !== newVals['units']) {
-      return;
-    }
-
-    var scale = newVals['val']/oldVals['val'];
-
-    // Check if the number is valid
-    if (!isFinite(scale) || scale === 1) {
-      return;
-    }
-
-    // Callback
-    if (this.props.onScale) {
-      this.props.onScale(scale);
-    }
-  }
-  handleBlur(e) {
-    this.scaleQuantity();
-    if (this.props.onBlur) {
-      this.props.onBlur(e);
-    }
-  }
-  handleFocus(e) {
-    this.setState({
-      startingValue: this.props.value
-    });
-    if (this.props.onFocus) {
-      this.props.onFocus(e);
-    }
-  }
-  render() {
-    const {onScale, ...props} = this.props;
-    return (
-      <input
-          type='text'
-          name='quantity'
-          {...props}
-          onBlur={this.handleBlur}
-          onFocus={this.handleFocus}
-          />
+const FoodTable = connect(
+  function(state, ownProps) {
+    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
+    let entities = Object.values(state.food.entities).filter(
+      entity => entity && entity.date === ownProps.date
     );
+    let entitiesWithoutParent = entities.filter(entity => !entity.parent_id);
+    function computeTotal(entities, property) {
+      return entities.map(function(entity) {
+        if (entity[property]) {
+          return entity[property];
+        } else {
+          return computeTotal(entity.children, property);
+        }
+      }).filter(
+        val => val && isFinite(val)
+      ).reduce(
+        (acc, val) => acc+parseFloat(val), 0
+      );
+    }
+    return {
+      loadingStatus,
+      entries: entitiesWithoutParent,
+      total: {
+        calories: computeTotal(entitiesWithoutParent, 'calories'),
+        protein: computeTotal(entitiesWithoutParent, 'protein'),
+      },
+      dirty: state.food.dirtyEntities.size > 0
+    }
+  },
+  function(dispatch, ownProps) {
+    return {
+      fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
+      updateData: entry => dispatch(foodActions['update'](entry)),
+      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids))
+    };
   }
-}
+)(ConnectedFoodTable);
 
 class ConnectedFoodRowNewEntry extends Component {
   constructor(props) {
@@ -1028,190 +1221,9 @@ class FoodRowCell extends Component {
   }
 }
 
-class ConnectedFoodTable extends Component {
-  constructor(props){
-    super(props)
-    this.state = {
-      selected: new Set()
-    };
-    this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
-    this.handleToggleSelected = this.handleToggleSelected.bind(this);
-
-    this.props.fetchData(this.props.date);
-  }
-  componentDidUpdate(prevProps) {
-    if (prevProps.date !== this.props.date) {
-      this.props.fetchData(this.props.date);
-    }
-  }
-  handleToggleSelected(entryId) {
-    /* Callback to be triggered when an entry has been selected. */
-    var setCopy = new Set(this.state.selected);
-    if (this.state.selected.has(entryId)){
-      setCopy.delete(entryId);
-    } else {
-      setCopy.add(entryId);
-    }
-    this.setState({
-      selected: setCopy
-    });
-  }
-  deleteSelectedEntries(event) {
-    event.preventDefault();
-    var that = this;
-    this.props.deleteEntry(Array.from(this.state.selected).map(id => {return {id: id}}))
-      .then(function(response) {
-        that.setState({
-          selected: new Set()
-        });
-        that.props.fetchData(that.props.date);
-      });
-  }
-  render() {
-    var that = this;
-    let controls = null;
-    if (this.state.selected.size === 1) {
-      controls = (
-        <>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <i className='material-icons action'>date_range</i>
-        </>
-      );
-    } else if (this.state.selected.size > 1) {
-      controls = (
-        <>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <i className='material-icons action'>date_range</i>
-        </>
-      );
-    }
-    let status = null;
-    if (this.props.loadingStatus) {
-      switch (this.props.loadingStatus.status) {
-        case 'loading':
-          status = (
-            <tr className='status'>
-              <td colSpan='999'>LOADING</td>
-            </tr>
-          );
-          break;
-        case 'loaded':
-          if (this.props.entries.length === 0) {
-            status = (
-              <tr className='status'>
-                <td colSpan='999'>
-                  <div>
-                    You have not yet recorded any food for today.
-                  </div>
-                </td>
-              </tr>
-            );
-          }
-          break;
-        case 'error':
-          status = (
-            <tr className='status'>
-              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
-            </tr>
-          );
-          break;
-        default:
-          status = null;
-          break;
-      }
-    }
-    return (
-      <div className='food-table'>
-        <div className='controls'>
-          <div className='table-controls'>
-          </div>
-          <div className='entry-controls'>
-            {controls}
-          </div>
-        </div>
-        <table className="Food cards">
-          <colgroup>
-            <col className='expand' />
-            <col className='item'/>
-            <col className='numbers'/>
-            <col className='numbers'/>
-            <col className='numbers'/>
-            <col className='actions' />
-          </colgroup>
-          <thead>
-          <tr>
-            <td>{this.props.dirty ? <i className='material-icons spin' alt='Saving changes...'>autorenew</i> : <i className='material-icons' alt='Changes saved'>check</i>}</td>
-            <th>Item</th>
-            <th>Quantity</th>
-            <th>Calories</th>
-            <th>Protein</th>
-            <th></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr className='total'>
-            <td></td>
-            <th>Total</th>
-            <td></td>
-            <td data-label='Cals'>{this.props.total.calories}</td>
-            <td data-label='Prot'>{this.props.total.protein}</td>
-            <td></td>
-          </tr>
-          <FoodRowNewEntry date={this.props.date} />
-          {
-            this.props.entries.map(function(entry){
-              return <FoodRow key={entry.id}
-                          data={entry}
-                          selected={that.state.selected}
-                          onToggleSelected={that.handleToggleSelected}
-                          onChange={that.props.updateData}/>
-            })
-          }
-          { status }
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-}
-const FoodTable = connect(
-  function(state, ownProps) {
-    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
-    let entities = Object.values(state.food.entities).filter(
-      entity => entity && entity.date === ownProps.date
-    );
-    let entitiesWithoutParent = entities.filter(entity => !entity.parent_id);
-    function computeTotal(entities, property) {
-      return entities.map(function(entity) {
-        if (entity[property]) {
-          return entity[property];
-        } else {
-          return computeTotal(entity.children, property);
-        }
-      }).filter(
-        val => val && isFinite(val)
-      ).reduce(
-        (acc, val) => acc+parseFloat(val), 0
-      );
-    }
-    return {
-      loadingStatus,
-      entries: entitiesWithoutParent,
-      total: {
-        calories: computeTotal(entitiesWithoutParent, 'calories'),
-        protein: computeTotal(entitiesWithoutParent, 'protein'),
-      },
-      dirty: state.food.dirtyEntities.size > 0
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
-      updateData: entry => dispatch(foodActions['update'](entry)),
-      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids))
-    };
-  }
-)(ConnectedFoodTable);
+//////////////////////////////////////////////////
+// Editor
+//////////////////////////////////////////////////
 
 class ConnectedEntryEditorForm extends Component {
   constructor(props) {
