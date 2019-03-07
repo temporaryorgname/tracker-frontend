@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import { connect } from "react-redux";
 import { 
-  photoActions,
-  photoDataActions
+  photoActions
 } from './actions/Actions.js';
 import './Common.scss';
 
@@ -77,19 +76,6 @@ class ModalFooter extends Component {
 }
 
 class ConnectedFoodPhotoThumbnail extends Component {
-  constructor(props) {
-    super(props);
-    if (this.props.photoId && !this.props.data) {
-      //this.props.fetchData(this.props.photoId);
-    }
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.photoId &&
-        prevProps.photoId !== this.props.photoId && 
-        !this.props.data) {
-      //this.props.fetchData(this.props.photoId);
-    }
-  }
   render() {
     // Set the appropriate class names if the thumbnail is selected
     var classNames = ['thumbnail'];
@@ -124,9 +110,7 @@ const FoodPhotoThumbnail = connect(
     }
   },
   function(dispatch, ownProps) {
-    return {
-      fetchData: (id) => dispatch(photoActions['fetchSingle'](id))
-    };
+    return {};
   }
 )(ConnectedFoodPhotoThumbnail);
 

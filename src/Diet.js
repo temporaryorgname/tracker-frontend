@@ -8,18 +8,15 @@ import axios from 'axios';
 import { connect } from "react-redux";
 
 import { 
-  getLoadingStatus,
-  dictEqual
+  getLoadingStatus
 } from './Utils.js';
 import { 
   foodActions,
   photoActions,
   photoGroupActions,
-  getFoodByPhotoGroupId,
-  getPhotosByPhotoGroupId
 } from './actions/Actions.js';
 
-import { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
+import { Checkbox, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
@@ -465,102 +462,6 @@ const Gallery = connect(
   }
 )(ConnectedGallery);
 
-class ConnectedFileUploadDialog extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      modal: false,
-      predictions: []
-    }
-    this.ref = React.createRef();
-    this.toggle = this.toggle.bind(this);
-    this.uploadFile = this.uploadFile.bind(this);
-    this.onUpload = props.onUpload;
-    this.loadPrediction = this.loadPrediction.bind(this);
-    this.getSelectPredictionHandler = this.getSelectPredictionHandler.bind(this);
-  }
-  uploadFile(event) {
-    let that = this;
-    let target = event.target;
-    this.props.uploadPhoto(target.files)
-    .then(function(response){
-      target.value = "";
-      that.onUpload([...that.props.files, response.data.id]);
-      that.loadPrediction(response.data.id);
-    });
-  }
-  loadPrediction(photoId) {
-    return; //TODO
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/photo/predict/"+photoId, {withCredentials: true})
-        .then(function(response){
-          that.setState({
-            predictions: response.data
-          });
-        });
-  }
-  getSelectPredictionHandler(pred) {
-    return function() {
-      if (this.props.onSelectPrediction) {
-        this.props.onSelectPrediction(pred);
-      }
-    }
-  }
-  toggle() {
-    this.setState({
-      modal: !this.state.modal
-    });
-  }
-  render() {
-    var that = this;
-    return (
-      <div className='file-upload-dialog'>
-        <i className="material-icons action" onClick={this.toggle}>add_a_photo</i>
-        <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-sm">
-          <ModalHeader toggle={this.toggle}>Upload Photo</ModalHeader>
-          <ModalBody>
-            <div className='thumbnails'>
-              {
-                this.props.files.map(function(file){
-                  return <FoodPhotoThumbnail key={file} photoId={file}/>
-                })
-              }
-            </div>
-            <div className='predictions'>
-              {
-                this.state.predictions.map(function(s){
-                  return <Link to='#' onClick={that.getSelectPredictionHandler(s)}>{s}</Link>
-                })
-              }
-            </div>
-            <form>
-              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
-              <span color="muted">
-                Select a photo to include with your entry.
-              </span>
-            </form>
-          </ModalBody>
-          <ModalFooter>
-            <button className="primary" onClick={this.toggle}>Done</button>
-          </ModalFooter>
-        </Modal>
-      </div>
-    );
-  }
-}
-const FileUploadDialog = connect(
-  function(state, ownProps) {
-    return {};
-  },
-  function(dispatch, ownProps) {
-    return {
-      uploadPhoto: (files) => dispatch(
-        photoActions['create'](files, ownProps.date)
-      ),
-    };
-  }
-)(ConnectedFileUploadDialog);
-
 class FoodNameInput extends Component {
   constructor(props) {
     super(props);
@@ -741,7 +642,7 @@ class FoodNameInput extends Component {
     }
     return (
       <div className='food-name-input'>
-        <form autocomplete='off' onSubmit={e => e.preventDefault()}>
+        <form autoComplete='off' onSubmit={e => e.preventDefault()}>
         {inputField}
         </form>
         {s && <div className='table'> {s} </div>}
@@ -1083,7 +984,7 @@ class FoodRow extends Component {
           <FoodRowCell value={this.props.data.name} onChange={this.getOnChangeHandler('name')} />
           <td>
             <QuantityInput
-                value={this.props.data.quantity}
+                value={this.props.data.quantity || ''}
                 onChange={this.getOnChangeHandler('quantity')}
                 onKeyPress={this.handleKeyPress}
                 onScale={this.handleQuantityScale}/>
@@ -1119,10 +1020,9 @@ class FoodRowCell extends Component {
     return (
       <td>
         <input type='text' 
-          value={this.props.value}
+          value={this.props.value || ''}
           onChange={this.props.onChange}
-          onKeyPress={this.handleKeyPress}
-          ref={x=>this.ref=x}/>
+          onKeyPress={this.handleKeyPress}/>
       </td>
     );
   }
@@ -1174,7 +1074,6 @@ class ConnectedFoodTable extends Component {
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <FileUploadDialog onUpload={this.handlePhotoUpload} files={[/*TODO*/]}/>
           <i className='material-icons action'>date_range</i>
         </>
       );
@@ -1353,8 +1252,6 @@ class ConnectedEntryEditorForm extends Component {
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    let foodStatusChanged = prevProps.foodLoadingStatus !== this.props.foodLoadingStatus;
-    let photoStatusChanged = prevProps.photoLoadingStatus !== this.props.photoLoadingStatus;
     let dateChanged = prevProps.date !== this.props.date;
     // Load food entry
     if (!this.state.data && prevProps.selectedEntry !== this.props.selectedEntry) {
@@ -1708,7 +1605,7 @@ class ConnectedEntryEditorForm extends Component {
         photoIds = [this.state.data.photo_id];
       } else if (this.state.data.photo_group_id) {
         photoIds = Object.keys(this.props.photos).filter(
-          id => this.props.photos[id].group_id == this.state.data.photo_group_id
+          id => parseInt(this.props.photos[id].group_id) === parseInt(this.state.data.photo_group_id)
         );
       }
       return (
@@ -1827,7 +1724,7 @@ const EntryEditorForm = connect(
       if (ownProps.id) {
         selectedEntry = food[ownProps.id];
       } else if (ownProps.photo_id) {
-        for(let [k,v] of Object.entries(food)) {
+        for(let v of Object.values(food)) {
           if (v.photo_id === parseInt(ownProps.photo_id)) {
             selectedEntry = v;
             break;
@@ -1847,7 +1744,7 @@ const EntryEditorForm = connect(
           };
         }
       } else if (ownProps.group_id) {
-        for(let [k,v] of Object.entries(food)) {
+        for(let v of Object.values(food)) {
           if (v.photo_group_id === parseInt(ownProps.group_id)) {
             selectedEntry = v;
             break;
