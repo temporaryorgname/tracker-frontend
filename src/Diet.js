@@ -1162,7 +1162,6 @@ class FoodRow extends Component {
     this.dropdownCheckbox = React.createRef();
     this.toggleChildren = this.toggleChildren.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
-    this.handleToggleSelected = this.handleToggleSelected.bind(this);
   }
   getOnChangeHandler(propName) {
     let that = this;
