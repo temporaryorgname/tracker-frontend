@@ -1163,7 +1163,8 @@ class FoodRow extends Component {
     });
   }
   handleQuantityScale(scale) {
-    var cals = this.state.data.calories;
+    let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
+    var cals = this.props.data.calories;
     if (isFinite(cals)) {
       if (typeof cals === 'string' && cals.length > 0) {
         cals = parseFloat(cals)*scale;
@@ -1171,7 +1172,8 @@ class FoodRow extends Component {
       } else {
         cals *= scale
       }
-    } var prot = this.state.data.protein;
+    }
+    var prot = this.props.data.protein;
     if (isFinite(prot)) {
       if (typeof prot === 'string' && prot.length > 0) {
         prot = parseFloat(prot)*scale;
@@ -1180,12 +1182,10 @@ class FoodRow extends Component {
         prot *= scale
       }
     }
-    this.setState({
-      data: {
-        ...this.state.data,
-        calories: cals,
-        protein: prot
-      }
+    onChange({
+      ...this.props.data,
+      calories: cals,
+      protein: prot
     });
   }
   handleKeyPress(e) {
