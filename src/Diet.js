@@ -740,6 +740,7 @@ class ConnectedFoodTable extends Component {
     };
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
+    this.getSelectedTopLevel = this.getSelectedTopLevel.bind(this);
     this.handleChangeDate = this.handleChangeDate.bind(this);
 
     this.props.fetchData(this.props.date);
@@ -749,17 +750,41 @@ class ConnectedFoodTable extends Component {
       this.props.fetchData(this.props.date);
     }
   }
-  handleToggleSelected(entryId) {
+  handleToggleSelected(entry) {
     /* Callback to be triggered when an entry has been selected. */
     var setCopy = new Set(this.state.selected);
-    if (this.state.selected.has(entryId)){
-      setCopy.delete(entryId);
+    if (this.state.selected.has(entry.id)){
+      function unselect(entry) {
+        setCopy.delete(entry.id);
+        entry.children.forEach(unselect);
+      }
+      unselect(entry);
     } else {
-      setCopy.add(entryId);
+      function select(entry) {
+        setCopy.add(entry.id);
+        entry.children.forEach(select);
+      }
+      select(entry);
     }
     this.setState({
       selected: setCopy
     });
+  }
+  getSelectedTopLevel() {
+    /* Return a set of selected entries that do not have parent entries or whose parents are not selected. */
+    let entries = this.props.entries;
+    let selected = this.state.selected;
+    let newVals = Array.from(this.state.selected).filter(
+      function(id) {
+        for (let entry of entries) {
+          if (entry.id === id) {
+            return !selected.has(entry.parent_id);
+          }
+        }
+        console.error('Could not find entry with ID '+id);
+      }
+    );
+    return new Set(newVals);
   }
   deleteSelectedEntries(event) {
     event.preventDefault();
@@ -801,17 +826,20 @@ class ConnectedFoodTable extends Component {
   render() {
     var that = this;
     let controls = null;
-    if (this.state.selected.size === 1) {
+    let topLevelSelected = this.getSelectedTopLevel();
+    if (topLevelSelected.size === 1) {
+      let selectedId = topLevelSelected.values().next().value;
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
+          <Link to={'/food/editor?id='+selectedId}><i className="material-icons action">create</i></Link>
           <label>
             <i className='material-icons action'>date_range</i>
             <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
           </label>
         </>
       );
-    } else if (this.state.selected.size > 1) {
+    } else if (topLevelSelected.size > 1) {
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
@@ -901,6 +929,8 @@ class ConnectedFoodTable extends Component {
                           data={entry}
                           selected={that.state.selected}
                           onToggleSelected={that.handleToggleSelected}
+                          onSelect={that.handleSelect}
+                          onUnselect={that.handleUnselect}
                           onChange={that.props.updateData}/>
             })
           }
@@ -1132,6 +1162,7 @@ class FoodRow extends Component {
     this.dropdownCheckbox = React.createRef();
     this.toggleChildren = this.toggleChildren.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
+    this.handleToggleSelected = this.handleToggleSelected.bind(this);
   }
   getOnChangeHandler(propName) {
     let that = this;
@@ -1242,7 +1273,7 @@ class FoodRow extends Component {
             placeholder={childrenProtein || ''}/>
           <td className='select'>
             <Checkbox checked={selected.has(this.props.data.id)}
-              onChange={()=>this.props.onToggleSelected(this.props.data.id)} />
+              onChange={()=>this.props.onToggleSelected(this.props.data)} />
           </td>
         </tr>
         {this.state.expanded && this.props.data.children.length > 0 && 
@@ -1767,7 +1798,7 @@ const EntryEditorForm = connect(
   function(state, ownProps) {
     let date = ownProps.date;
     // Diet
-    let food= Object.keys(state.food.entities).filter(
+    let food = Object.keys(state.food.entities).filter(
       id => state.food.entities[id].date === date
     ).map(
       id => state.food.entities[id]
