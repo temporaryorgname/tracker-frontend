@@ -394,8 +394,6 @@ export const foodListActions = createActions('FOOD', '/data/foods');
 export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
 
 export const photoActions = createActions('PHOTOS', '/data/photos');
-export const photoGroupActions = createActions('PHOTO_GROUPS', '/data/photo_groups');
-export const photoDataActions = createActions('PHOTO_DATA', '/data/photo_data');
 
 export const tagActions = createActions('TAGS', '/data/tags');
 export const labelActions = createActions('LABELS', '/data/labels');
@@ -415,6 +413,4 @@ photoActions['create'] = (function(){
   }
 })()
 
-export const getPhotosByPhotoGroupId = createActions2('PHOTOS', '/data/photo_groups/{id}/photos')['get'];
-export const getFoodByPhotoGroupId = createActions2('FOOD', '/data/photo_groups/{id}/food')['get'];
 export const getFoodByPhotoId = createActions2('FOOD', '/data/photos/{id}/food')['get'];

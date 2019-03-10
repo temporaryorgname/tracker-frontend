@@ -12,8 +12,7 @@ import {
 } from './Utils.js';
 import { 
   foodActions,
-  photoActions,
-  photoGroupActions,
+  photoActions
 } from './actions/Actions.js';
 
 import { Checkbox, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
@@ -397,52 +396,28 @@ class ConnectedGallery extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      groups: [],
-      selectedPhotoId: null,
-      selectedGroupId: null
+      selectedPhotoId: null
     };
     this.props.fetchPhotos(this.props.uid);
-    this.props.fetchGroups();
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
-    this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
-    this.createGroup = this.createGroup.bind(this);
-    this.handleDragOver = this.handleDragOver.bind(this);
-    this.handleDrop = this.handleDrop.bind(this);
-    this.handleDragStart = this.handleDragStart.bind(this);
     this.editSelected = this.editSelected.bind(this);
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.date !== this.props.date) {
       this.props.fetchPhotos(this.props.uid);
-      this.props.fetchGroups();
     }
   }
   handleSelectPhoto(photoId) {
     photoId = parseInt(photoId);
     if (this.state.selectedPhotoId === photoId) {
       this.setState({
-        selectedPhotoId: null,
-        selectedGroupId: null
+        selectedPhotoId: null
       });
     } else {
       this.setState({
-        selectedPhotoId: parseInt(photoId),
-        selectedGroupId: null
-      });
-    }
-  }
-  handleSelectGroup(groupId) {
-    if (this.state.selectedGroupId === groupId) {
-      this.setState({
-        selectedPhotoId: null,
-        selectedGroupId: null
-      });
-    } else {
-      this.setState({
-        selectedPhotoId: null,
-        selectedGroupId: parseInt(groupId)
+        selectedPhotoId: parseInt(photoId)
       });
     }
   }
@@ -450,12 +425,8 @@ class ConnectedGallery extends Component {
     if (this.state.selectedPhotoId) {
       this.props.deletePhoto(this.state.selectedPhotoId);
     }
-    if (this.state.selectedGroupId) {
-      this.props.deletePhotoGroup(this.state.selectedGroupId);
-    }
     this.setState({
-      selectedPhotoId: null,
-      selectedGroupId: null
+      selectedPhotoId: null
     });
   }
   uploadFile(event) {
@@ -466,58 +437,34 @@ class ConnectedGallery extends Component {
       that.props.fetchPhotos(false);
     });
   }
-  createGroup() {
-    this.props.createGroup();
-    this.setState({
-      groups: [...this.state.groups, []]
-    });
-  }
-  handleDragOver(event) {
-    event.preventDefault();
-  }
-  handleDrop(event, groupId) {
-    event.stopPropagation();
-    var photoId = event.dataTransfer.getData('photoId');
-    this.props.updatePhoto({
-      ...this.props.photos[photoId],
-      group_id: groupId
-    });
-  }
-  handleDragStart(event, photoId) {
-    event.dataTransfer.setData('photoId', photoId);
-  }
   editSelected() {
-    this.props.onEditEntry(this.state.selectedPhotoId, this.state.selectedGroupId);
+    this.props.onEditEntry(this.state.selectedPhotoId);
   }
   render() {
     const {
       selectedPhotoId = this.state.selectedPhotoId,
-      selectedGroupId = this.state.selectedGroupId,
       onSelectPhoto = this.handleSelectPhoto,
-      onSelectGroup = this.handleSelectGroup,
       disabledPhotos = new Set(),
-      disabledGroups = new Set()
     } = this.props;
-    var that = this;
-    if (!this.props.photosLoadingStatus || !this.props.groupsLoadingStatus) {
+    if (!this.props.photosLoadingStatus) {
       return (
         <div>
           Waiting to load
         </div>
       );
-    } else if (this.props.photosLoadingStatus.status === 'loading' || this.props.groupsLoadingStatus.status === 'loading') {
+    } else if (this.props.photosLoadingStatus.status === 'loading') {
       return (
         <div>
           LOADING...
         </div>
       );
-    } else if (this.props.photosLoadingStatus.status === 'error' || this.props.groupsLoadingStatus.status === 'error') {
+    } else if (this.props.photosLoadingStatus.status === 'error') {
       return (
         <div className='error-message'>
           {this.props.photosLoadingStatus.error || this.props.groupsLoadingStatus.error}
         </div>
       );
-    } else if (this.props.photosLoadingStatus.status === 'loaded' && this.props.groupsLoadingStatus.status === 'loaded') {
+    } else if (this.props.photosLoadingStatus.status === 'loaded') {
       if (Object.keys(this.props.photos).length > 0) {
         // Render controls
         let controls = (
@@ -526,12 +473,9 @@ class ConnectedGallery extends Component {
               <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
               <i className='material-icons action'>add_a_photo</i>
             </label>
-            <label onClick={this.createGroup}>
-              <i className='material-icons action'>create_new_folder</i>
-            </label>
           </>
         );
-        if (this.state.selectedPhotoId || this.state.selectedGroupId) {
+        if (this.state.selectedPhotoId) {
           controls = (
             <>
               <i className='material-icons action' onClick={this.handleDelete}>delete</i>
@@ -540,96 +484,35 @@ class ConnectedGallery extends Component {
           );
         }
         // Render thumbnails
-        var thumbnails = {};
-        for (var k in this.props.groups) {
-          if (k === 'null') {
-            thumbnails[k] = this.props.groups[k].map(function(photoId){
-              if (disabledPhotos.has(photoId)) {
-                return (
-                  <div className='photo-viewer-thumbnail disabled'
-                      key={photoId}
-                      onClick={()=>onSelectPhoto(null)}
-                      onDragStart={(e) => that.handleDragStart(e,photoId)}
-                      draggable>
-                    <FoodPhotoThumbnail photoId={photoId}
-                        selected={selectedPhotoId === photoId}/>
-                  </div>
-                );
-              } else {
-                return (
-                  <div className='photo-viewer-thumbnail'
-                      key={photoId}
-                      onClick={()=>onSelectPhoto(selectedPhotoId === photoId ? null : photoId)}
-                      onDragStart={(e) => that.handleDragStart(e,photoId)}
-                      draggable>
-                    <FoodPhotoThumbnail photoId={photoId}
-                        selected={selectedPhotoId === photoId}/>
-                  </div>
-                );
-              }
-            });
-          } else {
-            thumbnails[k] = this.props.groups[k].map(function(photoId){
+        let thumbnails = Object.keys(this.props.photos).map(
+          function(photoId){
+            photoId = parseInt(photoId);
+            if (disabledPhotos.has(photoId)) {
+              return (
+                <div className='photo-viewer-thumbnail disabled'
+                    key={photoId}
+                    onClick={()=>onSelectPhoto(null)} >
+                  <FoodPhotoThumbnail photoId={photoId}
+                      selected={selectedPhotoId === photoId}/>
+                </div>
+              );
+            } else {
               return (
                 <div className='photo-viewer-thumbnail'
                     key={photoId}
-                    onDragStart={(e) => that.handleDragStart(e,photoId)}
-                    draggable>
-                  <FoodPhotoThumbnail photoId={photoId} />
+                    onClick={()=>onSelectPhoto(selectedPhotoId === photoId ? null : photoId)} >
+                  <FoodPhotoThumbnail photoId={photoId}
+                      selected={selectedPhotoId === photoId}/>
                 </div>
               );
-            });
-          }
-        }
-        // Render groups
-        let groups = null;
-        if (this.props.groups) {
-          let noThumbnails = <i className='material-icons'>folder</i>
-          groups = Object.keys(this.props.groups).map(
-            function(groupId){
-              if (groupId === 'null') { // Object.keys() converts the null key to a string
-                return null;
-              }
-              groupId = parseInt(groupId);
-              var classNames = ['thumbnail', 'group'];
-              if (selectedGroupId === groupId) {
-                classNames.push('selected');
-              }
-              classNames = classNames.join(' ');
-              let groupThumbnails = thumbnails[groupId];
-              if (groupThumbnails.length === 0) {
-                groupThumbnails = noThumbnails;
-              }
-              if (disabledGroups.has(groupId)) {
-                return (
-                  <div className={classNames+' disabled'}
-                      key={groupId}
-                      onClick={()=>onSelectGroup(null)}
-                      onDragOver={that.handleDragOver}
-                      onDrop={(e)=>that.handleDrop(e,groupId)}>
-                    {groupThumbnails}
-                  </div>
-                );
-              } else {
-                return (
-                  <div className={classNames}
-                      key={groupId}
-                      onClick={()=>onSelectGroup(selectedGroupId === groupId ? null : groupId)}
-                      onDragOver={that.handleDragOver}
-                      onDrop={(e)=>that.handleDrop(e,groupId)}>
-                    {groupThumbnails}
-                  </div>
-                );
-              }
             }
-          );
-        }
+          }
+        );
         return (
-          <div className='gallery' onDragOver={that.handleDragOver} onDrop={(e)=>that.handleDrop(e,null)}>
+          <div className='gallery'>
             <div className='controls'>{controls}</div>
             <div className='thumbnails'>
-              {thumbnails[null]}
-              {groups}
+              {thumbnails}
             </div>
           </div>
         );
@@ -653,49 +536,26 @@ class ConnectedGallery extends Component {
 const Gallery = connect(
   function(state, ownProps) {
     let photos = {};
-    let photoIdsByGroup = {};
     let photosLoadingStatus = getLoadingStatus(
       state.loadingStatus['PHOTOS'],
       {user_id: ownProps.uid, date: ownProps.date}
     );
-    let groupsLoadingStatus = getLoadingStatus(
-      state.loadingStatus['PHOTO_GROUPS'],
-      {user_id: ownProps.uid, date: ownProps.date}
-    );
     let photosReady = photosLoadingStatus && photosLoadingStatus.status === 'loaded';
-    let groupsReady = groupsLoadingStatus && groupsLoadingStatus.status === 'loaded';
-    if (photosReady && groupsReady) {
+    if (photosReady) {
       // Get all photos for the given date
       let photoIds = Object.keys(
         state.photos.entities
       ).filter(function(id) {
         return state.photos.entities[id].date === ownProps.date;
       });
-      // Get all photo groups for the given date
-      let groupIds = Object.keys(
-        state.photoGroups.entities
-      ).filter(function(id){
-        return state.photoGroups.entities[id].date === ownProps.date;
-      });
-      // Populate with groups
-      groupIds.forEach(function(groupId){
-        photoIdsByGroup[groupId] = [];
-      });
-      photoIdsByGroup[null] = [];
       // Populate photo by ID and photo ID by group
-      photoIds.forEach(function(photoId){
-        let photo = state.photos.entities[photoId];
-        // Add photo ID to the appropriate group
-        photoIdsByGroup[photo.group_id].push(parseInt(photoId));
-        // Add photo to the dictionary of photos
-        photos[photoId] = photo;
-      });
+      for (let photoId of photoIds) {
+        photos[photoId] = state.photos.entities[photoId];
+      }
     }
     return {
       photosLoadingStatus,
-      groupsLoadingStatus,
-      groups: photoIdsByGroup,
-      photos: photos
+      photos
     };
   },
   function(dispatch, ownProps) {
@@ -703,17 +563,11 @@ const Gallery = connect(
       fetchPhotos: (cache) => dispatch(
         photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date}, cache)
       ),
-      fetchGroups: () => dispatch(
-        photoGroupActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date})
-      ),
       updatePhoto: (data) => dispatch(
         photoActions['update'](data)
       ),
       uploadPhoto: (files) => dispatch(
         photoActions['create'](files, ownProps.date)
-      ),
-      createGroup: () => dispatch(
-        photoGroupActions['create']({date: ownProps.date})
       ),
       createFood: (data) => dispatch(
         foodActions['create'](data)
@@ -721,9 +575,6 @@ const Gallery = connect(
       deletePhoto: (id) => dispatch(
         photoActions['deleteSingle'](id)
       ),
-      deletePhotoGroup: (id) => dispatch(
-        photoGroupActions['deleteSingle'](id)
-      )
     };
   }
 )(ConnectedGallery);
@@ -782,6 +633,7 @@ class ConnectedFoodTable extends Component {
           }
         }
         console.error('Could not find entry with ID '+id);
+        return null;
       }
     );
     return new Set(newVals);
@@ -807,7 +659,7 @@ class ConnectedFoodTable extends Component {
     let confirmMove = window.confirm('Are you sure you want to move the selected entry to '+newDate+'?');
     if (confirmMove) {
       let that = this;
-      let ids = Array.from(this.state.selected).forEach(function(id){
+      Array.from(this.state.selected).forEach(function(id){
         for (var entry of that.props.entries) {
           if (entry.id === id) {
             break;
@@ -1324,6 +1176,7 @@ class ConnectedEntryEditorForm extends Component {
       searchResults: {},
       searchSelectedEntry: null
     };
+    console.log(props.selectedEntry);
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.handleChildrenChange = this.handleChildrenChange.bind(this);
@@ -1914,7 +1767,11 @@ class SmallTable extends Component {
   render() {
     let that = this;
     let emptyRow = null;
-    if (this.props.data.length === 0) {
+    if (!this.props.data) {
+      emptyRow = (
+        <tr><td colSpan='999'>{'...'}</td></tr>
+      );
+    } else if (this.props.data.length === 0) {
       emptyRow = (
         <tr><td colSpan='999'>{'There are not child entries to show.'}</td></tr>
       );
@@ -1930,13 +1787,12 @@ class SmallTable extends Component {
           </tr>
         </thead>
         <tbody>
-          {this.props.data.map(function(datum, index){
+          {emptyRow || this.props.data.map(function(datum, index){
             return <SmallTableRow
               key={index}
               data={datum} 
               onChange={x => that.handleChange(x, index)} />
           })}
-          {emptyRow}
         </tbody>
       </table>
     );
