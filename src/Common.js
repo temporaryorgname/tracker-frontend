@@ -98,10 +98,10 @@ class ConnectedFoodPhotoThumbnail extends Component {
 const FoodPhotoThumbnail = connect(
   function(state, ownProps) {
     let photo = state.photos.entities[ownProps.photoId] || {};
-    let data = photo.file;
+    let data = process.env.REACT_APP_SERVER_ADDRESS+photo.file_url;
     if (data) {
       return {
-        data: 'data:image/'+data.format+';base64,'+data.content
+        data: data
       };
     } else {
       return {
