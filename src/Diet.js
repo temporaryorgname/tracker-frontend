@@ -586,6 +586,9 @@ class ConnectedFoodTable extends Component {
     this.getSelectedTopLevel = this.getSelectedTopLevel.bind(this);
     this.handleChangeDate = this.handleChangeDate.bind(this);
 
+    this.renderMobile = this.renderMobile.bind(this);
+    this.renderDesktop = this.renderDesktop.bind(this);
+
     this.props.fetchData(this.props.date);
   }
   componentDidUpdate(prevProps) {
@@ -667,7 +670,108 @@ class ConnectedFoodTable extends Component {
       });
     }
   }
-  render() {
+  renderMobile() {
+    var that = this;
+    let controls = null;
+    let topLevelSelected = this.getSelectedTopLevel();
+    if (topLevelSelected.size === 1) {
+      let selectedId = topLevelSelected.values().next().value;
+      controls = (
+        <>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
+          <Link to={'/food/editor?id='+selectedId}><i className="material-icons action">create</i></Link>
+          <label>
+            <i className='material-icons action'>date_range</i>
+            <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
+          </label>
+        </>
+      );
+    } else if (topLevelSelected.size > 1) {
+      controls = (
+        <>
+          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
+          <label>
+            <i className='material-icons action'>date_range</i>
+            <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
+          </label>
+        </>
+      );
+    }
+    let status = null;
+    if (this.props.loadingStatus) {
+      switch (this.props.loadingStatus.status) {
+        case 'loading':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>LOADING</td>
+            </tr>
+          );
+          break;
+        case 'loaded':
+          if (this.props.entries.length === 0) {
+            status = (
+              <tr className='status'>
+                <td colSpan='999'>
+                  <div>
+                    You have not yet recorded any food for today.
+                  </div>
+                </td>
+              </tr>
+            );
+          }
+          break;
+        case 'error':
+          status = (
+            <tr className='status'>
+              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
+            </tr>
+          );
+          break;
+        default:
+          status = null;
+          break;
+      }
+    }
+    return (
+      <div className='mobile-food-table'>
+        <div className='controls'>
+          <div className='table-controls'>
+          </div>
+          <div className='entry-controls'>
+            {controls}
+          </div>
+        </div>
+        <div className='total'>
+          Total: {this.props.total.calories} Calories, {this.props.total.protein}g protein
+        </div>
+        <div className='entries'>
+          {
+            this.props.entries.map(function(entry){
+              return (<div key={entry.id} className='entry'>
+                <div className='name'>
+                  {entry.name}
+                </div>
+                <div className='values'>
+                  {entry.quantity && <span>{entry.quantity}</span>}
+                  {entry.calories && <span>Calories: {entry.calories}</span>}
+                  {entry.protein && <span>Protein: {entry.protein}</span>}
+                  {!entry.quantity && !entry.calories && !entry.protein && <span>No nutritional information</span>}
+                </div>
+                <Link to={'/food/editor?id='+entry.id}>
+                  <i className='material-icons'>chevron_right</i>
+                </Link>
+              </div>);
+            })
+          }
+          { status }
+        </div>
+        <Link to={'/food/editor?date='+this.props.date}>
+          <button>New Entry</button>
+        </Link>
+      </div>
+    );
+  }
+  renderDesktop() {
     var that = this;
     let controls = null;
     let topLevelSelected = this.getSelectedTopLevel();
@@ -783,6 +887,12 @@ class ConnectedFoodTable extends Component {
         </table>
       </div>
     );
+  }
+  render() {
+    return (<>
+      {this.renderMobile()}
+      {this.renderDesktop()}
+    </>);
   }
 }
 const FoodTable = connect(

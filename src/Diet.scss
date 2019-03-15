@@ -11,6 +11,7 @@
     display: inline-block;
     color: rgb(50,50,50);
     margin: auto;
+    width: 100%;
 
    .large-button {
       display: inline-block;
@@ -97,82 +98,6 @@
     }
   }
 
-  .food-table {
-    text-align: center;
-    display: inline-block;
-    max-width: 750px;
-
-    .controls{
-      padding: 5px 20px;
-      height: 32px;
-      label {
-        position: relative;
-        input {
-          // Mainly for date pickers
-          width: 0;
-          height: 0;
-          padding: 0;
-          margin: 0;
-          border: 0;
-          position: absolute;
-          top: 100%;
-          left: 0;
-        }
-      }
-    }
-    .table-controls{
-      display: inline-block;
-      width: 50%;
-      text-align: left;
-    }
-    .entry-controls{
-      display: inline-block;
-      width: 50%;
-      text-align: right;
-    }
-
-    table {
-      display: inline-block;
-    }
-    tr {
-      &.new-entry {
-        input[type='text'] {
-          border-style: solid;
-        }
-      }
-      &.entry {
-        input[type='text'] {
-          border-style: none;
-          &:focus {
-            border-style: solid;
-          }
-        }
-      }
-      &.status {
-        td {
-          text-align: center;
-        }
-      }
-    }
-    td {
-      white-space: nowrap;
-      .indentation {
-        display: inline-block;
-        width: 1rem;
-        &:after {
-          content: '-';
-        }
-      }
-    }
-
-    .react-datepicker-popper {
-      z-index: 2;
-    }
-    .react-datepicker {
-      left: -40px;
-    }
-  }
-
   .food-name-input {
     position: relative;
 
@@ -211,6 +136,55 @@
     }
   }
 
+  .food-table {
+    display: none;
+  }
+
+  .mobile-food-table {
+    .total {
+      margin: 5px;
+      background-color: rgb(200,200,200);
+    }
+    .entries {
+      border-top: 1px solid black;
+      .entry {
+        width: 100%;
+        text-align: left;
+        border-bottom: 1px solid rgb(100,100,100);
+        position: relative;
+        padding: 5px;
+        padding-left: 30px;
+        box-sizing: border-box;
+
+        div {
+          margin: 3px;
+          &.name {
+            height: 50%;
+          }
+          &.values {
+            height: 50%;
+            font-size: 10px;
+            padding-left: 20px;
+            color: rgb(100,100,100);
+            span {
+              margin-right: 10px;
+            }
+          }
+        }
+
+        a {
+          position: absolute;
+          top: 50%;
+          right: 0;
+          i.material-icons {
+            font-size: 30px;
+            line-height: 0;
+          }
+        }
+      }
+    }
+  }
+
   .gallery {
     input[type='file'] {
       display: none;
@@ -237,6 +211,81 @@
 
 @media #{$computer-and-tablet} {
   .diet-page-container {
+    .food-table {
+      text-align: center;
+      display: inline-block;
+      max-width: 750px;
+
+      .controls{
+        padding: 5px 20px;
+        height: 32px;
+        label {
+          position: relative;
+          input {
+            // Mainly for date pickers
+            width: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            border: 0;
+            position: absolute;
+            top: 100%;
+            left: 0;
+          }
+        }
+      }
+      .table-controls{
+        display: inline-block;
+        width: 50%;
+        text-align: left;
+      }
+      .entry-controls{
+        display: inline-block;
+        width: 50%;
+        text-align: right;
+      }
+
+      table {
+        display: inline-block;
+      }
+      tr {
+        &.new-entry {
+          input[type='text'] {
+            border-style: solid;
+          }
+        }
+        &.entry {
+          input[type='text'] {
+            border-style: none;
+            &:focus {
+              border-style: solid;
+            }
+          }
+        }
+        &.status {
+          td {
+            text-align: center;
+          }
+        }
+      }
+      td {
+        white-space: nowrap;
+        .indentation {
+          display: inline-block;
+          width: 1rem;
+          &:after {
+            content: '-';
+          }
+        }
+      }
+
+      .react-datepicker-popper {
+        z-index: 2;
+      }
+      .react-datepicker {
+        left: -40px;
+      }
+    }
     .food-table {
       width: 100%;
       table {
@@ -288,38 +337,8 @@
         max-width: unset;
       }
     }
-  }
-}
-
-// Phones
-@media #{$mobile} {
-  .diet-page-container {
-    i.material-icons {
-      font-size: 18px;
-    }
-    .food-table {
-      width: 100%;
-      font-size: 10px;
-      table {
-        width: 100%;
-        padding: 10px;
-        box-sizing: border-box;
-      }
-      col.numbers {
-        width: 10px;
-      }
-      col.item {
-        width: 100%;
-      }
-      th, td {
-        padding: 3px;
-      }
-      input[type='text'] {
-        font-size: 10px;
-      }
-    }
-    .empty-view {
-      width: 100%;
+    .mobile-food-table {
+      display: none;
     }
   }
 }
