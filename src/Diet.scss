@@ -52,26 +52,39 @@
         text-align: left;
         display: block;
         position: relative;
+        white-space: nowrap;
         span {
+          position: absolute;
           display: inline-block;
           text-align: left;
           padding: 0 10px;
           margin: 9px 0;
-          position: absolute;
-          top: 0;
-          left: 10px;
-          font-size: 10px;
           background-color: white;
+          transition: 0.3s ease;
         }
         input[type='text'] {
-          width: 300px;
           display: inline-block;
-          height: 2rem;
           margin: 1rem 0;
+          margin-left: 120px;
+          transition: 0.3s ease;
+          width: calc(100% - 140px);
         }
         input[type='date'], input[type='time'] {
-          height: 3rem;
           margin: 1rem 0;
+          margin-left: 120px;
+        }
+      }
+      label:focus-within {
+        span {
+          font-size: 10px;
+          transform: translateY(-5px);
+        }
+        input[type='text'] {
+          margin-top: 1.5rem;
+          margin-bottom: 0.5rem;
+          margin-left: 9px;
+          margin-right: 90px;
+          width: calc(100% - 20px);
         }
       }
     }
