@@ -672,59 +672,30 @@ class ConnectedFoodTable extends Component {
   }
   renderMobile() {
     var that = this;
-    let controls = null;
-    let topLevelSelected = this.getSelectedTopLevel();
-    if (topLevelSelected.size === 1) {
-      let selectedId = topLevelSelected.values().next().value;
-      controls = (
-        <>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <Link to={'/food/editor?id='+selectedId}><i className="material-icons action">create</i></Link>
-          <label>
-            <i className='material-icons action'>date_range</i>
-            <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
-          </label>
-        </>
-      );
-    } else if (topLevelSelected.size > 1) {
-      controls = (
-        <>
-          <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
-          <label>
-            <i className='material-icons action'>date_range</i>
-            <input type='date' value={this.props.date} onChange={this.handleChangeDate} />
-          </label>
-        </>
-      );
-    }
     let status = null;
     if (this.props.loadingStatus) {
       switch (this.props.loadingStatus.status) {
         case 'loading':
           status = (
-            <tr className='status'>
-              <td colSpan='999'>LOADING</td>
-            </tr>
+            <div className='empty-view'>
+              LOADING
+            </div>
           );
           break;
         case 'loaded':
           if (this.props.entries.length === 0) {
             status = (
-              <tr className='status'>
-                <td colSpan='999'>
-                  <div>
-                    You have not yet recorded any food for today.
-                  </div>
-                </td>
-              </tr>
+              <div className='empty-view'>
+                You have not yet recorded any food for today.
+              </div>
             );
           }
           break;
         case 'error':
           status = (
-            <tr className='status'>
-              <td colSpan='999'>Error: {this.props.loadingStatus.error}</td>
-            </tr>
+            <div className='empty-view error-message'>
+              Error: {this.props.loadingStatus.error}
+            </div>
           );
           break;
         default:
@@ -734,16 +705,11 @@ class ConnectedFoodTable extends Component {
     }
     return (
       <div className='mobile-food-table'>
-        <div className='controls'>
-          <div className='table-controls'>
-          </div>
-          <div className='entry-controls'>
-            {controls}
-          </div>
-        </div>
+        { status ||
         <div className='total'>
           Total: {this.props.total.calories} Calories, {this.props.total.protein}g protein
         </div>
+        }
         <div className='entries'>
           {
             this.props.entries.map(function(entry){
@@ -763,7 +729,6 @@ class ConnectedFoodTable extends Component {
               </div>);
             })
           }
-          { status }
         </div>
         <Link to={'/food/editor?date='+this.props.date}>
           <button>New Entry</button>
@@ -1500,7 +1465,7 @@ class ConnectedEntryEditorForm extends Component {
             <span>Time</span>
             <input type='time' name='time' value={this.state.data.time || undefined} onChange={this.onChange}/>
           </label>
-          <label>
+          <label className='resize'>
             <span>Item name</span>
             <FoodNameInput name='name' value={this.state.data.name || undefined} onChange={this.onChange} onSelect={this.handleAutocompleteMainEntry} />
           </label>
