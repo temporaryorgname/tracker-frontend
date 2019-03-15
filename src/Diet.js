@@ -24,70 +24,34 @@ class ConnectedDietPage extends Component {
   constructor(props) {
     super(props);
 
-    // If no date is provided, then set it to the current date
-    var queryParams = parseQueryString(this.props.location.search);
-    if (!queryParams['date']) {
-      queryParams['date'] = formatDate(new Date());
-    }
-    if (!queryParams['uid']) {
-      queryParams['uid'] = this.props.uid;
-    }
-    this.state = {
-      params: queryParams
-    }
-
     this.handleDateChange = this.handleDateChange.bind(this);
     this.prevDate = this.prevDate.bind(this);
     this.nextDate = this.nextDate.bind(this);
-    this.handleEditEntry = this.handleEditEntry.bind(this);
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.location.search !== this.props.location.search) {
-      var queryParams = parseQueryString(this.props.location.search);
-      if (!queryParams['date']) {
-        queryParams['date'] = formatDate(new Date());
-      }
-      if (!queryParams['uid']) {
-        queryParams['uid'] = this.props.uid;
-      }
-      this.setState({
-        params: queryParams
-      });
-    }
   }
   handleDateChange(date) {
-    var params = this.state.params;
+    var params = this.props.params;
     params.date = formatDate(date);
     this.props.history.push(dictToQueryString(params, ['uid', 'date']));
   }
   prevDate() {
-    var newDate = new Date(this.state.params.date);
+    var newDate = new Date(this.props.params.date);
     newDate.setDate(newDate.getDate());
     this.handleDateChange(newDate);
   }
   nextDate() {
-    var newDate = new Date(this.state.params.date);
+    var newDate = new Date(this.props.params.date);
     newDate.setDate(newDate.getDate()+2);
     this.handleDateChange(newDate);
   }
-  handleEditEntry(photoId, groupId) {
-    let params = {date: this.state.params.date};
-    if (photoId) {
-      params['photo_id'] = photoId;
-    } else if (groupId) {
-      params['group_id'] = groupId;
-    }
-    this.props.history.push('/food/editor'+dictToQueryString(params));
-  }
   render() {
-    if (!this.state.params.date || !this.state.params.uid) {
+    if (!this.props.params.date || !this.props.params.uid) {
       return null;
     }
     let links = (
       <>
-        <Link to={'/food/table'+dictToQueryString(this.state.params, ['uid','date'])}>Table</Link>
-        <Link to={'/food/photos'+dictToQueryString(this.state.params, ['uid','date'])}>Photos</Link>
-        <Link to={'/food/editor'+dictToQueryString(this.state.params, ['uid','date'])}>Editor</Link>
+        <Link to={'/food/table'+dictToQueryString(this.props.params, ['uid','date'])}>Table</Link>
+        <Link to={'/food/photos'+dictToQueryString(this.props.params, ['uid','date'])}>Photos</Link>
+        <Link to={'/food/editor'+dictToQueryString(this.props.params, ['uid','date'])}>Editor</Link>
       </>
     );
     //links = null;
@@ -101,13 +65,13 @@ class ConnectedDietPage extends Component {
           <i className='material-icons action' onClick={this.prevDate}>navigate_before</i>
           <DatePicker 
             onChange={this.handleDateChange}
-            customInput={<span>{this.state.params.date}</span>}/>
+            customInput={<span>{this.props.params.date}</span>}/>
           <i className='material-icons action' onClick={this.nextDate}>navigate_next</i>
         </h3>
         <Switch>
-          <Route path="/food/table" render={() => <FoodTable date={this.state.params.date} onDateChange={this.handleDateChange} />} />
-          <Route path="/food/photos" render={() => <Gallery date={this.state.params.date} uid={this.state.params.uid} onEditEntry={this.handleEditEntry}/>} />
-          <Route path="/food/editor" render={() => <EntryEditorForm date={this.state.params.date} uid={this.state.params.uid} id={this.state.params.id} photo_id={this.state.params.photo_id} group_id={this.state.params.group_id}/>} />
+          <Route path="/food/table" render={() => <FoodTable date={this.props.params.date} onDateChange={this.handleDateChange} />} />
+          <Route path="/food/photos" render={() => <Gallery date={this.props.params.date} uid={this.props.params.uid} />} />
+          <Route path="/food/editor" render={() => <EntryEditorForm date={this.props.params.date} uid={this.props.params.uid} id={this.props.params.id} photo_ids={this.props.params.photo_ids}/>} />
         </Switch>
       </main>
     );
@@ -115,14 +79,21 @@ class ConnectedDietPage extends Component {
 }
 export const DietPage = connect(
   function(state, ownProps) {
+    let uid = state.session.uid;
+    let queryParams = parseQueryString(ownProps.location.search);
+    if (!queryParams['date']) {
+      queryParams['date'] = formatDate(new Date());
+    }
+    if (!queryParams['uid']) {
+      queryParams['uid'] = uid;
+    }
     return {
-      uid: state.session.uid
+      uid,
+      params: queryParams
     }
   },
   function(dispatch, ownProps) {
-    return {
-      updateData: (uid) => dispatch(photoActions['fetchMultiple']({user_id: uid}))
-    };
+    return {};
   }
 )(ConnectedDietPage);
 
@@ -396,7 +367,7 @@ class ConnectedGallery extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedPhotoId: null
+      selectedPhotoIds: new Set()
     };
     this.props.fetchPhotos(this.props.uid);
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
@@ -409,24 +380,27 @@ class ConnectedGallery extends Component {
       this.props.fetchPhotos(this.props.uid);
     }
   }
-  handleSelectPhoto(photoId) {
-    photoId = parseInt(photoId);
-    if (this.state.selectedPhotoId === photoId) {
-      this.setState({
-        selectedPhotoId: null
-      });
+  toggleSet(s,x) {
+    if (s.has(x)) {
+      s = new Set(s)
+      s.delete(x);
+      return s;
     } else {
-      this.setState({
-        selectedPhotoId: parseInt(photoId)
-      });
+      return new Set(s).add(x);
     }
   }
-  handleDelete() {
-    if (this.state.selectedPhotoId) {
-      this.props.deletePhoto(this.state.selectedPhotoId);
-    }
+  handleSelectPhoto(photoIds) {
     this.setState({
-      selectedPhotoId: null
+      selectedPhotoIds: photoIds
+    });
+  }
+  handleDelete() {
+    if (!window.confirm('Are you sure you want to delete the '+this.state.selectedPhotoId.size+' selected photos?')) {
+      return;
+    }
+    Array.from(this.state.selectedPhotoIds).forEach(this.props.deletePhoto)
+    this.setState({
+      selectedPhotoIds: new Set()
     });
   }
   uploadFile(event) {
@@ -438,14 +412,15 @@ class ConnectedGallery extends Component {
     });
   }
   editSelected() {
-    this.props.onEditEntry(this.state.selectedPhotoId);
+    this.props.onEditEntry(this.state.selectedPhotoIds);
   }
   render() {
     const {
-      selectedPhotoId = this.state.selectedPhotoId,
+      selectedPhotoIds = this.state.selectedPhotoIds,
       onSelectPhoto = this.handleSelectPhoto,
       disabledPhotos = new Set(),
     } = this.props;
+    let that = this;
     if (!this.props.photosLoadingStatus) {
       return (
         <div>
@@ -475,11 +450,29 @@ class ConnectedGallery extends Component {
             </label>
           </>
         );
-        if (this.state.selectedPhotoId) {
+        if (selectedPhotoIds.size > 0) {
+          // Compute editor URL
+          let foodIds = new Set();
+          let photoIds = Array.from(selectedPhotoIds);
+          for (let pid of photoIds) {
+            foodIds.add(this.props.photos[pid].food_id);
+          }
+          let queryString;
+          if (foodIds.size > 1) {
+            queryString = null;
+          } else if (foodIds.size === 1 && !foodIds.has(null)) {
+            queryString = 'id='+foodIds.values().next().value;
+          } else {
+            queryString = 'photo_ids='+photoIds.join(',');
+          }
           controls = (
             <>
               <i className='material-icons action' onClick={this.handleDelete}>delete</i>
-              <i className='material-icons action' onClick={this.editSelected}>create</i>
+              {queryString && 
+                <Link to={'/food/editor?date='+this.props.date+'&'+queryString}>
+                  <i className='material-icons action'>create</i>
+                </Link>
+              }
             </>
           );
         }
@@ -490,19 +483,18 @@ class ConnectedGallery extends Component {
             if (disabledPhotos.has(photoId)) {
               return (
                 <div className='photo-viewer-thumbnail disabled'
-                    key={photoId}
-                    onClick={()=>onSelectPhoto(null)} >
+                    key={photoId} >
                   <FoodPhotoThumbnail photoId={photoId}
-                      selected={selectedPhotoId === photoId}/>
+                      selected={selectedPhotoIds.has(photoId)}/>
                 </div>
               );
             } else {
               return (
                 <div className='photo-viewer-thumbnail'
                     key={photoId}
-                    onClick={()=>onSelectPhoto(selectedPhotoId === photoId ? null : photoId)} >
+                    onClick={()=>onSelectPhoto(that.toggleSet(selectedPhotoIds,photoId))} >
                   <FoodPhotoThumbnail photoId={photoId}
-                      selected={selectedPhotoId === photoId}/>
+                      selected={selectedPhotoIds.has(photoId)}/>
                 </div>
               );
             }
@@ -1176,7 +1168,6 @@ class ConnectedEntryEditorForm extends Component {
       searchResults: {},
       searchSelectedEntry: null
     };
-    console.log(props.selectedEntry);
     this.addEntry = this.addEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.handleChildrenChange = this.handleChildrenChange.bind(this);
@@ -1197,72 +1188,39 @@ class ConnectedEntryEditorForm extends Component {
     this.handleSearchSelect = this.handleSearchSelect.bind(this);
 
     if (!this.selectedEntry) {
-      this.props.fetchFoodByDate(this.props.date);
-      this.props.fetchPhotosByDate(this.props.date);
+      if (this.props.id) {
+        this.props.fetchFood(this.props.id);
+      }
+    } else {
+      if (this.state.data.date) {
+        this.props.fetchPhotosByDate(this.state.data.date);
+      }
     }
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    let dateChanged = prevProps.date !== this.props.date;
+    let dateChanged = prevState.data && this.state.data && prevState.data.date !== this.state.data.date;
     // Load food entry
-    if (!this.state.data && prevProps.selectedEntry !== this.props.selectedEntry) {
+    if (!this.state.data && this.props.selectedEntry) {
       this.setState({
         data: {...this.props.selectedEntry}
       });
+      this.props.fetchPhotosByDate(this.props.selectedEntry.date);
       return; // Prevent multiple setState calls in one update cycle
     }
-    // Clear photos if the date changed
     if (dateChanged) {
+      // Clear photos if the date changed
       this.setState({
         data: {
           ...this.state.data,
-          photo_id: null,
-          photo_group_id: null
+          photo_ids: [],
         }
       });
-    }
-    // Load food/photo data
-    if (dateChanged) {
-      this.props.fetchFoodByDate(this.props.date);
-      this.props.fetchPhotosByDate(this.props.date);
-    }
-  }
-
-  newEntryByPhotoId(photoId) {
-    this.setState({
-      data: {
-        id: null,
-        name: '',
-        time: '',
-        quantity: '',
-        calories: '',
-        protein: '',
-        photo_ids: [photoId],
-        photo_id: photoId,
-        photo_group_id: null,
-        children: [],
+      // Load food/photo data
+      if (this.state.data.date) {
+        this.props.fetchPhotosByDate(this.state.data.date);
       }
-    });
-  }
-  newEntryByGroupId(groupId) {
-    groupId = parseInt(groupId);
-    let photoIds = Object.keys(this.props.photos).filter(
-      id => this.props.photos[id].group_id === groupId
-    );
-    this.setState({
-      data: {
-        id: null,
-        name: '',
-        time: '',
-        quantity: '',
-        calories: '',
-        protein: '',
-        photo_ids: photoIds,
-        photo_id: null,
-        photo_group_id: groupId,
-        children: [],
-      }
-    });
+    }
   }
 
   addEntry(e) {
@@ -1275,14 +1233,13 @@ class ConnectedEntryEditorForm extends Component {
     let that = this;
     onSubmit({
       id: this.state.data.id,
-      date: this.props.date,
+      date: this.state.data.date,
       time: this.state.data.time,
       name: this.state.data.name,
       quantity: this.state.data.quantity,
       calories: this.state.data.calories,
       protein: this.state.data.protein,
-      photo_id: this.state.data.photo_id,
-      photo_group_id: this.state.data.photo_group_id,
+      photo_ids: this.state.data.photo_ids,
       children: this.state.data.children
     }).then(function(response){
       // Clear form
@@ -1300,6 +1257,7 @@ class ConnectedEntryEditorForm extends Component {
         },
         successMessage: 'Entry created successfully!'
       });
+      that.props.fetchPhotosByDate(that.state.data.date);
     }).catch(function(error){
       that.setState({
         errorMessage: error.repsonse.data.error
@@ -1426,7 +1384,7 @@ class ConnectedEntryEditorForm extends Component {
           <h3>Entry Details</h3>
           <label>
             <span>Date</span>
-            <input type='date' name='date' value={this.props.date} onChange={()=>null}/>
+            <input type='date' name='date' value={this.state.data.date} onChange={this.onChange}/>
           </label>
           <label>
             <span>Time</span>
@@ -1549,67 +1507,35 @@ class ConnectedEntryEditorForm extends Component {
     }
   }
   renderPhotos() {
-    let photoLoadingStatus = this.props.photoLoadingStatus || {};
-    if (photoLoadingStatus.status === 'loaded') {
-      let photoIds = [];
-      if (this.state.data.photo_id) {
-        photoIds = [this.state.data.photo_id];
-      } else if (this.state.data.photo_group_id) {
-        photoIds = Object.keys(this.props.photos).filter(
-          id => parseInt(this.props.photos[id].group_id) === parseInt(this.state.data.photo_group_id)
-        );
-      }
-      return (
-        <div className='photos'>
-          <h3>Photos</h3>
-          <ThumbnailsList ids={photoIds}/>
-          <button onClick={()=>this.setState({selectingPhoto: true})}>{'Select photo'}</button>
-        </div>
-      );
-    } else if (photoLoadingStatus.status === 'loading') {
-      return (
-        <div className='photos'>
-          <h3>Photos</h3>
-          LOADING...
-        </div>
-      );
-    } else {
-      return (
-        <div className='photos'>
-          <h3>Photos</h3>
-          <div className='error-message'>Unknown status</div>
-        </div>
-      );
-    }
-  }
-  renderPhotoSelector() {
-    let disabledPhotos = new Set();
-    let disabledGroups = new Set();
-    for (let [id,entry] of Object.entries(this.props.food)) {
-      if (parseInt(id) === this.state.data.id) {
-        continue;
-      }
-      if (entry.photo_group_id) {
-        disabledGroups.add(entry.photo_group_id);
-      } else if (entry.photo_id) {
-        disabledPhotos.add(entry.photo_id);
-      }
-    }
+    let photoIds = this.state.data.photo_ids;
     return (
       <div className='photos'>
         <h3>Photos</h3>
-        <Gallery date={this.props.date}
+        <ThumbnailsList ids={photoIds}/>
+        <button onClick={()=>this.setState({selectingPhoto: true})}>{'Select photo'}</button>
+      </div>
+    );
+  }
+  renderPhotoSelector() {
+    let foodId = this.state.data.id;
+    let disabledPhotos = new Set(
+      Object.values(this.props.photos).filter(
+        p => p.food_id !== null && p.food_id !== foodId
+      ).map(
+        p => p.id
+      )
+    );
+    return (
+      <div className='photos'>
+        <h3>Photos</h3>
+        <Gallery date={this.state.data.date}
             uid={this.props.uid}
             disabledPhotos={disabledPhotos}
-            disabledGroups={disabledGroups}
-            selectedPhotoId={this.state.data.photo_id}
-            selectedGroupId={this.state.data.photo_group_id}
-            onSelectPhoto={id => this.setState({
-              data: {...this.state.data, photo_id: id, photo_group_id: null}
+            selectedPhotoIds={new Set(this.state.data.photo_ids)}
+            onSelectPhoto={ids => this.setState({
+              data: {...this.state.data, photo_ids: Array.from(ids)}
             })}
-            onSelectGroup={id => this.setState({
-              data: {...this.state.data, photo_id: null, photo_group_id: id}
-            })}/>
+            />
         <button onClick={()=>this.setState({selectingPhoto: false})}>{'< Back'}</button>
       </div>
     );
@@ -1649,16 +1575,6 @@ class ConnectedEntryEditorForm extends Component {
 const EntryEditorForm = connect(
   function(state, ownProps) {
     let date = ownProps.date;
-    // Diet
-    let food = Object.keys(state.food.entities).filter(
-      id => state.food.entities[id].date === date
-    ).map(
-      id => state.food.entities[id]
-    ).reduce(
-      (acc, entity) => ({...acc, [entity.id]: entity}),
-      {}
-    );
-    let foodLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
     // Photos
     let photos = Object.keys(state.photos.entities).filter(
       id => state.photos.entities[id].date === date
@@ -1671,75 +1587,43 @@ const EntryEditorForm = connect(
     let photoLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
     // Loaded entry
     let selectedEntry = null;
-    if (foodLoadingStatus && foodLoadingStatus.status === 'loaded') {
-      if (ownProps.id) {
-        selectedEntry = food[ownProps.id];
-      } else if (ownProps.photo_id) {
-        for(let v of Object.values(food)) {
-          if (v.photo_id === parseInt(ownProps.photo_id)) {
-            selectedEntry = v;
-            break;
-          }
-        }
-        if (!selectedEntry) {
-          selectedEntry = {
-            id: null,
-            name: '',
-            time: '',
-            quantity: '',
-            calories: '',
-            protein: '',
-            photo_id: ownProps.photo_id,
-            photo_group_id: null,
-            children: [],
-          };
-        }
-      } else if (ownProps.group_id) {
-        for(let v of Object.values(food)) {
-          if (v.photo_group_id === parseInt(ownProps.group_id)) {
-            selectedEntry = v;
-            break;
-          }
-        }
-        if (!selectedEntry) {
-          selectedEntry = {
-            id: null,
-            name: '',
-            time: '',
-            quantity: '',
-            calories: '',
-            protein: '',
-            photo_id: null,
-            photo_group_id: ownProps.group_id,
-            children: [],
-          };
-        }
-      } else {
-        selectedEntry = {
-          id: null,
-          name: '',
-          time: '',
-          quantity: '',
-          calories: '',
-          protein: '',
-          photo_id: null,
-          photo_group_id: null,
-          children: [],
-        };
-      }
+    if (ownProps.id) {
+      selectedEntry = state.food.entities[ownProps.id];
+    } else if (ownProps.photo_ids) {
+      selectedEntry = {
+        id: null,
+        date: date,
+        name: '',
+        time: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photo_ids: JSON.parse('['+ownProps.photo_ids+']'),
+        children: [],
+      };
+    } else {
+      selectedEntry = {
+        id: null,
+        date: date,
+        name: '',
+        time: '',
+        quantity: '',
+        calories: '',
+        protein: '',
+        photo_ids: [],
+        children: [],
+      };
     }
 
     return {
-      food,
       photos,
-      foodLoadingStatus,
       photoLoadingStatus,
       selectedEntry
     }
   },
   function(dispatch, ownProps) {
     return {
-      fetchFoodByDate: date => dispatch(foodActions['fetchMultiple']({date})),
+      fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
       fetchPhotosByDate: date => dispatch(photoActions['fetchMultiple']({date})),
       createFoodEntry: data => dispatch(foodActions['create'](data)),
       updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
