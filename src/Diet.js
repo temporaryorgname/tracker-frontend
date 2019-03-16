@@ -367,11 +367,14 @@ class ConnectedGallery extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedPhotoIds: new Set()
+      selectedPhotoIds: new Set(),
+      uploadingCount: 0,
+      errors: []
     };
     this.props.fetchPhotos(this.props.uid);
     this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.handleUpload = this.handleUpload.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
     this.editSelected = this.editSelected.bind(this);
   }
@@ -403,12 +406,37 @@ class ConnectedGallery extends Component {
       selectedPhotoIds: new Set()
     });
   }
-  uploadFile(event) {
+  handleUpload(event) {
+    this.uploadFile(event.target.files);
+  }
+  uploadFile(file) {
     let that = this;
+    this.setState({
+      uploadingCount: this.state.uploadingCount+1
+    });
     this.props.uploadPhoto(
-      event.target.files
+      file
     ).then(function(response){
       that.props.fetchPhotos(false);
+      that.setState({
+        uploadingCount: that.state.uploadingCount-1
+      });
+    }).catch(function(error){
+      that.setState({
+        uploadingCount: that.state.uploadingCount-1,
+        errors: [...that.state.errors, 
+          {
+            error: error.response.data,
+            file: file,
+            retry: function() {
+              that.setState({
+                errors: that.state.errors.filter(e => e.file !== file)
+              });
+              that.uploadFile(file);
+            }
+          }
+        ]
+      });
     });
   }
   editSelected() {
@@ -440,12 +468,12 @@ class ConnectedGallery extends Component {
         </div>
       );
     } else if (this.props.photosLoadingStatus.status === 'loaded') {
-      if (Object.keys(this.props.photos).length > 0) {
+      if (Object.keys(this.props.photos).length > 0 || this.state.errors.length > 0 || this.state.uploadingCount > 0) {
         // Render controls
         let controls = (
           <>
             <label>
-              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
               <i className='material-icons action'>add_a_photo</i>
             </label>
           </>
@@ -500,11 +528,36 @@ class ConnectedGallery extends Component {
             }
           }
         );
+        let uploadingThumbnails = null;
+        for (let i = 0; i < this.state.uploadingCount; i++) {
+          uploadingThumbnails = (<>
+            {uploadingThumbnails}
+            <div className='photo-viewer-thumbnail'
+                key={'uploading-'+i}>
+              <div className='thumbnail'>
+                Uploading...
+              </div>
+            </div>
+          </>);
+        }
+        let errorThumbnails = this.state.errors.map(function(e,i){
+          return (
+            <div className='photo-viewer-thumbnail'
+                key={'error-'+i}
+                onClick={()=>null}>
+              <div className='thumbnail error-message'>
+                {e.error}
+              </div>
+            </div>
+          );
+        });
         return (
           <div className='gallery'>
             <div className='controls'>{controls}</div>
             <div className='thumbnails'>
               {thumbnails}
+              {uploadingThumbnails}
+              {errorThumbnails}
             </div>
           </div>
         );
@@ -513,7 +566,7 @@ class ConnectedGallery extends Component {
           <div className='gallery empty-view'>
             <div>There are no photos to show.</div>
             <label>
-              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.uploadFile}/>
+              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
               <div className='large-button'>
                 <i className='material-icons'>add_a_photo</i>
                 Upload Photo
