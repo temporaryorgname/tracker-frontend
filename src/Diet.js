@@ -770,6 +770,16 @@ class ConnectedFoodTable extends Component {
           break;
       }
     }
+    let controls = null;
+    if (this.state.selected.size > 0) {
+      controls = (
+        <div className='controls'>
+          <i className='material-icons' onClick={this.deleteSelectedEntries}>
+            delete
+          </i>
+        </div>
+      );
+    }
     return (
       <div className='mobile-food-table'>
         { status ||
@@ -797,6 +807,7 @@ class ConnectedFoodTable extends Component {
         <Link to={'/food/photos?date='+this.props.date}>
           <button>Photos</button>
         </Link>
+        {controls}
       </div>
     );
   }
@@ -1353,12 +1364,6 @@ class FoodRowMobile extends Component {
               onClick={()=>this.handleDuplicate(entry)}>
             file_copy
           </i>
-          {!entry.parent_id && entry.children.length === 0 &&
-            <i className='material-icons action'
-                onClick={()=>null}>
-              format_indent_increase
-            </i>
-          }
         </div>
       );
     }

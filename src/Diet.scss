@@ -251,6 +251,22 @@
         }
       }
     }
+    .controls {
+      background-color: white;
+      border: 1px solid black;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      box-sizing: border-box;
+
+      > * {
+        margin: 5px;
+      }
+
+      i.material-icons {
+        cursor: pointer;
+      }
+    }
   }
 
   .gallery {
