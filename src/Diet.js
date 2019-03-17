@@ -54,7 +54,7 @@ class ConnectedDietPage extends Component {
         <Link to={'/food/editor'+dictToQueryString(this.props.params, ['uid','date'])}>Editor</Link>
       </>
     );
-    //links = null;
+    links = null;
     return (
       <main className='diet-page-container'>
         <div className='background'>
@@ -71,7 +71,7 @@ class ConnectedDietPage extends Component {
         <Switch>
           <Route path="/food/table" render={() => <FoodTable date={this.props.params.date} onDateChange={this.handleDateChange} />} />
           <Route path="/food/photos" render={() => <Gallery date={this.props.params.date} uid={this.props.params.uid} />} />
-          <Route path="/food/editor" render={() => <EntryEditorForm date={this.props.params.date} uid={this.props.params.uid} id={this.props.params.id} photo_ids={this.props.params.photo_ids}/>} />
+          <Route path="/food/editor" render={() => <EntryEditorForm date={this.props.params.date} uid={this.props.params.uid} id={this.props.params.id} photo_ids={this.props.params.photo_ids} history={this.props.history}/>} />
         </Switch>
       </main>
     );
@@ -783,6 +783,9 @@ class ConnectedFoodTable extends Component {
         <Link to={'/food/editor?date='+this.props.date}>
           <button>New Entry</button>
         </Link>
+        <Link to={'/food/photos?date='+this.props.date}>
+          <button>Photos</button>
+        </Link>
       </div>
     );
   }
@@ -1488,6 +1491,8 @@ class ConnectedEntryEditorForm extends Component {
 
   addEntry(e) {
     e.preventDefault();
+    // Save for callback
+    let date = this.state.data.date;
     // Submit entry to server
     let onSubmit = this.props.createFoodEntry;
     if (this.state.id) {
@@ -1514,13 +1519,13 @@ class ConnectedEntryEditorForm extends Component {
           quantity: '',
           calories: '',
           protein: '',
-          photo_id: null,
-          photo_group_id: null,
+          photo_ids: [],
           children: []
         },
         successMessage: 'Entry created successfully!'
       });
       that.props.fetchPhotosByDate(that.state.data.date);
+      that.props.history.push('/food/table?date='+date);
     }).catch(function(error){
       that.setState({
         errorMessage: error.repsonse.data.error
