@@ -1329,6 +1329,7 @@ class FoodRowMobile extends Component {
       depth = 0,
       deleteEntry = ()=>null,
     } = this.props;
+    let that = this;
     // Selected overlay
     let selectedOverlay = null;
     if (selected.has(entry.id)) {
@@ -1390,11 +1391,9 @@ class FoodRowMobile extends Component {
     {entry.children.map(function(child){
       return (
         <FoodRowMobile 
+            {...that.props}
             entry={child} 
-            depth={depth+1} 
-            selected={selected}
-            onToggleSelected={onToggleSelected} 
-            deleteEntry={deleteEntry}/>
+            depth={depth+1} />
       );
     })}
     </>);
