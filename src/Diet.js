@@ -635,6 +635,7 @@ class ConnectedFoodTable extends Component {
       selected: new Set()
     };
     this.deleteSelectedEntries = this.deleteSelectedEntries.bind(this);
+    this.deleteOneEntry = this.deleteOneEntry.bind(this);
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
     this.getSelectedTopLevel = this.getSelectedTopLevel.bind(this);
     this.handleChangeDate = this.handleChangeDate.bind(this);
@@ -705,6 +706,16 @@ class ConnectedFoodTable extends Component {
         that.props.fetchData(that.props.date);
       });
   }
+  deleteOneEntry(id) {
+    let selected = new Set(this.state.selected);
+    if (selected.has(id)) {
+      selected.delete(id);
+      this.setState({
+        selected
+      });
+    }
+    this.props.deleteEntry([{id: id}]);
+  }
   handleChangeDate(e) {
     let newDate = e.target.value;
     let confirmMove = window.confirm('Are you sure you want to move the selected entry to '+newDate+'?');
@@ -774,7 +785,7 @@ class ConnectedFoodTable extends Component {
                     entry={entry} 
                     selected={that.state.selected}
                     onToggleSelected={that.handleToggleSelected} 
-                    deleteEntries={that.props.deleteEntry}
+                    deleteEntry={that.deleteOneEntry}
                     createEntry={that.props.createEntry}/>
               );
             })
@@ -1340,7 +1351,7 @@ class FoodRowMobile extends Component {
       entry = {},
       onToggleSelected,
       depth = 0,
-      deleteEntries = ()=>null,
+      deleteEntry = ()=>null,
     } = this.props;
     // Selected overlay
     let selectedOverlay = null;
@@ -1358,7 +1369,7 @@ class FoodRowMobile extends Component {
             </Link>
           </i>
           <i className='material-icons action'
-              onClick={()=>deleteEntries([{id: entry.id}])}>
+              onClick={()=>deleteEntry(entry.id)}>
             delete
           </i>
           <i className='material-icons action'
@@ -1410,7 +1421,8 @@ class FoodRowMobile extends Component {
             entry={child} 
             depth={depth+1} 
             selected={selected}
-            onToggleSelected={onToggleSelected} />
+            onToggleSelected={onToggleSelected} 
+            deleteEntry={deleteEntry}/>
       );
     })}
     </>);
