@@ -1298,8 +1298,7 @@ class FoodRowMobile extends Component {
   constructor(props){
     super(props);
     [
-      'handleClick', 'handleMouseDown', 'handleMouseUp',
-      'handleDuplicate', 'duplicate'
+      'handleClick', 'handleDuplicate', 'duplicate'
     ].forEach(x=>this[x].bind(this));
     this.duplicate = this.duplicate.bind(this);
   }
@@ -1309,30 +1308,7 @@ class FoodRowMobile extends Component {
       entry,
       onToggleSelected
     } = this.props;
-    if (selected.size > 0 && !selected.has(entry.id)) {
-      // If we're selecting things, then select what the user clicked
-      onToggleSelected(entry);
-    } else {
-      // Otherwise, expand the entry
-    }
-  }
-  handleMouseDown() {
-    let {
-      selected,
-      entry,
-      onToggleSelected
-    } = this.props
-    if (selected.size > 0) {
-      return;
-    }
-    let that = this;
-    let timeoutHandle = setTimeout(function(){
-      onToggleSelected(entry);
-    }, 500);
-    this.longPressTimeout = timeoutHandle;
-  }
-  handleMouseUp() {
-    clearTimeout(this.longPressTimeout);
+    onToggleSelected(entry);
   }
   handleDuplicate(entry) {
     let newEntry = this.duplicate(entry);
@@ -1395,11 +1371,7 @@ class FoodRowMobile extends Component {
     indentation = (<div className='indentations'>{indentation}</div>)
     return (<>
       <div key={entry.id} className='entry'
-        onClick={()=>this.handleClick(entry)}
-        onMouseDown={()=>this.handleMouseDown(entry)}
-        onMouseUp={()=>this.handleMouseUp(entry)}
-        onTouchStart={()=>this.handleMouseDown(entry)}
-        onTouchEnd={()=>this.handleMouseUp(entry)} >
+        onClick={()=>this.handleClick(entry)} >
       {indentation}
       <div className='name'>
         {entry.name}
