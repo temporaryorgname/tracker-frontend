@@ -647,6 +647,9 @@ class ConnectedFoodTable extends Component {
   componentDidUpdate(prevProps) {
     if (prevProps.date !== this.props.date) {
       this.props.fetchData(this.props.date);
+      this.setState({
+        selected: new Set()
+      });
     }
   }
   handleToggleSelected(entry) {
@@ -770,7 +773,9 @@ class ConnectedFoodTable extends Component {
                 <FoodRowMobile key={entry.id} 
                     entry={entry} 
                     selected={that.state.selected}
-                    onToggleSelected={that.handleToggleSelected} />
+                    onToggleSelected={that.handleToggleSelected} 
+                    deleteEntries={that.props.deleteEntry}
+                    createEntry={that.props.createEntry}/>
               );
             })
           }
@@ -939,7 +944,8 @@ const FoodTable = connect(
     return {
       fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
       updateData: entry => dispatch(foodActions['update'](entry)),
-      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids))
+      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids)),
+      createEntry: data => dispatch(foodActions['create'](data))
     };
   }
 )(ConnectedFoodTable);
@@ -1278,8 +1284,10 @@ class FoodRowMobile extends Component {
   constructor(props){
     super(props);
     [
-      'handleClick', 'handleMouseDown', 'handleMouseUp'
+      'handleClick', 'handleMouseDown', 'handleMouseUp',
+      'handleDuplicate', 'duplicate'
     ].forEach(x=>this[x].bind(this));
+    this.duplicate = this.duplicate.bind(this);
   }
   handleClick() {
     let {
@@ -1312,12 +1320,24 @@ class FoodRowMobile extends Component {
   handleMouseUp() {
     clearTimeout(this.longPressTimeout);
   }
+  handleDuplicate(entry) {
+    let newEntry = this.duplicate(entry);
+    newEntry['date'] = formatDate(new Date());
+    this.props.createEntry(newEntry);
+  }
+  duplicate(entry) {
+    let {id, parent_id, ...newEntry} = {...entry};
+    newEntry['photo_ids'] = [];
+    newEntry['children'] = entry.children.map(this.duplicate);
+    return newEntry;
+  }
   render() {
     let {
       selected = new Set(),
       entry = {},
       onToggleSelected,
-      depth = 0
+      depth = 0,
+      deleteEntries = ()=>null,
     } = this.props;
     // Selected overlay
     let selectedOverlay = null;
@@ -1335,8 +1355,12 @@ class FoodRowMobile extends Component {
             </Link>
           </i>
           <i className='material-icons action'
-              onClick={()=>null}>
+              onClick={()=>deleteEntries([{id: entry.id}])}>
             delete
+          </i>
+          <i className='material-icons action'
+              onClick={()=>this.handleDuplicate(entry)}>
+            file_copy
           </i>
           {!entry.parent_id && entry.children.length === 0 &&
             <i className='material-icons action'
