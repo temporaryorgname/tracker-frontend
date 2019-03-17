@@ -766,20 +766,12 @@ class ConnectedFoodTable extends Component {
         <div className='entries'>
           {
             this.props.entries.map(function(entry){
-              return (<div key={entry.id} className='entry'>
-                <div className='name'>
-                  {entry.name}
-                </div>
-                <div className='values'>
-                  {entry.quantity && <span>{entry.quantity}</span>}
-                  {entry.calories && <span>Calories: {entry.calories}</span>}
-                  {entry.protein && <span>Protein: {entry.protein}</span>}
-                  {!entry.quantity && !entry.calories && !entry.protein && <span>No nutritional information</span>}
-                </div>
-                <Link to={'/food/editor?id='+entry.id}>
-                  <i className='material-icons'>chevron_right</i>
-                </Link>
-              </div>);
+              return (
+                <FoodRowMobile key={entry.id} 
+                    entry={entry} 
+                    selected={that.state.selected}
+                    onToggleSelected={that.handleToggleSelected} />
+              );
             })
           }
         </div>
@@ -1126,7 +1118,7 @@ class FoodRow extends Component {
   constructor(props) {
     super(props);
     this.state = { // Keep a copy of the data
-      expanded: false
+      expanded: true
     };
 
     this.getOnChangeHandler = this.getOnChangeHandler.bind(this);
@@ -1196,7 +1188,10 @@ class FoodRow extends Component {
     }
   }
   render() {
-    let selected = this.props.selected;
+    let {
+      selected,
+      depth = 0
+    } = this.props;
     let childrenCalories = this.props.data.children.map(
       child => child.calories
     ).reduce(
@@ -1208,9 +1203,9 @@ class FoodRow extends Component {
       (a, b) => a+b, 0
     );
     let indentation = null;
-    for (let i = 0; i < (this.props.depth || 0); i++) {
+    for (let i = 0; i < depth; i++) {
       indentation = (
-        <><div className='indentation'/></>
+        <>{indentation}<div className='indentation'/></>
       );
     }
     let that = this;
@@ -1254,7 +1249,7 @@ class FoodRow extends Component {
                 selected={selected}
                 onToggleSelected={that.props.onToggleSelected}
                 onChange={that.handleChildrenChange}
-                depth={1}/>);
+                depth={depth+1}/>);
           })
         }
       </>
@@ -1276,6 +1271,122 @@ class FoodRowCell extends Component {
           {...this.props} />
       </td>
     );
+  }
+}
+
+class FoodRowMobile extends Component {
+  constructor(props){
+    super(props);
+    [
+      'handleClick', 'handleMouseDown', 'handleMouseUp'
+    ].forEach(x=>this[x].bind(this));
+  }
+  handleClick() {
+    let {
+      selected,
+      entry,
+      onToggleSelected
+    } = this.props;
+    if (selected.size > 0 && !selected.has(entry.id)) {
+      // If we're selecting things, then select what the user clicked
+      onToggleSelected(entry);
+    } else {
+      // Otherwise, expand the entry
+    }
+  }
+  handleMouseDown() {
+    let {
+      selected,
+      entry,
+      onToggleSelected
+    } = this.props
+    if (selected.size > 0) {
+      return;
+    }
+    let that = this;
+    let timeoutHandle = setTimeout(function(){
+      onToggleSelected(entry);
+    }, 500);
+    this.longPressTimeout = timeoutHandle;
+  }
+  handleMouseUp() {
+    clearTimeout(this.longPressTimeout);
+  }
+  render() {
+    let {
+      selected = new Set(),
+      entry = {},
+      onToggleSelected,
+      depth = 0
+    } = this.props;
+    // Selected overlay
+    let selectedOverlay = null;
+    if (selected.has(entry.id)) {
+      selectedOverlay = (
+        <div className='selected-overlay'>
+          <i className='material-icons action'
+              onClick={()=>onToggleSelected(entry)}>
+            check_box
+          </i>
+          <i className='material-icons action'
+                onClick={()=>null}>
+            <Link to={'/food/editor?id='+entry.id}>
+              create
+            </Link>
+          </i>
+          <i className='material-icons action'
+              onClick={()=>null}>
+            delete
+          </i>
+          {!entry.parent_id && entry.children.length === 0 &&
+            <i className='material-icons action'
+                onClick={()=>null}>
+              format_indent_increase
+            </i>
+          }
+        </div>
+      );
+    }
+    // Indentation
+    let indentation = null;
+    for (let i = 0; i < depth; i++) {
+      indentation = (
+        <>{indentation}<div className='indentation'/></>
+      );
+    }
+    indentation = (<div className='indentations'>{indentation}</div>)
+    return (<>
+      <div key={entry.id} className='entry'
+        onClick={()=>this.handleClick(entry)}
+        onMouseDown={()=>this.handleMouseDown(entry)}
+        onMouseUp={()=>this.handleMouseUp(entry)}
+        onTouchStart={()=>this.handleMouseDown(entry)}
+        onTouchEnd={()=>this.handleMouseUp(entry)} >
+      {indentation}
+      <div className='name'>
+        {entry.name}
+      </div>
+      <div className='values'>
+        {entry.quantity && <span>{entry.quantity}</span>}
+        {entry.calories && <span>Calories: {entry.calories}</span>}
+        {entry.protein && <span>Protein: {entry.protein}</span>}
+        {!entry.quantity && !entry.calories && !entry.protein && <span>No nutritional information</span>}
+      </div>
+      <Link to={'/food/editor?id='+entry.id}>
+        <i className='material-icons'>chevron_right</i>
+      </Link>
+      {selectedOverlay}
+    </div>
+    {entry.children.map(function(child){
+      return (
+        <FoodRowMobile 
+            entry={child} 
+            depth={depth+1} 
+            selected={selected}
+            onToggleSelected={onToggleSelected} />
+      );
+    })}
+    </>);
   }
 }
 
