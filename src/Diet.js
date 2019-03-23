@@ -8,7 +8,8 @@ import axios from 'axios';
 import { connect } from "react-redux";
 
 import { 
-  getLoadingStatus
+  getLoadingStatus,
+  arrayToDict
 } from './Utils.js';
 import { 
   foodActions,
@@ -655,11 +656,18 @@ class ConnectedFoodTable extends Component {
   }
   handleToggleSelected(entry) {
     /* Callback to be triggered when an entry has been selected. */
-    var setCopy = new Set(this.state.selected);
+    let setCopy = new Set(this.state.selected);
+    let that = this;
     if (this.state.selected.has(entry.id)){
       function unselect(entry) {
         setCopy.delete(entry.id);
+        // Unselect children
         entry.children.forEach(unselect);
+        // Unselect all parents if they're selected
+        while (entry) {
+          setCopy.delete(entry.id);
+          entry = that.props.allEntries[entry.parent_id];
+        }
       }
       unselect(entry);
     } else {
@@ -675,17 +683,13 @@ class ConnectedFoodTable extends Component {
   }
   getSelectedTopLevel() {
     /* Return a set of selected entries that do not have parent entries or whose parents are not selected. */
-    let entries = this.props.entries;
+    let entries = this.props.allEntries;
     let selected = this.state.selected;
     let newVals = Array.from(this.state.selected).filter(
       function(id) {
-        for (let entry of entries) {
-          if (entry.id === id) {
-            return !selected.has(entry.parent_id);
-          }
-        }
-        console.error('Could not find entry with ID '+id);
-        return null;
+        let parentId = entries[id].parent_id;
+        let parentEntry = entries[parentId];
+        return !parentId || !selected.has(parentEntry.id);
       }
     );
     return new Set(newVals);
@@ -722,7 +726,7 @@ class ConnectedFoodTable extends Component {
     if (confirmMove) {
       let that = this;
       Array.from(this.state.selected).forEach(function(id){
-        for (var entry of that.props.entries) {
+        for (var entry of Object.values(that.props.entries)) {
           if (entry.id === id) {
             break;
           }
@@ -750,7 +754,7 @@ class ConnectedFoodTable extends Component {
           );
           break;
         case 'loaded':
-          if (this.props.entries.length === 0) {
+          if (Object.values(this.props.entries).length === 0) {
             status = (
               <div className='empty-view'>
                 You have not yet recorded any food for today.
@@ -789,9 +793,10 @@ class ConnectedFoodTable extends Component {
         }
         <div className='entries'>
           {
-            this.props.entries.map(function(entry){
+            Object.values(this.props.entries).map(function(entry){
               return (
                 <FoodRowMobile key={entry.id} 
+                    allEntries={that.props.allEntries}
                     entry={entry} 
                     selected={that.state.selected}
                     onToggleSelected={that.handleToggleSelected} 
@@ -814,9 +819,10 @@ class ConnectedFoodTable extends Component {
   renderDesktop() {
     var that = this;
     let controls = null;
-    let topLevelSelected = this.getSelectedTopLevel();
-    if (topLevelSelected.size === 1) {
-      let selectedId = topLevelSelected.values().next().value;
+    let selected = this.getSelectedTopLevel();
+    console.log('num selected: '+selected.size);
+    if (selected.size === 1) {
+      let selectedId = this.state.selected.values().next().value;
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
@@ -827,7 +833,7 @@ class ConnectedFoodTable extends Component {
           </label>
         </>
       );
-    } else if (topLevelSelected.size > 1) {
+    } else if (selected.size > 1) {
       controls = (
         <>
           <Link to='#' onClick={this.deleteSelectedEntries}><i className="material-icons action">delete</i></Link>
@@ -849,7 +855,7 @@ class ConnectedFoodTable extends Component {
           );
           break;
         case 'loaded':
-          if (this.props.entries.length === 0) {
+          if (Object.values(this.props.entries).length === 0) {
             status = (
               <tr className='status'>
                 <td colSpan='999'>
@@ -912,7 +918,7 @@ class ConnectedFoodTable extends Component {
           </tr>
           <FoodRowNewEntry date={this.props.date} />
           {
-            this.props.entries.map(function(entry){
+            Object.values(this.props.entries).map(function(entry){
               return <FoodRow key={entry.id}
                           data={entry}
                           selected={that.state.selected}
@@ -938,16 +944,27 @@ class ConnectedFoodTable extends Component {
 const FoodTable = connect(
   function(state, ownProps) {
     let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
-    let entities = Object.values(state.food.entities).filter(
+
+    let allEntries = Object.values(state.food.entities).filter(
       entity => entity && entity.date === ownProps.date
     );
-    let entitiesWithoutParent = entities.filter(entity => !entity.parent_id);
-    function computeTotal(entities, property) {
-      return entities.map(function(entity) {
-        if (entity[property]) {
-          return entity[property];
+    let entitiesWithoutParent = allEntries.filter(entity => !entity.parent_id);
+    allEntries = arrayToDict(allEntries, 'id');
+    entitiesWithoutParent = arrayToDict(entitiesWithoutParent, 'id');
+    // Add children to entries
+    for (let id of Object.keys(allEntries)) {
+      allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
+    }
+
+    function computeTotal(entries, property) {
+      return Object.values(entries).map(function(entry) {
+        if (entry[property]) {
+          return entry[property];
         } else {
-          return computeTotal(entity.children, property);
+          return computeTotal(
+            entry.children_ids.map(id => allEntries[id]).filter(entry => entry),
+            property
+          );
         }
       }).filter(
         val => val && isFinite(val)
@@ -955,9 +972,11 @@ const FoodTable = connect(
         (acc, val) => acc+parseFloat(val), 0
       );
     }
+
     return {
       loadingStatus,
       entries: entitiesWithoutParent,
+      allEntries,
       total: {
         calories: computeTotal(entitiesWithoutParent, 'calories'),
         protein: computeTotal(entitiesWithoutParent, 'protein'),
@@ -1339,6 +1358,7 @@ class FoodRowMobile extends Component {
       onToggleSelected,
       depth = 0,
       deleteEntry = ()=>null,
+      allEntries
     } = this.props;
     let that = this;
     // Selected overlay
@@ -1414,6 +1434,7 @@ class ConnectedEntryEditorForm extends Component {
     super(props);
     this.state = {
       data: props.selectedEntry || null,
+      children: null,
       selectingPhoto: false,
       successMessage: null,
       errorMessage: null,
@@ -1462,18 +1483,10 @@ class ConnectedEntryEditorForm extends Component {
       this.props.fetchPhotosByDate(this.props.selectedEntry.date);
       return; // Prevent multiple setState calls in one update cycle
     }
-    if (dateChanged) {
-      // Clear photos if the date changed
-      this.setState({
-        data: {
-          ...this.state.data,
-          photo_ids: [],
-        }
-      });
-      // Load food/photo data
-      if (this.state.data.date) {
-        this.props.fetchPhotosByDate(this.state.data.date);
-      }
+
+    // Load children
+    if (this.state.data && (!this.state.children || this.state.children.filter(x=>!x).length > 0)) {
+      this.props.fetchFoodByDate(this.state.data.date);
     }
   }
 
@@ -1496,9 +1509,10 @@ class ConnectedEntryEditorForm extends Component {
       calories: this.state.data.calories,
       protein: this.state.data.protein,
       photo_ids: this.state.data.photo_ids,
-      children: this.state.data.children
+      children: this.state.children || this.props.children
     }).then(function(response){
       // Clear form
+      // TODO: Remove? I don't think this is needed anymore now that we redirect after saving.
       that.setState({
         data: {
           id: null,
@@ -1521,32 +1535,34 @@ class ConnectedEntryEditorForm extends Component {
     });
   }
   onChange(e) {
-    this.setState({
+    let changedField = e.target.name;
+    let newValue = e.target.value;
+    let updatedState = {
       data: {
         ...this.state.data,
-        [e.target.name]: e.target.value
+        [changedField]: newValue
       },
       successMessage: null,
       errorMessage: null
-    });
+    };
+    if (changedField === 'date') {
+      updatedState.data.photo_ids = [];
+      this.props.fetchPhotosByDate(newValue);
+    }
+    this.setState(updatedState);
   }
   handleChildrenChange(data) {
     this.setState({
-      data: {
-        ...this.state.data,
-        children: data
-      }
+      children: data
     });
   }
   handleNewChild() {
+    let children = this.state.children || this.props.children;
     let newEntry = {
       name: ''
     };
     this.setState({
-      data: {
-        ...this.state.data,
-        children: [...this.state.data.children, newEntry]
-      }
+      children: [...children, newEntry]
     });
   }
   uploadFile(event) {
@@ -1640,11 +1656,11 @@ class ConnectedEntryEditorForm extends Component {
           <h3>Entry Details</h3>
           <label>
             <span>Date</span>
-            <input type='date' name='date' value={this.state.data.date} onChange={this.onChange}/>
+            <input type='date' name='date' value={this.state.data.date} onChange={this.onChange} readOnly={this.state.data.parent_id}/>
           </label>
           <label>
             <span>Time</span>
-            <input type='time' name='time' value={this.state.data.time || undefined} onChange={this.onChange}/>
+            <input type='time' name='time' value={this.state.data.time || undefined} onChange={this.onChange} readOnly={this.state.data.parent_id}/>
           </label>
           <label className='resize'>
             <span>Item name</span>
@@ -1743,12 +1759,13 @@ class ConnectedEntryEditorForm extends Component {
     );
   }
   renderChildEntries() {
-    if (this.state.data) {
+    let children = this.state.children || this.props.children;
+    if (children) {
       return (
         <div className='children-entries'>
           <h3>Children Entries</h3>
           <p> {"What is contained in this meal? Enter the components and we'll sum it up for you!"} </p>
-          <SmallTable data={this.state.data.children} onChange={this.handleChildrenChange} />
+          <SmallTable data={children} onChange={this.handleChildrenChange} />
           <button onClick={this.handleNewChild}>New Component</button>
           <button onClick={this.openAutocomplete}>Search</button>
         </div>
@@ -1843,8 +1860,12 @@ const EntryEditorForm = connect(
     let photoLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
     // Loaded entry
     let selectedEntry = null;
+    let children = null;
     if (ownProps.id) {
       selectedEntry = state.food.entities[ownProps.id];
+      if (selectedEntry) { // If the data is loaded
+        children = selectedEntry.children_ids.map(id => state.food.entities[id]);
+      }
     } else if (ownProps.photo_ids) {
       selectedEntry = {
         id: null,
@@ -1874,12 +1895,14 @@ const EntryEditorForm = connect(
     return {
       photos,
       photoLoadingStatus,
-      selectedEntry
+      selectedEntry,
+      children,
     }
   },
   function(dispatch, ownProps) {
     return {
       fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
+      fetchFoodByDate: date => dispatch(foodActions['fetchMultiple']({date: date})),
       fetchPhotosByDate: date => dispatch(photoActions['fetchMultiple']({date})),
       createFoodEntry: data => dispatch(foodActions['create'](data)),
       updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
@@ -1928,10 +1951,14 @@ class SmallTable extends Component {
         </thead>
         <tbody>
           {emptyRow || this.props.data.map(function(datum, index){
-            return <SmallTableRow
-              key={index}
-              data={datum} 
-              onChange={x => that.handleChange(x, index)} />
+            if (datum) {
+              return <SmallTableRow
+                key={index}
+                data={datum} 
+                onChange={x => that.handleChange(x, index)} />
+            } else {
+              return (<tr key={index}><td colSpan='999'>...</td></tr>);
+            }
           })}
         </tbody>
       </table>

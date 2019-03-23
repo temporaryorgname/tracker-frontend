@@ -84,6 +84,14 @@ export const dictEqual = function(dict1, dict2) {
   return true;
 }
 
+export const arrayToDict = function(a, k) {
+  let output = {};
+  for (let x of a) {
+    output[x[k]] = x;
+  }
+  return output;
+}
+
 // String utils
 export const formatString = function(string, values) {
   return Object.keys(values).reduce(function(acc,key){
