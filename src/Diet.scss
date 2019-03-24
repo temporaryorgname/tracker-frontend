@@ -169,23 +169,35 @@
         text-align: left;
         border-bottom: 1px solid rgb(100,100,100);
         position: relative;
-        padding: 5px;
-        padding-left: 30px;
+        padding: 0;
         box-sizing: border-box;
+        display: flex;
 
         .indentations {
-          position: absolute;
-          left: 0;
-          top: 0;
-          background-color: rgb(100,100,100);
+          //display: inline-block;
+          margin-left: 5px;
+          margin-top: auto;
+          margin-bottom: auto;
+          margin-right: 0;
           height: 100%;
-          margin: 0;
           .indentation {
             display: inline-block;
             width: 10px;
             height: 100%;
             margin: 0;
-            border-right: 1px solid black;
+            margin-left: 5px;
+            margin-right: 5px;
+            &:last-child::after {
+              content: '\21b3';
+              margin-right: 0;
+              text-align: right;
+            }
+          }
+        }
+
+        .row-body {
+          .name.empty {
+            color: rgb(100,100,100);
           }
         }
 

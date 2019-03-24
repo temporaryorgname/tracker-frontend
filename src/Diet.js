@@ -1399,14 +1399,16 @@ class FoodRowMobile extends Component {
       <div key={entry.id} className='entry'
         onClick={()=>this.handleClick(entry)} >
       {indentation}
-      <div className='name'>
-        {entry.name}
-      </div>
-      <div className='values'>
-        {entry.quantity && <span>{entry.quantity}</span>}
-        {entry.calories && <span>Calories: {entry.calories}</span>}
-        {entry.protein && <span>Protein: {entry.protein}</span>}
-        {!entry.quantity && !entry.calories && !entry.protein && <span>No nutritional information</span>}
+      <div className='row-body'>
+        <div className={entry.name ? 'name' : 'name empty'}>
+          {entry.name || 'Unnamed entry'}
+        </div>
+        <div className='values'>
+          {entry.quantity && <span>{entry.quantity}</span>}
+          {entry.calories && <span>Calories: {entry.calories}</span>}
+          {entry.protein && <span>Protein: {entry.protein}</span>}
+          {!entry.quantity && !entry.calories && !entry.protein && <span>No nutritional information</span>}
+        </div>
       </div>
       <Link to={'/food/editor?id='+entry.id}>
         <i className='material-icons'>chevron_right</i>
