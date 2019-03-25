@@ -309,6 +309,7 @@
       text-align: center;
       display: inline-block;
       max-width: 750px;
+      width: 100%;
 
       .controls{
         padding: 5px 20px;
@@ -341,6 +342,13 @@
 
       table {
         display: inline-block;
+        width: 100%;
+        col.numbers {
+          width: 10px;
+        }
+        col.item {
+          width: 100%;
+        }
       }
       tr {
         &.new-entry {
@@ -364,11 +372,27 @@
       }
       td {
         white-space: nowrap;
-        .indentation {
+        .indentations {
           display: inline-block;
-          width: 1rem;
-          &:after {
-            content: '-';
+          .indentation {
+            display: inline-block;
+            height: 100%;
+            width: 1rem;
+            &:last-child:after {
+              content: '\21b3';
+            }
+            &:last-child {
+              margin-right: 10px;
+            }
+            margin-left: 10px;
+          }
+        }
+        .dropdown-checkbox {
+          height: 0;
+          position: relative;
+          i {
+            text-align: bottom;
+            line-height: 0;
           }
         }
       }
@@ -378,18 +402,6 @@
       }
       .react-datepicker {
         left: -40px;
-      }
-    }
-    .food-table {
-      width: 100%;
-      table {
-        width: 100%;
-      }
-      col.numbers {
-        width: 10px;
-      }
-      col.item {
-        width: 100%;
       }
     }
     .empty-view {

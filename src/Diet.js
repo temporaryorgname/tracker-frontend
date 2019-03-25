@@ -820,7 +820,6 @@ class ConnectedFoodTable extends Component {
     var that = this;
     let controls = null;
     let selected = this.getSelectedTopLevel();
-    console.log('num selected: '+selected.size);
     if (selected.size === 1) {
       let selectedId = this.state.selected.values().next().value;
       controls = (
@@ -1172,7 +1171,6 @@ class FoodRow extends Component {
     };
 
     this.getOnChangeHandler = this.getOnChangeHandler.bind(this);
-    this.handleChildrenChange = this.handleChildrenChange.bind(this);
     this.dropdownCheckbox = React.createRef();
     this.toggleChildren = this.toggleChildren.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
@@ -1188,18 +1186,6 @@ class FoodRow extends Component {
       }
       onChange(updatedEntry);
     }
-  }
-  handleChildrenChange(entry) {
-    let that = this;
-    let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
-    let otherChildren = that.props.data.children.filter(child => child.id !== entry.id);
-    onChange({
-      ...that.props.data,
-      children: [
-        ...otherChildren,
-        entry
-      ] 
-    });
   }
   toggleChildren(visible) {
     this.setState({
@@ -1252,26 +1238,31 @@ class FoodRow extends Component {
     ).reduce(
       (a, b) => a+b, 0
     );
+    let expandCheckbox = null;
+    if (this.props.data.children.length > 0) {
+      expandCheckbox = (
+        <DropdownCheckbox 
+          ref={this.dropdownCheckbox}
+          onChange={this.toggleChildren}
+          checked={this.state.expanded}/>
+      );
+    }
     let indentation = null;
     for (let i = 0; i < depth; i++) {
       indentation = (
         <>{indentation}<div className='indentation'/></>
       );
     }
+    indentation = (<div className='indentations'>{indentation}</div>);
     let that = this;
     return (
       <>
         <tr className='entry'>
           <td>
-            {
-              this.props.data.children.length > 0 && 
-              <DropdownCheckbox 
-                ref={this.dropdownCheckbox}
-                onChange={this.toggleChildren} />
-            }
           </td>
           <td>
             {indentation}
+            {expandCheckbox}
             <input type='text' value={this.props.data.name} onChange={this.getOnChangeHandler('name')} onKeyPress={this.handleKeyPress} />
           </td>
           <td>
@@ -1298,7 +1289,7 @@ class FoodRow extends Component {
                 data={child}
                 selected={selected}
                 onToggleSelected={that.props.onToggleSelected}
-                onChange={that.handleChildrenChange}
+                onChange={that.props.onChange}
                 depth={depth+1}/>);
           })
         }
