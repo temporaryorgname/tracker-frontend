@@ -391,8 +391,11 @@
           height: 0;
           position: relative;
           i {
-            text-align: bottom;
-            line-height: 0;
+            transition: 0.1s ease;
+          }
+          &.checked i {
+            transform: rotate(90deg);
+            transition: 0.1s ease;
           }
         }
       }

@@ -1153,9 +1153,9 @@ class DropdownCheckbox extends Component {
   }
   render() {
     return (
-      <label className='dropdown-checkbox'>
+      <label className={this.state.checked ? 'dropdown-checkbox checked' : 'dropdown-checkbox'}>
         <i className='material-icons action'>
-          {this.state.checked ? 'arrow_drop_down':'arrow_right'}
+          arrow_right
         </i>
         <input type='checkbox' onChange={this.toggle}/>
       </label>
