@@ -1195,19 +1195,25 @@ class FoodRow extends Component {
   handleQuantityScale(scale) {
     let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
     var cals = this.props.data.calories;
-    if (isFinite(cals)) {
-      if (typeof cals === 'string' && cals.length > 0) {
-        cals = parseFloat(cals)*scale;
-        cals = cals.toString();
+    if (cals && isFinite(cals)) {
+      if (typeof cals === 'string') {
+        if (cals.length > 0) {
+          cals = parseFloat(cals)*scale;
+          cals = cals.toString();
+        }
       } else {
         cals *= scale
       }
     }
     var prot = this.props.data.protein;
-    if (isFinite(prot)) {
-      if (typeof prot === 'string' && prot.length > 0) {
-        prot = parseFloat(prot)*scale;
-        prot = prot.toString();
+    if (prot && isFinite(prot)) {
+      console.log('prot "'+prot+'"');
+      window.x = prot;
+      if (typeof prot === 'string') {
+        if (prot.length > 0) {
+          prot = parseFloat(prot)*scale;
+          prot = prot.toString();
+        }
       } else {
         prot *= scale
       }
@@ -1261,9 +1267,11 @@ class FoodRow extends Component {
           <td>
           </td>
           <td>
+            <div>
             {indentation}
             {expandCheckbox}
             <input type='text' value={this.props.data.name} onChange={this.getOnChangeHandler('name')} onKeyPress={this.handleKeyPress} />
+            </div>
           </td>
           <td>
             <QuantityInput
