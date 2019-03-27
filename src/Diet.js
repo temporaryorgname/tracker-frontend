@@ -9,7 +9,8 @@ import { connect } from "react-redux";
 
 import { 
   getLoadingStatus,
-  arrayToDict
+  arrayToDict,
+  clipFloat
 } from './Utils.js';
 import { 
   foodActions,
@@ -996,7 +997,7 @@ const FoodTable = connect(
         val => val && isFinite(val)
       ).reduce(
         (acc, val) => acc+parseFloat(val), 0
-      );
+      ).toPrecision(1);
     }
 
     return {
@@ -1407,8 +1408,8 @@ class FoodRowMobile extends Component {
         </div>
         <div className='values'>
           {entry.quantity && <span>{entry.quantity}</span>}
-          {entry.calories && <span>Calories: {entry.calories}</span>}
-          {entry.protein && <span>Protein: {entry.protein}</span>}
+          {entry.calories && <span>Calories: {clipFloat(entry.calories,1)}</span>}
+          {entry.protein && <span>Protein: {clipFloat(entry.protein,1)}</span>}
           {!entry.quantity && !entry.calories && !entry.protein && <span>No nutritional information</span>}
         </div>
       </div>

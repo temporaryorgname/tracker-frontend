@@ -111,6 +111,20 @@ export const extractPlaceholders = function(string) {
   }
 }
 
+// Float utils
+export const clipFloat = function(val, decimalPlaces) {
+  if (!val) {
+    return val;
+  }
+  if (typeof val === 'string') {
+    val = parseFloat(val);
+  }
+  let intPart = Math.floor(val);
+  let decimalPart = val-intPart;
+  let decimalString = String(decimalPart).substr(1, decimalPlaces+1);
+  return String(intPart)+decimalString;
+}
+
 // Postgresql data type utils
 export const stringifyPolygon = function(polygon) {
   console.log('Stringifying');
