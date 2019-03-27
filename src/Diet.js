@@ -806,6 +806,9 @@ class ConnectedFoodTable extends Component {
         </div>
       );
     }
+    let searchTableControls = [
+      {value: 'Add', callback: (x) => this.props.createEntry({date: this.props.date, ...x}), requiresSelected: true},
+    ];
     return (
       <div className='mobile-food-table'>
         { status ||
@@ -835,6 +838,10 @@ class ConnectedFoodTable extends Component {
           <button>Photos</button>
         </Link>
         {controls}
+        <h2>Search</h2>
+        Search past entries and quickly add them to today's log.
+        <SearchTable 
+          controls={searchTableControls}/>
       </div>
     );
   }
@@ -901,7 +908,6 @@ class ConnectedFoodTable extends Component {
       }
     }
     let searchTableControls = [
-      {value: 'print', callback: console.log, requiresSelected: true},
       {value: 'Add', callback: (x) => this.props.createEntry({date: this.props.date, ...x}), requiresSelected: true},
     ];
     return (
@@ -956,6 +962,8 @@ class ConnectedFoodTable extends Component {
           { status }
           </tbody>
         </table>
+        <h2>Search</h2>
+        Search past entries and quickly add them to today's log.
         <SearchTable 
           controls={searchTableControls}/>
       </div>
@@ -1908,6 +1916,8 @@ class SearchTable extends Component {
     this.search = this.search.bind(this);
     this.handleSearchSelect = this.handleSearchSelect.bind(this);
 
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+
     // Start off with some default suggestions
     this.search();
   }
@@ -1947,6 +1957,12 @@ class SearchTable extends Component {
     let [key,index] = this.state.selectedEntry;
     let {date, ...entry} = this.state.results[key][index];
     return entry;
+  }
+
+  handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      this.search();
+    }
   }
 
   renderAutocompleteTable() {
@@ -1998,8 +2014,8 @@ class SearchTable extends Component {
     return (
       <div className='autocomplete'>
         <div className='search'>
-          <input type='text' value={this.state.query} onChange={(e)=>{this.setState({query: e.target.value})}} />
-          <button onClick={this.search}>Search</button>
+          <i className='material-icons'>search</i>
+          <input type='text' value={this.state.query} onChange={(e)=>{this.setState({query: e.target.value})}} onKeyPress={this.handleKeyPress}/>
         </div>
         <div className='search-table'>
           <table>

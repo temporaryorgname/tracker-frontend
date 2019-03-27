@@ -303,11 +303,42 @@
     margin: 20px 0;
     padding: 10px;
     border-radius: 10px;
-    border: 1px solid black;
+    //border: 1px solid grey;
     text-align: center;
     width: 100%;
+    .search {
+      position: relative;
+      display: inline-block;
+      color: grey;
+      margin: 10px;
+      margin-bottom: 1rem;
+      width: 50%;
+      transition: 0.3s ease;
+      i.material-icons {
+        position: absolute;
+        line-height: 0;
+        top: 50%;
+        left: 10px;
+      }
+      input {
+        border: 1px solid grey;
+        border-radius: 10px;
+        padding: 10px 20px 10px 50px;
+        color: grey;
+      }
+      &:focus-within {
+        color: black;
+        width: 100%;
+        input {
+          color: black;
+          border-color: black;
+        }
+      }
+    }
     .search-table {
       display: inline-block;
+      max-width: 100%;
+      overflow-x: scroll;
     }
     tr {
       box-sizing: border-box;
@@ -315,6 +346,14 @@
       &.selected {
         border: 2px solid black;
         padding: 0;
+      }
+    }
+    td {
+      white-space: nowrap;
+      &[colspan='999'] {
+        background-color: inherit;
+        font-weight: bold;
+        border: 1px solid grey;
       }
     }
   }
