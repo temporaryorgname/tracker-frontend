@@ -1955,7 +1955,10 @@ class SearchTable extends Component {
   }
   getSelectedEntry() {
     let [key,index] = this.state.selectedEntry;
-    let {date, ...entry} = this.state.results[key][index];
+    return this.state.results[key][index];
+  }
+  getSelectedEntryCopy() {
+    let {date, id, ...entry} = this.getSelectedEntry();
     return entry;
   }
 
@@ -2040,12 +2043,25 @@ class SearchTable extends Component {
   renderControls() {
     let controls = this.props.controls || [];
     let that = this;
-    return controls.map(function(control){
+    controls = controls.map(function(control){
       let disabled = !that.state.selectedEntry && control['requiresSelected'];
       return (
-        <button className={disabled ? 'disabled' : ''} onClick={()=>control['callback'](that.getSelectedEntry())}>{control['value']}</button>
+        <button className={disabled ? 'disabled' : ''} onClick={()=>control['callback'](that.getSelectedEntryCopy())}>{control['value']}</button>
       );
     });
+    // Add edit button
+    if (this.state.selectedEntry) {
+      let selectedEntry = this.getSelectedEntry();
+      console.log(selectedEntry);
+      if (selectedEntry.id) {
+        controls.push(
+          <Link to={'/food/editor?id='+selectedEntry.id}>
+            <button>Edit</button>
+          </Link>
+        );
+      }
+    }
+    return controls;
   }
   render() {
     let successMessage = null;
