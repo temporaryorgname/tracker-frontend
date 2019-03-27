@@ -878,6 +878,10 @@ class ConnectedFoodTable extends Component {
           break;
       }
     }
+    let searchTableControls = [
+      {value: 'print', callback: console.log, requiresSelected: true},
+      {value: 'Add', callback: (x) => this.props.createEntry({date: this.props.date, ...x}), requiresSelected: true},
+    ];
     return (
       <div className='food-table'>
         <div className='controls'>
@@ -930,6 +934,8 @@ class ConnectedFoodTable extends Component {
           { status }
           </tbody>
         </table>
+        <SearchTable 
+          controls={searchTableControls}/>
       </div>
     );
   }
@@ -1510,7 +1516,8 @@ class ConnectedEntryEditorForm extends Component {
       calories: this.state.data.calories,
       protein: this.state.data.protein,
       photo_ids: this.state.data.photo_ids,
-      children: this.state.children || this.props.children
+      children: this.state.children || this.props.children,
+      premade: this.state.data.premade
     }).then(function(response){
       // Clear form
       // TODO: Remove? I don't think this is needed anymore now that we redirect after saving.
@@ -1536,8 +1543,14 @@ class ConnectedEntryEditorForm extends Component {
     });
   }
   onChange(e) {
+    let inputType = e.target.type;
     let changedField = e.target.name;
-    let newValue = e.target.value;
+    let newValue = null;
+    if (inputType === 'checkbox') {
+      newValue = e.target.checked;
+    } else {
+      newValue = e.target.value;
+    }
     let updatedState = {
       data: {
         ...this.state.data,
@@ -1678,6 +1691,10 @@ class ConnectedEntryEditorForm extends Component {
           <label>
             <span>Protein</span>
             <input type='text' name='protein' value={this.state.data.protein || undefined} onChange={this.onChange}/>
+          </label>
+          <label className='checkbox'>
+            <span>Premade</span>
+            <Checkbox name='premade' checked={this.state.data.premade || undefined} onChange={this.onChange}/>
           </label>
           <button onClick={this.addEntry}>{this.state.data.id ? "Save Changes" : "Create Entry"}</button>
         </div>
@@ -1878,6 +1895,7 @@ const EntryEditorForm = connect(
         protein: '',
         photo_ids: JSON.parse('['+ownProps.photo_ids+']'),
         children: [],
+        premade: false
       };
     } else {
       selectedEntry = {
@@ -1890,6 +1908,7 @@ const EntryEditorForm = connect(
         protein: '',
         photo_ids: [],
         children: [],
+        premade: false
       };
     }
 
@@ -1913,6 +1932,166 @@ const EntryEditorForm = connect(
     };
   }
 )(ConnectedEntryEditorForm);
+
+//////////////////////////////////////////////////
+// Search Table
+//////////////////////////////////////////////////
+
+class SearchTable extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      query: '',
+      loading: false,
+      results: {},
+      selectedEntry: null
+    };
+
+    this.renderControls = this.renderControls.bind(this);
+    this.renderAutocompleteTable = this.renderAutocompleteTable.bind(this);
+
+    this.search = this.search.bind(this);
+    this.handleSearchSelect = this.handleSearchSelect.bind(this);
+
+    // Start off with some default suggestions
+    this.search();
+  }
+
+  search() {
+    var that = this;
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.state.query),
+      {withCredentials: true}
+    ).then(function(response){
+      that.setState({
+        results: response.data,
+        loading: false
+      });
+    }).catch(function(error){
+      console.error(error);
+    });
+  }
+  handleSearchSelect(key, index) {
+    if (this.state.selectedEntry) {
+      if (this.state.selectedEntry[0] === key && this.state.selectedEntry[1] === index) {
+        this.setState({
+          selectedEntry: null
+        });
+      } else {
+        this.setState({
+          selectedEntry: [key, index]
+        });
+      }
+    } else {
+      this.setState({
+        selectedEntry: [key, index]
+      });
+    }
+  }
+  getSelectedEntry() {
+    let [key,index] = this.state.selectedEntry;
+    let {date, ...entry} = this.state.results[key][index];
+    return entry;
+  }
+
+  renderAutocompleteTable() {
+    let loadingMessage = null;
+    if (this.state.loading) {
+      loadingMessage = (<tr><td colSpan='999'>LOADING...</td></tr>);
+    }
+    let resultsBySection = {};
+    let that = this;
+    if (this.state.results) {
+      let entries = Object.entries(this.state.results);
+      for (let [key,vals] of entries) {
+        resultsBySection[key] = vals.map(function(val, index){
+          let isSelected = (that.state.selectedEntry &&
+              that.state.selectedEntry[0] === key &&
+              that.state.selectedEntry[1] === index);
+          return (<tr key={index} onClick={() => that.handleSearchSelect(key,index)} className={isSelected ? 'selected' : ''}>
+            <td>{val.date}</td>
+            <td>{val.name}</td>
+            <td>{val.quantity}</td>
+            <td>{val.calories}</td>
+            <td>{val.protein}</td>
+          </tr>);
+        });
+      }
+    }
+    let results = null;
+    if (resultsBySection['recent']) {
+      results = (<>
+        {results}
+        <tr><td colSpan='999'>Recent</td></tr>
+        {resultsBySection['recent']}
+      </>);
+    }
+    if (resultsBySection['history']) {
+      results = (<>
+        {results}
+        <tr><td colSpan='999'>History</td></tr>
+        {resultsBySection['history']}
+      </>);
+    }
+    return (
+      <div className='autocomplete'>
+        <div className='search'>
+          <input type='text' value={this.state.query} onChange={(e)=>{this.setState({query: e.target.value})}} />
+          <button onClick={this.search}>Search</button>
+        </div>
+        <div className='search-table'>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Calories</th>
+                <th>Protein</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingMessage}
+              {results}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+  renderControls() {
+    let controls = this.props.controls || [];
+    let that = this;
+    return controls.map(function(control){
+      let disabled = !that.state.selectedEntry && control['requiresSelected'];
+      return (
+        <button className={disabled ? 'disabled' : ''} onClick={()=>control['callback'](that.getSelectedEntry())}>{control['value']}</button>
+      );
+    });
+  }
+  render() {
+    let successMessage = null;
+    if (this.state.successMessage) {
+      successMessage = (<div className='success-message'>
+        {this.state.successMessage}
+      </div>);
+    }
+    let errorMessage = null;
+    if (this.state.errorMessage) {
+      errorMessage = (
+        <div className='error-message'>{this.state.errorMessage}</div>
+      );
+    }
+    return (
+      <div className='search-table-container'>
+        {errorMessage}
+        {successMessage}
+        {this.renderAutocompleteTable()}
+        {this.renderControls()}
+      </div>
+    );
+  }
+}
 
 class SmallTable extends Component {
   constructor(props) {

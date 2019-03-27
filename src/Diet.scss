@@ -62,15 +62,16 @@
           background-color: white;
           transition: 0.3s ease;
         }
-        input[type='text'] {
-          display: inline-block;
+        input {
           margin: 1rem 0;
           margin-left: 120px;
+        }
+        input[type='text'] {
+          display: inline-block;
           transition: 0.3s ease;
           width: calc(100% - 140px);
         }
-        input[type='date'], input[type='time'] {
-          margin: 1rem 0;
+        .checkbox {
           margin-left: 120px;
         }
       }
@@ -298,8 +299,24 @@
     }
   }
 
-  .file-upload-dialog {
-    display: inline-block;
+  .search-table-container {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid black;
+    text-align: center;
+    width: 100%;
+    .search-table {
+      display: inline-block;
+    }
+    tr {
+      box-sizing: border-box;
+      padding: 1px;
+      &.selected {
+        border: 2px solid black;
+        padding: 0;
+      }
+    }
   }
 }
 
@@ -391,11 +408,11 @@
           height: 0;
           position: relative;
           i {
+            vertical-align: middle;
             transition: 0.1s ease;
           }
           &.checked i {
             transform: rotate(90deg);
-            transition: 0.1s ease;
           }
         }
       }
