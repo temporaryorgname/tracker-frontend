@@ -984,7 +984,7 @@ const FoodTable = connect(
     }
 
     function computeTotal(entries, property) {
-      return Object.values(entries).map(function(entry) {
+      let total = Object.values(entries).map(function(entry) {
         if (entry[property]) {
           return entry[property];
         } else {
@@ -997,7 +997,9 @@ const FoodTable = connect(
         val => val && isFinite(val)
       ).reduce(
         (acc, val) => acc+parseFloat(val), 0
-      ).toPrecision(1);
+      );
+      total = clipFloat(total, 1);
+      return total;
     }
 
     return {
