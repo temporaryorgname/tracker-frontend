@@ -310,7 +310,7 @@ class QuantityInput extends Component {
       return {val: val, units: units}
     }
     // Ignore empty strings
-    if (this.props.value === null) {
+    if (!this.props.value) {
       return;
     }
     if (this.props.value.length === 0) {
