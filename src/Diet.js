@@ -1245,14 +1245,14 @@ class FoodRow extends Component {
       (a, b) => a+b, 0
     );
     let expandCheckbox = null;
-    if (this.props.data.children.length > 0) {
-      expandCheckbox = (
-        <DropdownCheckbox 
-          ref={this.dropdownCheckbox}
-          onChange={this.toggleChildren}
-          checked={this.state.expanded}/>
-      );
-    }
+    //if (this.props.data.children.length > 0) {
+    //  expandCheckbox = (
+    //    <DropdownCheckbox 
+    //      ref={this.dropdownCheckbox}
+    //      onChange={this.toggleChildren}
+    //      checked={this.state.expanded}/>
+    //  );
+    //}
     let indentation = null;
     for (let i = 0; i < depth; i++) {
       indentation = (
