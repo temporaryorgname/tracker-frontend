@@ -299,6 +299,10 @@ class QuantityInput extends Component {
     this.handleBlur = this.handleBlur.bind(this);
   }
   scaleQuantity() {
+    if (!this.props.onScale) {
+      return;
+    }
+
     function splitUnits(str) {
       var val = parseFloat(str);
       var units = str.substring(val.toString().length).trim();
@@ -312,8 +316,8 @@ class QuantityInput extends Component {
       return;
     }
     // Split numbers and units
-    var oldVals = splitUnits(this.state.startingValue);
-    var newVals = splitUnits(this.props.value);
+    var oldVals = splitUnits(this.state.startingValue || '');
+    var newVals = splitUnits(this.props.value || '');
 
     // Check if the quantities use the same units
     if (oldVals['units'] !== newVals['units']) {
@@ -327,10 +331,27 @@ class QuantityInput extends Component {
       return;
     }
 
-    // Callback
-    if (this.props.onScale) {
-      this.props.onScale(scale);
+    // Scale values
+    let scalableValues = null;
+    if (this.props.scalablevalues) {
+      scalableValues = {};
+      for (let [k,v] of Object.entries(this.props.scalablevalues)) {
+        if (v && isFinite(v)) {
+          if (typeof v === 'string') {
+            if (v.length > 0) {
+              v = parseFloat(v)*scale;
+              v = v.toString();
+            }
+          } else {
+            v *= scale
+          }
+        }
+        scalableValues[k] = v;
+      }
     }
+
+    // Callback
+    this.props.onScale(scale, scalableValues);
   }
   handleBlur(e) {
     this.scaleQuantity();
@@ -1070,18 +1091,10 @@ class ConnectedFoodRowNewEntry extends Component {
       protein:  foo(entry.protein) || this.state.protein,
     });
   }
-  handleQuantityScale(scale) {
-    var cals = this.state.calories;
-    if (isFinite(cals) && cals.length > 0) {
-      cals = parseFloat(cals)*scale;
-    }
-    var prot = this.state.protein;
-    if (isFinite(prot) && prot.length > 0) {
-      prot = parseFloat(prot)*scale;
-    }
+  handleQuantityScale(scale, vals) {
     this.setState({
-      calories: cals.toString(),
-      protein: prot.toString()
+      calories: vals['calories'],
+      protein: vals['protein'] 
     });
   }
   render() {
@@ -1104,6 +1117,10 @@ class ConnectedFoodRowNewEntry extends Component {
               placeholder={this.state.suggestion.quantity || 'quantity'}
               onChange={this.onChange}
               onScale={this.handleQuantityScale}
+              scalablevalues={{
+                calories: this.state.calories,
+                protein: this.state.protein
+              }}
               name='quantity' />
         </td>
         <td>
@@ -1198,36 +1215,12 @@ class FoodRow extends Component {
       expanded: visible
     });
   }
-  handleQuantityScale(scale) {
+  handleQuantityScale(scale, vals) {
     let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
-    var cals = this.props.data.calories;
-    if (cals && isFinite(cals)) {
-      if (typeof cals === 'string') {
-        if (cals.length > 0) {
-          cals = parseFloat(cals)*scale;
-          cals = cals.toString();
-        }
-      } else {
-        cals *= scale
-      }
-    }
-    var prot = this.props.data.protein;
-    if (prot && isFinite(prot)) {
-      console.log('prot "'+prot+'"');
-      window.x = prot;
-      if (typeof prot === 'string') {
-        if (prot.length > 0) {
-          prot = parseFloat(prot)*scale;
-          prot = prot.toString();
-        }
-      } else {
-        prot *= scale
-      }
-    }
     onChange({
       ...this.props.data,
-      calories: cals,
-      protein: prot
+      calories: vals['calories'],
+      protein: vals['protein']
     });
   }
   handleKeyPress(e) {
@@ -1284,7 +1277,11 @@ class FoodRow extends Component {
                 value={this.props.data.quantity || ''}
                 onChange={this.getOnChangeHandler('quantity')}
                 onKeyPress={this.handleKeyPress}
-                onScale={this.handleQuantityScale}/>
+                onScale={this.handleQuantityScale}
+                scalablevalues={{
+                  calories: this.props.data.calories,
+                  protein: this.props.data.protein
+                }} />
           </td>
           <FoodRowCell value={this.props.data.calories}
             onChange={this.getOnChangeHandler('calories')}
@@ -1455,6 +1452,7 @@ class ConnectedEntryEditorForm extends Component {
     this.handleChildrenChange = this.handleChildrenChange.bind(this);
     this.handleNewChild = this.handleNewChild.bind(this);
     this.uploadFile = this.uploadFile.bind(this);
+    this.handleScale = this.handleScale.bind(this);
 
     this.renderMainEntry = this.renderMainEntry.bind(this);
     this.renderAutocompleteTable = this.renderAutocompleteTable.bind(this);
@@ -1590,6 +1588,15 @@ class ConnectedEntryEditorForm extends Component {
       });
     });
   }
+  handleScale(scale, vals) {
+    this.setState({
+      data: {
+        ...this.state.data,
+        calories: vals['calories'],
+        protein: vals['protein']
+      }
+    });
+  }
 
   openAutocomplete() {
     this.setState({
@@ -1682,7 +1689,14 @@ class ConnectedEntryEditorForm extends Component {
           </label>
           <label>
             <span>Quantity</span>
-            <input type='text' name='quantity' value={this.state.data.quantity || undefined} onChange={this.onChange}/>
+            <QuantityInput name='quantity' 
+                value={this.state.data.quantity || undefined}
+                onChange={this.onChange}
+                onScale={this.handleScale}
+                scalablevalues={{
+                  calories: this.state.data.calories,
+                  protein: this.state.data.protein
+                }}/>
           </label>
           <label>
             <span>Calories</span>
@@ -2019,6 +2033,13 @@ class SearchTable extends Component {
       }
     }
     let results = null;
+    if (resultsBySection['premade']) {
+      results = (<>
+        {results}
+        <tr><td colSpan='999'>Premade</td></tr>
+        {resultsBySection['premade']}
+      </>);
+    }
     if (resultsBySection['recent']) {
       results = (<>
         {results}
@@ -2161,18 +2182,18 @@ class SmallTableRow extends Component {
       this.props.onChange(data);
     }
   }
-  handleScale(scale) {
+  handleScale(scale, val) {
     this.props.onChange({
       ...this.props.data,
-      calories: this.props.data.calories*scale,
-      protein: this.props.data.protein*scale
-    })
+      calories: val['calories'],
+      protein: val['protein']
+    });
   }
   render() {
     return (
       <tr>
         <td><FoodNameInput onChange={this.handleChange} name='name' value={this.props.data.name || ''} /></td>
-        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale}/></td>
+        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale} scalablevalues={{calories: this.props.data.calories, protein: this.props.data.protein}}/></td>
         <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories || ''} /></td>
         <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein || ''} /></td>
       </tr>
