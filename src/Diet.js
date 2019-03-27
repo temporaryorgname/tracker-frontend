@@ -981,7 +981,7 @@ const FoodTable = connect(
     let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
 
     let allEntries = Object.values(state.food.entities).filter(
-      entity => entity && entity.date === ownProps.date
+      entity => entity && entity.date === ownProps.date && (!entity.premade || entity.premade == null)
     );
     let entitiesWithoutParent = allEntries.filter(entity => !entity.parent_id);
     allEntries = arrayToDict(allEntries, 'id');
