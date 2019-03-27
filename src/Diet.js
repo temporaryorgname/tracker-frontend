@@ -201,7 +201,7 @@ class FoodNameInput extends Component {
         .then(function(response){
           window.result = response;
           that.setState({
-            suggestions: response.data.history,
+            suggestions: response.data.frequent,
             loading: false
           });
         })
@@ -1618,17 +1618,13 @@ class ConnectedEntryEditorForm extends Component {
       showAutocompleteTable: false
     });
   }
-  handleAutocompleteChildren() {
-    let [key,index] = this.state.searchSelectedEntry;
-    let entryData = this.state.searchResults[key][index];
+  handleAutocompleteChildren(entryData) {
+    let children = this.state.children || this.props.children;
     this.setState({
-      data: {
-        ...this.state.data,
-        children: [
-          ...this.state.data.children,
-          entryData
-        ]
-      },
+      children: [
+        ...children,
+        entryData
+      ],
       showAutocompleteTable: false
     });
   }
@@ -1724,72 +1720,14 @@ class ConnectedEntryEditorForm extends Component {
     }
   }
   renderAutocompleteTable() {
-    let loadingMessage = null;
-    if (this.state.searchLoading) {
-      loadingMessage = (<tr><td colSpan='999'>LOADING...</td></tr>);
-    }
-    let resultsBySection = {};
-    let that = this;
-    if (this.state.searchResults) {
-      let entries = Object.entries(this.state.searchResults);
-      console.log(entries);
-      for (let [key,vals] of entries) {
-        resultsBySection[key] = vals.map(function(val, index){
-          let isSelected = (that.state.searchSelectedEntry &&
-              that.state.searchSelectedEntry[0] === key &&
-              that.state.searchSelectedEntry[1] === index);
-          return (<tr key={index} onClick={() => that.handleSearchSelect(key,index)} className={isSelected ? 'selected' : ''}>
-            <td>{val.date}</td>
-            <td>{val.name}</td>
-            <td>{val.quantity}</td>
-            <td>{val.calories}</td>
-            <td>{val.protein}</td>
-          </tr>);
-        });
-      }
-    }
-    let results = null;
-    if (resultsBySection['recent']) {
-      results = (<>
-        {results}
-        <tr><td colSpan='999'>Recent</td></tr>
-        {resultsBySection['recent']}
-      </>);
-    }
-    if (resultsBySection['history']) {
-      results = (<>
-        {results}
-        <tr><td colSpan='999'>History</td></tr>
-        {resultsBySection['history']}
-      </>);
-    }
+    let searchTableControls = [
+      {value: 'Cancel', callback: this.closeAutocomplete, requiresSelected: true},
+      {value: 'Add', callback: this.handleAutocompleteChildren, requiresSelected: true},
+    ];
     return (
-      <div className='autocomplete'>
-        <div className='search'>
-          <input type='text' value={this.state.searchString} onChange={(e)=>{this.setState({searchString: e.target.value})}} />
-          <button onClick={this.search}>Search</button>
-        </div>
-        <div className='search-table'>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Item</th>
-                <th>Quantity</th>
-                <th>Calories</th>
-                <th>Protein</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loadingMessage}
-              {results}
-            </tbody>
-          </table>
-        </div>
-        <button onClick={this.closeAutocomplete}>Cancel</button>
-        {this.state.searchSelectedEntry ? <button onClick={this.handleAutocompleteChildren}>Add</button> : <button className='disabled'>Add</button>}
-      </div>
-    );
+        <SearchTable 
+          controls={searchTableControls}/>
+    )
   }
   renderChildEntries() {
     let children = this.state.children || this.props.children;
@@ -2037,22 +1975,22 @@ class SearchTable extends Component {
     if (resultsBySection['premade']) {
       results = (<>
         {results}
-        <tr><td colSpan='999'>Premade</td></tr>
+        <tr><td colSpan='999'>Premade Foods</td></tr>
         {resultsBySection['premade']}
       </>);
     }
     if (resultsBySection['recent']) {
       results = (<>
         {results}
-        <tr><td colSpan='999'>Recent</td></tr>
+        <tr><td colSpan='999'>Recently Logged</td></tr>
         {resultsBySection['recent']}
       </>);
     }
-    if (resultsBySection['history']) {
+    if (resultsBySection['frequent']) {
       results = (<>
         {results}
-        <tr><td colSpan='999'>History</td></tr>
-        {resultsBySection['history']}
+        <tr><td colSpan='999'>Frequently Logged</td></tr>
+        {resultsBySection['frequent']}
       </>);
     }
     return (
