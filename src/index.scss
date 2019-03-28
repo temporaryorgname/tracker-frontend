@@ -72,6 +72,13 @@ input[type=button], input[type=submit], button {
   cursor: pointer;
   outline: none;
 
+  &.negative {
+    background-color: rgb(200,0,0);
+    &:focus {
+      background-color: rgb(200,50,50);
+    }
+  }
+
   &::-moz-focus-inner {
     border: 0;
   }

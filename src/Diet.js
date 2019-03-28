@@ -1463,6 +1463,7 @@ class ConnectedEntryEditorForm extends Component {
       searchSelectedEntry: null
     };
     this.addEntry = this.addEntry.bind(this);
+    this.deleteEntry = this.deleteEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.handleChildrenChange = this.handleChildrenChange.bind(this);
     this.handleNewChild = this.handleNewChild.bind(this);
@@ -1548,6 +1549,33 @@ class ConnectedEntryEditorForm extends Component {
         successMessage: 'Entry created successfully!'
       });
       that.props.fetchPhotosByDate(that.state.data.date);
+      that.props.history.push('/food/table?date='+date);
+    }).catch(function(error){
+      that.setState({
+        errorMessage: error.repsonse.data.error
+      });
+    });
+  }
+  deleteEntry(e) {
+    e.preventDefault();
+    //Confirm deletion
+    let confirmation = window.confirm('Are you sure you want to delete this entry?');
+    if (!confirmation) {
+      return;
+    }
+    // Save for callback
+    let date = this.state.data.date;
+    // Submit entry to server
+    let onDelete = this.props.deleteFoodEntry;
+    let that = this;
+    onDelete(
+      this.state.data.id
+    ).then(function(response){
+      // Clear form
+      that.setState({
+        data: null,
+        successMessage: 'Entry deleted successfully!'
+      });
       that.props.history.push('/food/table?date='+date);
     }).catch(function(error){
       that.setState({
@@ -1725,6 +1753,7 @@ class ConnectedEntryEditorForm extends Component {
           </label>
           }
           <button onClick={this.addEntry}>{this.state.data.id ? "Save Changes" : "Create Entry"}</button>
+          {this.state.data.id && <button className='negative' onClick={this.deleteEntry}>Delete</button>}
         </div>
       );
     } else {
@@ -1896,6 +1925,7 @@ const EntryEditorForm = connect(
       fetchPhotosByDate: date => dispatch(photoActions['fetchMultiple']({date})),
       createFoodEntry: data => dispatch(foodActions['create'](data)),
       updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
+      deleteFoodEntry: id => dispatch(foodActions['deleteSingle'](id)),
       uploadPhoto: (files) => dispatch(
         photoActions['create'](files, ownProps.date)
       ),
