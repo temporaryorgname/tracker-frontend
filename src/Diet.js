@@ -709,6 +709,9 @@ class ConnectedFoodTable extends Component {
     let selected = this.state.selected;
     let newVals = Array.from(this.state.selected).filter(
       function(id) {
+        if (!entries[id]) {
+          return false;
+        }
         let parentId = entries[id].parent_id;
         let parentEntry = entries[parentId];
         return !parentId || !selected.has(parentEntry.id);
