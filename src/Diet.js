@@ -1966,6 +1966,16 @@ class SearchTable extends Component {
   }
   getSelectedEntryCopy() {
     let {date, id, ...entry} = this.getSelectedEntry();
+    function clean(e) {
+      delete e.id;
+      delete e.date;
+      e.premade = false;
+      for (let c of e.children) {
+        clean(c);
+      }
+    }
+    clean(entry);
+    entry.copied_from = id;
     return entry;
   }
 
