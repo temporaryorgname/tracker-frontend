@@ -8,7 +8,8 @@ import {
   bodyweightSummaryActions
 } from './actions/Actions.js';
 import {
-  formatDate
+  formatDate,
+  clipFloat
 } from './Utils.js';
 
 class ConnectedHomePage extends Component {
@@ -110,12 +111,12 @@ class ConnectedHomePage extends Component {
         <>
           <ProgressBar percentage={this.props.todayCalories/this.props.targetCalories}
             centerText={'Today'}
-            leftText={this.props.todayCalories+' Calories consumed'}
-            rightText={this.props.caloriesLeft+' Calories left'} />
+            leftText={clipFloat(this.props.todayCalories,0)+' Calories consumed'}
+            rightText={clipFloat(this.props.caloriesLeft,0)+' Calories left'} />
           <ProgressBar percentage={this.props.avgCalories/this.props.targetCalories}
             centerText={'Weekly Average'}
-            leftText={this.props.avgCalories+' Calories consumed'}
-            rightText={(this.props.targetCalories-this.props.avgCalories)+' Calories left'} />
+            leftText={clipFloat(this.props.avgCalories,0)+' Calories consumed'}
+            rightText={clipFloat(this.props.targetCalories-this.props.avgCalories,0)+' Calories left'} />
           <div>
             {bodyweightChangeMessage} {caloriesChangeMessage}
           </div>
@@ -269,8 +270,8 @@ class ProgressBar extends Component {
             <rect className='total' x="1" y="1" rx="3" ry="3" width={width} height={height} />
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={progressWidth} height={height} />
             <text textAnchor='middle' x={width/2} y={height-6} >{centerText}</text>
-            <text textAnchor='start' x={6} y={height-6} >{leftText}</text>
-            <text textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
+            <text className='left' textAnchor='start' x={6} y={height-6} >{leftText}</text>
+            <text className='right' textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
           </svg>
           </ResponsiveSVG>
         </div>
@@ -283,8 +284,8 @@ class ProgressBar extends Component {
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={width} height={height} />
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={progressWidth} height={height} />
             <text textAnchor='middle' x={width/2} y={height-6} >{centerText}</text>
-            <text textAnchor='start' x={6} y={height-6} >{leftText}</text>
-            <text textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
+            <text className='left' textAnchor='start' x={6} y={height-6} >{leftText}</text>
+            <text className='right' textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
           </svg>
         </div>
       );
