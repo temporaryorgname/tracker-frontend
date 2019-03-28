@@ -300,6 +300,7 @@
   }
 
   .search-table-container {
+    box-sizing: border-box;
     margin: 20px 0;
     padding: 10px;
     border-radius: 10px;
@@ -308,9 +309,10 @@
     width: 100%;
     .search {
       position: relative;
+      box-sizing: border-box;
       display: inline-block;
       color: grey;
-      margin: 10px;
+      padding: 10px;
       margin-bottom: 1rem;
       width: 50%;
       transition: 0.3s ease;
@@ -318,7 +320,7 @@
         position: absolute;
         line-height: 0;
         top: 50%;
-        left: 10px;
+        left: 20px;
       }
       input {
         border: 1px solid grey;
@@ -346,6 +348,15 @@
       &.selected {
         border: 2px solid black;
         padding: 0;
+        td {
+          padding-top: 4px;
+        }
+        td:first-of-type {
+          padding-left: 19px;
+        }
+        td:last-of-type {
+          padding-right: 19px;
+        }
       }
     }
     td {
