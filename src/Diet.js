@@ -1294,10 +1294,10 @@ class FoodRow extends Component {
                   protein: this.props.data.protein
                 }} />
           </td>
-          <FoodRowCell value={this.props.data.calories}
+          <FoodRowCell value={this.props.data.calories || ''}
             onChange={this.getOnChangeHandler('calories')}
             placeholder={childrenCalories || ''}/>
-          <FoodRowCell value={this.props.data.protein}
+          <FoodRowCell value={this.props.data.protein || ''}
             onChange={this.getOnChangeHandler('protein')}
             placeholder={childrenProtein || ''}/>
           <td className='select'>
@@ -1431,6 +1431,7 @@ class FoodRowMobile extends Component {
     {entry.children.map(function(child){
       return (
         <FoodRowMobile 
+            key={child.id}
             {...that.props}
             entry={child} 
             depth={depth+1} />
@@ -1713,10 +1714,13 @@ class ConnectedEntryEditorForm extends Component {
             <span>Protein</span>
             <input type='text' name='protein' value={this.state.data.protein || undefined} onChange={this.onChange}/>
           </label>
+          {
+          !this.state.data.parent_id &&
           <label className='checkbox'>
             <span>Premade</span>
             <Checkbox name='premade' checked={this.state.data.premade || undefined} onChange={this.onChange}/>
           </label>
+          }
           <button onClick={this.addEntry}>{this.state.data.id ? "Save Changes" : "Create Entry"}</button>
         </div>
       );
@@ -2046,16 +2050,15 @@ class SearchTable extends Component {
     controls = controls.map(function(control){
       let disabled = !that.state.selectedEntry && control['requiresSelected'];
       return (
-        <button className={disabled ? 'disabled' : ''} onClick={()=>control['callback'](that.getSelectedEntryCopy())}>{control['value']}</button>
+        <button key={control['value']} className={disabled ? 'disabled' : ''} onClick={()=>control['callback'](that.getSelectedEntryCopy())}>{control['value']}</button>
       );
     });
     // Add edit button
     if (this.state.selectedEntry) {
       let selectedEntry = this.getSelectedEntry();
-      console.log(selectedEntry);
       if (selectedEntry.id) {
         controls.push(
-          <Link to={'/food/editor?id='+selectedEntry.id}>
+          <Link to={'/food/editor?id='+selectedEntry.id} key='Edit'>
             <button>Edit</button>
           </Link>
         );
