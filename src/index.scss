@@ -18,6 +18,22 @@ main {
   max-width: 1000px;
 }
 
+div.notification-container {
+  position: fixed;
+  top: 0;
+  padding: 20px;
+  z-index: 10;
+  .notification {
+    text-align: left;
+    background-color: white;
+    border: 1px solid black;
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    font-size: 10px;
+  }
+}
+
 a {
   color: $primary-colour;
   outline: none;

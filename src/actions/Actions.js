@@ -387,6 +387,24 @@ function createActions2(dataType, path) {
   }
 }
 
+export const notify = function(notification){
+  if (!notification.duration) {
+    notification.duration = 5000;
+  }
+  return function(dispatch, getState) {
+    dispatch({
+      type: 'NOTIFY',
+      payload: notification
+    });
+    setTimeout(function(){
+      dispatch({
+        type: 'UNNOTIFY',
+        payload: notification
+      });
+    }, notification.duration);
+  }
+}
+
 export const userProfileActions = createActions('USER_PROFILES', '/data/user_profiles');
 
 export const foodActions = createActions('FOOD', '/data/foods');

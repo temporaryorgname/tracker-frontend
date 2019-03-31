@@ -14,7 +14,8 @@ import {
 } from './Utils.js';
 import { 
   foodActions,
-  photoActions
+  photoActions,
+  notify
 } from './actions/Actions.js';
 
 import { Checkbox, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
@@ -810,7 +811,17 @@ class ConnectedFoodTable extends Component {
       );
     }
     let searchTableControls = [
-      {value: 'Add', callback: (x) => this.props.createEntry({date: this.props.date, ...x}), requiresSelected: true},
+      {
+        value: 'Add', 
+        callback: (x) => this.props.createEntry(
+          {date: this.props.date, ...x}
+        ).then(function(){
+          that.props.notify({
+            content: 'Successfully copied entry'
+          });
+        }),
+        requiresSelected: true
+      }
     ];
     return (
       <div className='mobile-food-table'>
@@ -911,7 +922,18 @@ class ConnectedFoodTable extends Component {
       }
     }
     let searchTableControls = [
-      {value: 'Add', callback: (x) => this.props.createEntry({date: this.props.date, ...x}), requiresSelected: true},
+      {
+        value: 'Add', 
+        callback: (x) => this.props.createEntry(
+          {date: this.props.date, ...x}
+        ).then(function(response){
+          let url = '/food/editor?id='+response.data.ids[0];
+          that.props.notify({
+            content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
+          });
+        }),
+        requiresSelected: true
+      }
     ];
     return (
       <div className='food-table'>
@@ -1029,7 +1051,8 @@ const FoodTable = connect(
       fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
       updateData: entry => dispatch(foodActions['update'](entry)),
       deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids)),
-      createEntry: data => dispatch(foodActions['create'](data))
+      createEntry: data => dispatch(foodActions['create'](data)),
+      notify: x => dispatch(notify(x)),
     };
   }
 )(ConnectedFoodTable);
@@ -1515,9 +1538,10 @@ class ConnectedEntryEditorForm extends Component {
     e.preventDefault();
     // Save for callback
     let date = this.state.data.date;
+    let id = this.state.id;
     // Submit entry to server
     let onSubmit = this.props.createFoodEntry;
-    if (this.state.id) {
+    if (id) {
       onSubmit = this.props.updateFoodEntry;
     }
     let that = this;
@@ -1534,19 +1558,18 @@ class ConnectedEntryEditorForm extends Component {
       premade: this.state.data.premade
     }).then(function(response){
       // Clear form
-      // TODO: Remove? I don't think this is needed anymore now that we redirect after saving.
+      let message = null;
+      if (id) {
+        message = 'Entry created successfully';
+      } else {
+        message = 'Entry updated successfully';
+      }
       that.setState({
-        data: {
-          id: null,
-          name: '',
-          time: '',
-          quantity: '',
-          calories: '',
-          protein: '',
-          photo_ids: [],
-          children: []
-        },
-        successMessage: 'Entry created successfully!'
+        data: null,
+        successMessage: message
+      });
+      that.props.notify({
+        content: message
       });
       that.props.fetchPhotosByDate(that.state.data.date);
       that.props.history.push('/food/table?date='+date);
@@ -1576,10 +1599,16 @@ class ConnectedEntryEditorForm extends Component {
         data: null,
         successMessage: 'Entry deleted successfully!'
       });
+      that.props.notify({
+        content: 'Entry deleted successfully'
+      });
       that.props.history.push('/food/table?date='+date);
     }).catch(function(error){
       that.setState({
         errorMessage: error.repsonse.data.error
+      });
+      that.props.notify({
+        content: 'Failed to delete: '+error.repsonse.data.error
       });
     });
   }
@@ -1929,6 +1958,7 @@ const EntryEditorForm = connect(
       uploadPhoto: (files) => dispatch(
         photoActions['create'](files, ownProps.date)
       ),
+      notify: x => dispatch(notify(x)),
     };
   }
 )(ConnectedEntryEditorForm);
@@ -2000,8 +2030,10 @@ class SearchTable extends Component {
       delete e.id;
       delete e.date;
       e.premade = false;
-      for (let c of e.children) {
-        clean(c);
+      if (e.children) {
+        for (let c of e.children) {
+          clean(c);
+        }
       }
     }
     clean(entry);

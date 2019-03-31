@@ -223,6 +223,19 @@ function bodyweightSummaryReducer(state = {}, action) {
   }
 }
 
+function notificationReducer(state = [], action) {
+  switch (action.type) {
+    case 'NOTIFY': {
+      return [...state, action.payload];
+    }
+    case 'UNNOTIFY': {
+      return state.filter(x => x !== action.payload);
+    }
+    default:
+      return state;
+  }
+}
+
 function sessionReducer(state = {}, action) {
   switch (action.type) {
     case 'UPDATE_SESSION_SUCCESS': {
@@ -274,6 +287,7 @@ const combinedReducer = combineReducers({
   bodyweightSummary: bodyweightSummaryReducer,
   loadingStatus: loadingStatusReducer,
   userProfiles: createReducer('USER_PROFILES'),
+  notifications: notificationReducer, 
   session: sessionReducer
 });
 

@@ -5,7 +5,7 @@ import './App.scss';
 
 import { connect } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
-import { userProfileActions } from './actions/Actions.js';
+import { userProfileActions, notify } from './actions/Actions.js';
 
 import { HomePage } from './Home.js'
 import { DietPage } from './Diet.js'
@@ -40,6 +40,7 @@ class ConnectedApp extends Component {
               <Route path="/" component={HomePage} />
               <Route render={() => <ErrorPage404 />}/>
             </Switch>
+            <NotificationContainer />
           </div>
         </Router>
       );
@@ -53,6 +54,7 @@ class ConnectedApp extends Component {
               <Route path="/signup" component={SignupPage} />
               <Route component={LoginPage} />
             </Switch>
+            <NotificationContainer />
           </div>
         </Router>
       );
@@ -383,5 +385,32 @@ class ErrorPage404 extends Component {
     );
   }
 }
+
+class ConnectedNotificationContainer extends Component {
+  render() {
+    let notifications = this.props.notifications.map(function(n,i){
+      return (
+        <div className='notification' key={i}>
+          {n.content}
+        </div>
+      );
+    });
+    return (
+      <div className='notification-container'>
+        {notifications}
+      </div>
+    );
+  }
+}
+const NotificationContainer = connect(
+  function(state, ownProps) {
+    return {
+      notifications: state.notifications || []
+    };
+  },
+  function(dispatch, ownProps) {
+    return {}
+  }
+)(ConnectedNotificationContainer);
 
 export default App;
