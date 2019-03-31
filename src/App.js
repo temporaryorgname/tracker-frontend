@@ -5,7 +5,7 @@ import './App.scss';
 
 import { connect } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
-import { userProfileActions, notify } from './actions/Actions.js';
+import { userProfileActions, notify, unnotify } from './actions/Actions.js';
 
 import { HomePage } from './Home.js'
 import { DietPage } from './Diet.js'
@@ -388,18 +388,23 @@ class ErrorPage404 extends Component {
 
 class ConnectedNotificationContainer extends Component {
   render() {
+    let that = this;
     let notifications = this.props.notifications.map(function(n,i){
       return (
-        <div className='notification' key={i}>
+        <div className='notification' key={i} onClick={()=>that.props.unnotify(n)}>
           {n.content}
         </div>
       );
     });
-    return (
-      <div className='notification-container'>
-        {notifications}
-      </div>
-    );
+    if (notifications.length > 0) {
+      return (
+        <div className='notification-container'>
+          {notifications}
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
 }
 const NotificationContainer = connect(
@@ -409,7 +414,9 @@ const NotificationContainer = connect(
     };
   },
   function(dispatch, ownProps) {
-    return {}
+    return {
+      unnotify: x => dispatch(unnotify(x))
+    }
   }
 )(ConnectedNotificationContainer);
 

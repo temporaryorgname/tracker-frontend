@@ -405,6 +405,15 @@ export const notify = function(notification){
   }
 }
 
+export const unnotify = function(notification){
+  return function(dispatch, getState) {
+    dispatch({
+      type: 'UNNOTIFY',
+      payload: notification
+    });
+  }
+}
+
 export const userProfileActions = createActions('USER_PROFILES', '/data/user_profiles');
 
 export const foodActions = createActions('FOOD', '/data/foods');
