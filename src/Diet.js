@@ -855,7 +855,8 @@ class ConnectedFoodTable extends Component {
         <h2>Search</h2>
         Search past entries and quickly add them to today's log.
         <SearchTable 
-          controls={searchTableControls}/>
+          controls={searchTableControls}
+          editable={true}/>
       </div>
     );
   }
@@ -990,7 +991,8 @@ class ConnectedFoodTable extends Component {
         <h2>Search</h2>
         Search past entries and quickly add them to today's log.
         <SearchTable 
-          controls={searchTableControls}/>
+          controls={searchTableControls}
+          editable={true}/>
       </div>
     );
   }
@@ -1801,7 +1803,8 @@ class ConnectedEntryEditorForm extends Component {
     ];
     return (
         <SearchTable 
-          controls={searchTableControls}/>
+          controls={searchTableControls}
+          editable={false}/>
     )
   }
   renderChildEntries() {
@@ -1962,6 +1965,93 @@ const EntryEditorForm = connect(
     };
   }
 )(ConnectedEntryEditorForm);
+
+class SmallTable extends Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+  }
+  handleChange(data, index) {
+    if (this.props.onChange) {
+      let updatedData = [
+        ...this.props.data,
+      ];
+      updatedData[index] = data;
+      this.props.onChange(updatedData);
+    }
+  }
+  render() {
+    let that = this;
+    let emptyRow = null;
+    if (!this.props.data) {
+      emptyRow = (
+        <tr><td colSpan='999'>{'...'}</td></tr>
+      );
+    } else if (this.props.data.length === 0) {
+      emptyRow = (
+        <tr><td colSpan='999'>{'There are not child entries to show.'}</td></tr>
+      );
+    }
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Calories</th>
+            <th>Protein</th>
+          </tr>
+        </thead>
+        <tbody>
+          {emptyRow || this.props.data.map(function(datum, index){
+            if (datum) {
+              return <SmallTableRow
+                key={index}
+                data={datum} 
+                onChange={x => that.handleChange(x, index)} />
+            } else {
+              return (<tr key={index}><td colSpan='999'>...</td></tr>);
+            }
+          })}
+        </tbody>
+      </table>
+    );
+  }
+}
+
+class SmallTableRow extends Component {
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleScale = this.handleScale.bind(this);
+  }
+  handleChange(e) {
+    if (this.props.onChange) {
+      let data = {
+        ...this.props.data,
+        [e.target.name]: e.target.value
+      };
+      this.props.onChange(data);
+    }
+  }
+  handleScale(scale, val) {
+    this.props.onChange({
+      ...this.props.data,
+      calories: val['calories'],
+      protein: val['protein']
+    });
+  }
+  render() {
+    return (
+      <tr>
+        <td><input type='text' onChange={this.handleChange} name='name' value={this.props.data.name || ''} /></td>
+        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale} scalablevalues={{calories: this.props.data.calories, protein: this.props.data.protein}}/></td>
+        <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories || ''} /></td>
+        <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein || ''} /></td>
+      </tr>
+    );
+  }
+}
 
 //////////////////////////////////////////////////
 // Search Table
@@ -2129,7 +2219,7 @@ class SearchTable extends Component {
       );
     });
     // Add edit button
-    if (this.state.selectedEntry) {
+    if (this.props.editable && this.state.selectedEntry) {
       let selectedEntry = this.getSelectedEntry();
       if (selectedEntry.id) {
         controls.push(
@@ -2161,93 +2251,6 @@ class SearchTable extends Component {
         {this.renderAutocompleteTable()}
         {this.renderControls()}
       </div>
-    );
-  }
-}
-
-class SmallTable extends Component {
-  constructor(props) {
-    super(props);
-    this.handleChange = this.handleChange.bind(this);
-  }
-  handleChange(data, index) {
-    if (this.props.onChange) {
-      let updatedData = [
-        ...this.props.data,
-      ];
-      updatedData[index] = data;
-      this.props.onChange(updatedData);
-    }
-  }
-  render() {
-    let that = this;
-    let emptyRow = null;
-    if (!this.props.data) {
-      emptyRow = (
-        <tr><td colSpan='999'>{'...'}</td></tr>
-      );
-    } else if (this.props.data.length === 0) {
-      emptyRow = (
-        <tr><td colSpan='999'>{'There are not child entries to show.'}</td></tr>
-      );
-    }
-    return (
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Quantity</th>
-            <th>Calories</th>
-            <th>Protein</th>
-          </tr>
-        </thead>
-        <tbody>
-          {emptyRow || this.props.data.map(function(datum, index){
-            if (datum) {
-              return <SmallTableRow
-                key={index}
-                data={datum} 
-                onChange={x => that.handleChange(x, index)} />
-            } else {
-              return (<tr key={index}><td colSpan='999'>...</td></tr>);
-            }
-          })}
-        </tbody>
-      </table>
-    );
-  }
-}
-
-class SmallTableRow extends Component {
-  constructor(props) {
-    super(props);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleScale = this.handleScale.bind(this);
-  }
-  handleChange(e) {
-    if (this.props.onChange) {
-      let data = {
-        ...this.props.data,
-        [e.target.name]: e.target.value
-      };
-      this.props.onChange(data);
-    }
-  }
-  handleScale(scale, val) {
-    this.props.onChange({
-      ...this.props.data,
-      calories: val['calories'],
-      protein: val['protein']
-    });
-  }
-  render() {
-    return (
-      <tr>
-        <td><FoodNameInput onChange={this.handleChange} name='name' value={this.props.data.name || ''} /></td>
-        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale} scalablevalues={{calories: this.props.data.calories, protein: this.props.data.protein}}/></td>
-        <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories || ''} /></td>
-        <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein || ''} /></td>
-      </tr>
     );
   }
 }

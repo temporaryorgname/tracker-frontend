@@ -95,21 +95,6 @@
         overflow-x: scroll;
       }
     }
-    .autocomplete {
-      .search {
-        white-space: nowrap;
-        input {
-          width: auto;
-        }
-      }
-      .search-table {
-        overflow: scroll;
-      }
-      .selected {
-        background-color: black;
-        color: white;
-      }
-    }
   }
 
   .food-name-input {
