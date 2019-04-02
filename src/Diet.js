@@ -10,7 +10,8 @@ import { connect } from "react-redux";
 import { 
   getLoadingStatus,
   arrayToDict,
-  clipFloat
+  clipFloat,
+  computeDietEntryTotal
 } from './Utils.js';
 import { 
   foodActions,
@@ -1037,32 +1038,13 @@ const FoodTable = connect(
       allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
     }
 
-    function computeTotal(entries, property) {
-      let total = Object.values(entries).map(function(entry) {
-        if (entry[property]) {
-          return entry[property];
-        } else {
-          return computeTotal(
-            entry.children_ids.map(id => allEntries[id]).filter(entry => entry),
-            property
-          );
-        }
-      }).filter(
-        val => val && isFinite(val)
-      ).reduce(
-        (acc, val) => acc+parseFloat(val), 0
-      );
-      total = clipFloat(total, 1);
-      return total;
-    }
-
     return {
       loadingStatus,
       entries: entitiesWithoutParent,
       allEntries,
       total: {
-        calories: computeTotal(entitiesWithoutParent, 'calories'),
-        protein: computeTotal(entitiesWithoutParent, 'protein'),
+        calories: computeDietEntryTotal(entitiesWithoutParent, 'calories', allEntries),
+        protein: computeDietEntryTotal(entitiesWithoutParent, 'protein', allEntries),
       },
       dirty: state.food.dirtyEntities.size > 0
     }
@@ -1298,16 +1280,8 @@ class FoodRow extends Component {
       selected,
       depth = 0
     } = this.props;
-    let childrenCalories = this.props.data.children.map(
-      child => child.calories
-    ).reduce(
-      (a, b) => a+b, 0
-    );
-    let childrenProtein = this.props.data.children.map(
-      child => child.protein
-    ).reduce(
-      (a, b) => a+b, 0
-    );
+    let childrenCalories = computeDietEntryTotal(this.props.data.children,'calories');
+    let childrenProtein = computeDietEntryTotal(this.props.data.children,'protein');
     let expandCheckbox = null;
     let indentation = null;
     for (let i = 0; i < depth; i++) {

@@ -234,3 +234,30 @@ export function updateLoadingStatus(tree, filters, status, keysToCheck=null) {
     );
   }
 }
+
+// Diet utils
+export function computeDietEntryTotal(entries, property, allEntries) {
+  let total = Object.values(entries).map(function(entry) {
+    if (entry[property]) {
+      return entry[property];
+    } else {
+      if (entry.children_id && allEntries) {
+        return computeDietEntryTotal(
+          entry.children_ids.map(id => allEntries[id]).filter(entry => entry),
+          property
+        );
+      } else if (entry.children) {
+        return computeDietEntryTotal(
+          entry.children,
+          property
+        );
+      }
+    }
+  }).filter(
+    val => val && isFinite(val)
+  ).reduce(
+    (acc, val) => acc+parseFloat(val), 0
+  );
+  total = clipFloat(total, 1);
+  return total;
+}
