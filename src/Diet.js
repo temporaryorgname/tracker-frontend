@@ -1504,11 +1504,7 @@ class ConnectedEntryEditorForm extends Component {
       children: null,
       selectingPhoto: false,
       successMessage: null,
-      errorMessage: null,
-      searchString: '',
-      searchLoading: false,
-      searchResults: {},
-      searchSelectedEntry: null
+      errorMessage: null
     };
     this.addEntry = this.addEntry.bind(this);
     this.deleteEntry = this.deleteEntry.bind(this);
@@ -1580,7 +1576,8 @@ class ConnectedEntryEditorForm extends Component {
       protein: this.state.data.protein,
       photo_ids: this.state.data.photo_ids,
       children: this.state.children || this.props.children,
-      premade: this.state.data.premade
+      premade: this.state.data.premade,
+      finished: this.state.data.finished
     }).then(function(response){
       // Clear form
       let message = null;
@@ -1709,7 +1706,10 @@ class ConnectedEntryEditorForm extends Component {
     this.setState({
       data: {
         ...this.state.data,
-        ...entryData
+        name: this.state.data.name || entryData.name,
+        quantity: this.state.data.quantity || entryData.quantity,
+        calories: this.state.data.calories || entryData.calories,
+        protein: this.state.data.protein || entryData.protein
       },
       showAutocompleteTable: false
     });
@@ -1806,6 +1806,13 @@ class ConnectedEntryEditorForm extends Component {
             <Checkbox name='premade' checked={this.state.data.premade || undefined} onChange={this.onChange}/>
           </label>
           }
+          {
+          this.state.data.premade &&
+          <label className='checkbox'>
+            <span>Finished</span>
+            <Checkbox name='finished' checked={this.state.data.finished || undefined} onChange={this.onChange}/>
+          </label>
+          }
           <button onClick={this.addEntry}>{this.state.data.id ? "Save Changes" : "Create Entry"}</button>
           {this.state.data.id && <button className='negative' onClick={this.deleteEntry}>Delete</button>}
         </div>
@@ -1821,8 +1828,9 @@ class ConnectedEntryEditorForm extends Component {
   }
   renderAutocompleteTable() {
     let searchTableControls = [
-      {value: 'Cancel', callback: this.closeAutocomplete, requiresSelected: true},
-      {value: 'Add', callback: this.handleAutocompleteChildren, requiresSelected: true},
+      {value: 'Cancel', callback: this.closeAutocomplete, requiresSelected: false},
+      {value: 'Add Child', callback: this.handleAutocompleteChildren, requiresSelected: true},
+      {value: 'Fill Main Entry', callback: this.handleAutocompleteMainEntry, requiresSelected: true},
     ];
     return (
         <SearchTable 
@@ -1905,6 +1913,7 @@ class ConnectedEntryEditorForm extends Component {
               {this.renderChildEntries()}
               {this.state.selectingPhoto ? this.renderPhotoSelector() : this.renderPhotos()}
             </div>
+            {this.renderAutocompleteTable()}
           </div>
         );
       }
@@ -2138,6 +2147,9 @@ class SearchTable extends Component {
     return this.state.results[key][index];
   }
   getSelectedEntryCopy() {
+    if (!this.state.selectedEntry) {
+      return null;
+    }
     let {date, id, ...entry} = this.getSelectedEntry();
     function clean(e) {
       delete e.id;
@@ -2237,8 +2249,14 @@ class SearchTable extends Component {
     let that = this;
     controls = controls.map(function(control){
       let disabled = !that.state.selectedEntry && control['requiresSelected'];
+      let className = disabled ? 'disabled' : '';
+      let onClick = disabled ? ()=>null : ()=>control['callback'](that.getSelectedEntryCopy())
       return (
-        <button key={control['value']} className={disabled ? 'disabled' : ''} onClick={()=>control['callback'](that.getSelectedEntryCopy())}>{control['value']}</button>
+        <button key={control['value']} 
+            className={className}
+            onClick={onClick}>
+          {control['value']}
+        </button>
       );
     });
     // Add edit button
