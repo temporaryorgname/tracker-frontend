@@ -289,16 +289,24 @@ class FoodNameInput extends Component {
   }
 }
 
-class QuantityInput extends Component {
+export class QuantityInput extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      focused: false,
-      startingValue: this.props.value
-    };
+
+    this.startingValue = this.props.value;
+    this.focused = false;
+
     this.scaleQuantity = this.scaleQuantity.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.handleBlur = this.handleBlur.bind(this);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.value !== this.props.value) {
+      if (!this.focused) {
+        this.scaleQuantity();
+        this.startingValue = this.props.value;
+      }
+    }
   }
   scaleQuantity() {
     if (!this.props.onScale) {
@@ -318,7 +326,7 @@ class QuantityInput extends Component {
       return;
     }
     // Split numbers and units
-    var oldVals = splitUnits(this.state.startingValue || '');
+    var oldVals = splitUnits(this.startingValue || '');
     var newVals = splitUnits(this.props.value || '');
 
     // Check if the quantities use the same units
@@ -352,19 +360,30 @@ class QuantityInput extends Component {
       }
     }
 
+    let scalableQuantities = null;
+    if (this.props.scalableQuantities) {
+      scalableQuantities = {};
+      for (let [k,v] of Object.entries(this.props.scalableQuantities)) {
+        if (v && typeof v !== 'undefined') {
+          let qty = splitUnits(v);
+          scalableQuantities[k] = qty.val*scale+qty.units;
+        }
+      }
+    }
+
     // Callback
-    this.props.onScale(scale, scalableValues);
+    this.props.onScale(scale, scalableValues, scalableQuantities);
   }
   handleBlur(e) {
+    this.focused = false;
     this.scaleQuantity();
     if (this.props.onBlur) {
       this.props.onBlur(e);
     }
   }
   handleFocus(e) {
-    this.setState({
-      startingValue: this.props.value
-    });
+    this.focused = true;
+    this.startingValue = this.props.value;
     if (this.props.onFocus) {
       this.props.onFocus(e);
     }
@@ -1254,13 +1273,20 @@ class FoodRow extends Component {
       expanded: visible
     });
   }
-  handleQuantityScale(scale, vals) {
+  handleQuantityScale(scale, vals, qtys) {
     let onChange = this.props.onChange || function(){console.error('No onChange callback defined.')};
     onChange({
       ...this.props.data,
       calories: vals['calories'],
       protein: vals['protein']
     });
+    let children = this.props.data.children || [];
+    for (let child of children) {
+      onChange({
+        ...child,
+        quantity: qtys[child.id]
+      })
+    }
   }
   handleKeyPress(e) {
     if (e.key === 'Enter') {
@@ -1283,14 +1309,6 @@ class FoodRow extends Component {
       (a, b) => a+b, 0
     );
     let expandCheckbox = null;
-    //if (this.props.data.children.length > 0) {
-    //  expandCheckbox = (
-    //    <DropdownCheckbox 
-    //      ref={this.dropdownCheckbox}
-    //      onChange={this.toggleChildren}
-    //      checked={this.state.expanded}/>
-    //  );
-    //}
     let indentation = null;
     for (let i = 0; i < depth; i++) {
       indentation = (
@@ -1320,7 +1338,12 @@ class FoodRow extends Component {
                 scalablevalues={{
                   calories: this.props.data.calories,
                   protein: this.props.data.protein
-                }} />
+                }}
+                scalableQuantities={
+                  this.props.data.children.reduce(function(acc,e){
+                    return {...acc, [e.id]: e.quantity};
+                  }, {})
+                }/>
           </td>
           <FoodRowCell value={this.props.data.calories || ''}
             onChange={this.getOnChangeHandler('calories')}
