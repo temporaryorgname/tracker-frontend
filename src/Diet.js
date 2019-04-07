@@ -148,15 +148,21 @@ class FoodNameInput extends Component {
       suggestions: []
     });
   }
-  handleBlur() {
+  handleBlur(e) {
     this.setState({
       focused: false
     });
+    if (this.props.onBlur) {
+      this.props.onBlur(e);
+    }
   }
-  handleFocus() {
+  handleFocus(e) {
     this.setState({
       focused: true
     });
+    if (this.props.onFocus) {
+      this.props.onFocus(e);
+    }
   }
   handleKeyDown(event) {
     var UP = 38;
@@ -683,9 +689,13 @@ class ConnectedFoodTable extends Component {
     this.handleToggleSelected = this.handleToggleSelected.bind(this);
     this.getSelectedTopLevel = this.getSelectedTopLevel.bind(this);
     this.handleChangeDate = this.handleChangeDate.bind(this);
+    this.createMainEntry = this.createMainEntry.bind(this);
+    this.createChildEntry = this.createChildEntry.bind(this);
+    this.createParentEntry = this.createParentEntry.bind(this);
 
     this.renderMobile = this.renderMobile.bind(this);
     this.renderDesktop = this.renderDesktop.bind(this);
+    this.renderAutocompleteTable = this.renderAutocompleteTable.bind(this);
 
     this.props.fetchData(this.props.date);
   }
@@ -697,6 +707,7 @@ class ConnectedFoodTable extends Component {
       });
     }
   }
+
   handleToggleSelected(entry) {
     /* Callback to be triggered when an entry has been selected. */
     let setCopy = new Set(this.state.selected);
@@ -766,6 +777,29 @@ class ConnectedFoodTable extends Component {
     }
     this.props.deleteEntry([{id: id}]);
   }
+  createMainEntry(entry) {
+    return this.props.createEntry(entry);
+  }
+  createChildEntry(entry) {
+    let selected = this.getSelectedTopLevel();
+    console.log(selected);
+    if (selected.size > 1) {
+      console.error('More than one entry selected. Cannot add child.');
+      return;
+    }
+    if (selected.size === 0) {
+      console.error('No entry selected. Cannot add child.');
+      return;
+    }
+    selected = Array.from(selected)[0];
+    entry.parent_id = selected;
+    return this.props.createEntry(entry);
+  }
+  createParentEntry(entry) {
+    let selected = this.getSelectedTopLevel();
+    // TODO
+  }
+
   handleChangeDate(e) {
     let newDate = e.target.value;
     let confirmMove = window.confirm('Are you sure you want to move the selected entry to '+newDate+'?');
@@ -787,6 +821,7 @@ class ConnectedFoodTable extends Component {
       });
     }
   }
+
   renderMobile() {
     var that = this;
     let status = null;
@@ -830,19 +865,6 @@ class ConnectedFoodTable extends Component {
         </div>
       );
     }
-    let searchTableControls = [
-      {
-        value: 'Add', 
-        callback: (x) => this.props.createEntry(
-          {date: this.props.date, ...x}
-        ).then(function(){
-          that.props.notify({
-            content: 'Successfully copied entry'
-          });
-        }),
-        requiresSelected: true
-      }
-    ];
     return (
       <div className='mobile-food-table'>
         { status ||
@@ -872,11 +894,7 @@ class ConnectedFoodTable extends Component {
           <button>Photos</button>
         </Link>
         {controls}
-        <h2>Search</h2>
-        Search past entries and quickly add them to today's log.
-        <SearchTable 
-          controls={searchTableControls}
-          editable={true}/>
+        {this.renderAutocompleteTable()}
       </div>
     );
   }
@@ -942,20 +960,6 @@ class ConnectedFoodTable extends Component {
           break;
       }
     }
-    let searchTableControls = [
-      {
-        value: 'Add', 
-        callback: (x) => this.props.createEntry(
-          {date: this.props.date, ...x}
-        ).then(function(response){
-          let url = '/food/editor?id='+response.data.ids[0];
-          that.props.notify({
-            content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
-          });
-        }),
-        requiresSelected: true
-      }
-    ];
     return (
       <div className='food-table'>
         <div className='controls'>
@@ -993,7 +997,9 @@ class ConnectedFoodTable extends Component {
             <td data-label='Prot'>{this.props.total.protein}</td>
             <td></td>
           </tr>
-          <FoodRowNewEntry date={this.props.date} />
+          <FoodRowNewEntry date={this.props.date} 
+              onCreateEntry={this.createMainEntry}
+              onCreateChildEntry={this.createChildEntry}/>
           {
             Object.values(this.props.entries).map(function(entry){
               return <FoodRow key={entry.id}
@@ -1008,12 +1014,48 @@ class ConnectedFoodTable extends Component {
           { status }
           </tbody>
         </table>
+        {this.renderAutocompleteTable()}
+      </div>
+    );
+  }
+  renderAutocompleteTable() {
+    let that = this;
+    let searchTableControls = [
+      {
+        value: 'Add', 
+        callback: (x) => this.createMainEntry(
+          {date: this.props.date, ...x}
+        ).then(function(response){
+          let url = '/food/editor?id='+response.data.ids[0];
+          that.props.notify({
+            content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
+          });
+        }),
+        requiresSelected: true
+      }
+    ];
+    if (this.getSelectedTopLevel().size === 1) {
+      searchTableControls.push({
+        value: 'Add Subentry', 
+        callback: (x) => that.createChildEntry(
+          {date: this.props.date, ...x}
+        ).then(function(response){
+          let url = '/food/editor?id='+response.data.ids[0];
+          that.props.notify({
+            content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
+          });
+        }),
+        requiresSelected: true
+      });
+    }
+    return (
+      <>
         <h2>Search</h2>
         Search past entries and quickly add them to today's log.
         <SearchTable 
           controls={searchTableControls}
           editable={true}/>
-      </div>
+      </>
     );
   }
   render() {
@@ -1060,7 +1102,7 @@ const FoodTable = connect(
   }
 )(ConnectedFoodTable);
 
-class ConnectedFoodRowNewEntry extends Component {
+class FoodRowNewEntry extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -1068,9 +1110,12 @@ class ConnectedFoodRowNewEntry extends Component {
       quantity: '',
       calories: '',
       protein: '',
-      suggestion: {}
+      suggestion: {},
+      focus: false
     };
     this.addEntry = this.addEntry.bind(this);
+    this.addMainEntry = this.addMainEntry.bind(this);
+    this.addChildEntry = this.addChildEntry.bind(this);
     this.onChange = this.onChange.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
@@ -1078,10 +1123,10 @@ class ConnectedFoodRowNewEntry extends Component {
     this.handleSelect = this.handleSelect.bind(this);
     this.handleQuantityScale = this.handleQuantityScale.bind(this);
   }
-  addEntry(e) {
+  addEntry(e, create) {
     // Submit entry to server
     var that = this;
-    this.props.onSubmit({
+    return create({
       date: this.props.date,
       name: this.state.item,
       quantity: this.state.quantity,
@@ -1099,6 +1144,12 @@ class ConnectedFoodRowNewEntry extends Component {
       // Place cursor
       that.nameRef.focus();
     });
+  }
+  addMainEntry(e) {
+    return this.addEntry(e, this.props.onCreateEntry);
+  }
+  addChildEntry(e) {
+    return this.addEntry(e, this.props.onCreateChildEntry);
   }
   onChange(e) {
     var x = {}
@@ -1138,7 +1189,9 @@ class ConnectedFoodRowNewEntry extends Component {
     });
   }
   render() {
+    let dataEntered = this.state.item || this.state.quantity || this.state.calories || this.state.protein;
     return (
+      <>
       <tr className='new-entry' onKeyPress={this.handleKeyPress}>
         <td></td>
         <td>
@@ -1183,19 +1236,16 @@ class ConnectedFoodRowNewEntry extends Component {
           <i className='material-icons action' onClick={this.addEntry}>save</i>
         </td>
       </tr>
+      <tr className={dataEntered ? '' : 'collapsed'}><td colSpan={999}>
+        <div>
+          <button onClick={this.addMainEntry}>Create Entry</button>
+          <button onClick={this.addChildEntry}>Create Subentry</button>
+        </div>
+      </td></tr>
+      </>
     );
   }
 }
-const FoodRowNewEntry = connect(
-  function(state, ownProps) {
-    return {}
-  },
-  function(dispatch, ownProps) {
-    return {
-      onSubmit: data => dispatch(foodActions['create'](data))
-    };
-  }
-)(ConnectedFoodRowNewEntry);
 
 class DropdownCheckbox extends Component {
   constructor(props) {
