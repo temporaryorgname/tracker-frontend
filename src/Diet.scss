@@ -207,6 +207,12 @@
           }
         }
 
+        &.child {
+          .name {
+            font-size: 12px;
+          }
+        }
+
         .selected-overlay {
           position: absolute;
           top: 0;

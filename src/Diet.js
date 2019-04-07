@@ -1293,7 +1293,7 @@ class FoodRow extends Component {
     let that = this;
     return (
       <>
-        <tr className='entry'>
+        <tr className={depth > 0 ? 'entry child depth-'+depth : 'entry'}>
           <td>
           </td>
           <td>
@@ -1434,7 +1434,7 @@ class FoodRowMobile extends Component {
     }
     indentation = (<div className='indentations'>{indentation}</div>)
     return (<>
-      <div key={entry.id} className='entry'
+      <div key={entry.id} className={depth > 0 ? 'entry child depth-'+depth : 'entry'}
         onClick={()=>this.handleClick(entry)} >
       {indentation}
       <div className='row-body'>
@@ -2087,6 +2087,9 @@ class SearchTable extends Component {
 
   search() {
     var that = this;
+    this.setState({
+      loading: true, // Not resetting results here. Makes the page jump.
+    });
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.state.query),
       {withCredentials: true}
@@ -2097,6 +2100,10 @@ class SearchTable extends Component {
       });
     }).catch(function(error){
       console.error(error);
+      that.setState({
+        errorMessage: error.response.data.error,
+        loading: false
+      });
     });
   }
   handleSearchSelect(key, index) {
