@@ -999,7 +999,7 @@ class ConnectedFoodTable extends Component {
           </tr>
           <FoodRowNewEntry date={this.props.date} 
               onCreateEntry={this.createMainEntry}
-              onCreateChildEntry={this.createChildEntry}/>
+              onCreateChildEntry={selected.size === 1 && this.createChildEntry}/>
           {
             Object.values(this.props.entries).map(function(entry){
               return <FoodRow key={entry.id}
@@ -1240,7 +1240,12 @@ class FoodRowNewEntry extends Component {
       <tr className={dataEntered ? '' : 'collapsed'}><td colSpan={999}>
         <div>
           <button onClick={this.addMainEntry}>Create Entry</button>
-          <button onClick={this.addChildEntry}>Create Subentry</button>
+          {this.props.onCreateChildEntry &&
+            <button onClick={this.addChildEntry}>Create Subentry</button>
+          }
+          {this.props.onCreateParentEntry &&
+            <button onClick={this.addParentEntry}>Create Parent Entry</button>
+          }
         </div>
       </td></tr>
       </>
