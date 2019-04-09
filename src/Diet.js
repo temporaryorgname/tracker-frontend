@@ -1489,13 +1489,14 @@ class FoodRowMobile extends Component {
       );
     }
     indentation = (<div className='indentations'>{indentation}</div>)
+    let hasName = entry.name && entry.name.trim().length > 0;
     return (<>
       <div key={entry.id} className={depth > 0 ? 'entry child depth-'+depth : 'entry'}
         onClick={()=>this.handleClick(entry)} >
       {indentation}
       <div className='row-body'>
-        <div className={entry.name ? 'name' : 'name empty'}>
-          {entry.name || 'Unnamed entry'}
+        <div className={hasName ? 'name' : 'name empty'}>
+          {hasName ? entry.name : 'Unnamed entry'}
         </div>
         <div className='values'>
           {entry.quantity && <span>{entry.quantity}</span>}
