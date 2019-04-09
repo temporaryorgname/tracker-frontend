@@ -344,6 +344,7 @@
     tr {
       box-sizing: border-box;
       padding: 1px;
+      position: relative;
       &.selected {
         border: 2px solid black;
         padding: 0;
@@ -364,6 +365,19 @@
         background-color: inherit;
         font-weight: bold;
         border: 1px solid grey;
+      }
+    }
+    .overlay-controls {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: 0;
+      z-index: 1;
+      button {
+        transform: translateY(-50%);
+        margin: 0;
+        margin-left: 5px;
+        font-size: 10px;
       }
     }
   }

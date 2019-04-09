@@ -2191,6 +2191,7 @@ class SearchTable extends Component {
     function clean(e) {
       delete e.id;
       delete e.date;
+      delete e.parent_id;
       e.premade = false;
       if (e.children) {
         for (let c of e.children) {
@@ -2214,6 +2215,11 @@ class SearchTable extends Component {
     if (this.state.loading) {
       loadingMessage = (<tr><td colSpan='999'>LOADING...</td></tr>);
     }
+    let overlayControls = (
+      <div className='overlay-controls'>
+        {this.renderControls()}
+      </div>
+    );
     let resultsBySection = {};
     let that = this;
     if (this.state.results) {
@@ -2224,7 +2230,7 @@ class SearchTable extends Component {
               that.state.selectedEntry[0] === key &&
               that.state.selectedEntry[1] === index);
           return (<tr key={index} onClick={() => that.handleSearchSelect(key,index)} className={isSelected ? 'selected' : ''}>
-            <td>{val.date}</td>
+            <td>{isSelected && overlayControls}{val.date}</td>
             <td>{val.name}</td>
             <td>{val.quantity}</td>
             <td>{val.calories}</td>
