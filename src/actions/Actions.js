@@ -16,6 +16,30 @@ function createActions(dataType, path, autosortProps) {
     path = path.substr(0, path.length-1);
   }
 
+  function updateStore(dispatch, response) {
+    console.log(response);
+    if (response.data.entities) {
+      for (let [eType,entities] of Object.entries(response.data.entities)) {
+        dispatch({ 
+          type: 'FETCH_'+eType.toUpperCase()+'_SUCCESS',
+          payload: {
+            entities: entities
+          }
+        });
+      }
+    }
+    if (response.data.summary) {
+      console.log("summary");
+      console.log(response.data.summary);
+      dispatch({ 
+        type: 'FETCH_'+dataType+'_SUCCESS',
+        payload: {
+          summary: response.data.summary
+        }
+      });
+    }
+  }
+
   return {
     fetchSingle: function(id) {
       console.log('FETCH '+dataType);
@@ -29,12 +53,7 @@ function createActions(dataType, path, autosortProps) {
           }
         ).then(function(response){
           // Update data
-          dispatch({ 
-            type: ACTION+'_SUCCESS',
-            payload: {
-              data: response.data
-            }
-          });
+          updateStore(dispatch, response);
           return response;
         });
       }
@@ -71,13 +90,7 @@ function createActions(dataType, path, autosortProps) {
           }
         ).then(function(response){
           // Update data
-          dispatch({ 
-            type: ACTION+'_SUCCESS',
-            payload: {
-              filters: filters,
-              data: response.data
-            }
-          });
+          updateStore(dispatch, response);
           // Save 'loaded' status
           dispatch({
             type: 'LOADING_SUCCESS',
@@ -89,6 +102,7 @@ function createActions(dataType, path, autosortProps) {
           return response;
         }).catch(function(error){
           // Set 'error' status
+          console.log(error);
           dispatch({
             type: 'LOADING_FAILURE',
             payload: {
@@ -123,14 +137,7 @@ function createActions(dataType, path, autosortProps) {
         ).then(function(response){
           if (contentType === 'application/json') {
             if (response.data.entities) {
-              for (let entity of response.data.entities) {
-                dispatch({
-                  type: 'CREATE_'+dataType+'_SUCCESS',
-                  payload: {
-                    data: entity
-                  }
-                });
-              }
+              updateStore(dispatch, response);
             } else {
               dispatch({
                 type: 'CREATE_'+dataType+'_SUCCESS',
@@ -166,12 +173,7 @@ function createActions(dataType, path, autosortProps) {
           data,
           {withCredentials: true}
         ).then(function(response){
-          dispatch({
-            type: 'UPDATE_'+dataType+'_SUCCESS',
-            payload: {
-              id: data.id
-            }
-          });
+          updateStore(dispatch, response);
           return response;
         });
       }
@@ -183,12 +185,7 @@ function createActions(dataType, path, autosortProps) {
           process.env.REACT_APP_SERVER_ADDRESS+path+'/'+id,
           {withCredentials: true}
         ).then(function(response) {
-          dispatch({
-            type: 'DELETE_'+dataType+'_SUCCESS',
-            payload: {
-              filters: [{id: id}]
-            }
-          });
+          updateStore(dispatch, response);
           return response;
         });
       }
@@ -200,172 +197,7 @@ function createActions(dataType, path, autosortProps) {
           process.env.REACT_APP_SERVER_ADDRESS+path,
           {data: filters, withCredentials: true}
         ).then(function(response) {
-          dispatch({
-            type: 'DELETE_'+dataType+'_SUCCESS',
-            payload: {
-              filters: filters
-            }
-          });
-          return response;
-        });
-      }
-    },
-    clear: function() {
-      console.log('CLEAR '+dataType);
-      return function(dispatch) {
-        dispatch({
-          type: 'CLEAR_'+dataType,
-        });
-        dispatch({
-          type: 'CLEAR_LOADING_STATUS',
-          payload: {
-            entityName: dataType
-          }
-        });
-      }
-    }
-  }
-}
-
-function createActions2(dataType, path) {
-  // Process path. If it should start with a / but not end with one.
-  if (!path.startsWith('/')) {
-    path = '/'+path;
-  }
-  let pathParamKeys = extractPlaceholders(path);
-
-  return {
-    get: function(params, cache=true) {
-      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
-      console.log('FETCH '+dataType);
-      const ACTION = 'FETCH_'+dataType;
-      return function(dispatch, getState) {
-        // Check if this is already loading/loaded
-        if (params && cache) {
-          let status = getLoadingStatus(getState().loadingStatus[dataType], params);
-          // Check if there was an error. (TODO)
-          // If not, then skip sending the request
-          if (status) {
-            console.log('Already loaded. Skipping.');
-            return;
-          }
-        }
-        // Save 'loading' status
-        dispatch({
-          type: 'LOADING_START',
-          payload: {
-            entityName: dataType,
-            params: params,
-            filters: params //TODO: Here for backwards compatibility. Remove later.
-          }
-        });
-        // Send request
-        return axios.get(
-          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
-          {
-            withCredentials: true
-          }
-        ).then(function(response){
-          // Update data
-          dispatch({ 
-            type: ACTION+'_SUCCESS',
-            payload: {
-              data: response.data
-            }
-          });
-          // Save 'loaded' status
-          dispatch({
-            type: 'LOADING_SUCCESS',
-            payload: {
-              entityName: dataType,
-              params: params,
-              filters: params //TODO: Here for backwards compatibility. Remove later.
-            }
-          });
-          return response;
-        }).catch(function(error){
-          // Set 'error' status
-          dispatch({
-            type: 'LOADING_FAILURE',
-            payload: {
-              entityName: dataType,
-              params: params,
-              filters: params, //TODO: Here for backwards compatibility. Remove later.
-              error: error.response.data.error
-            }
-          });
-          return error;
-        });
-      }
-    },
-    post: function(params, newEntity) {
-      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
-      console.log('CREATE '+dataType);
-      // Check what kind of entity we're creating
-      // If it's a JSON object, then send as application/json
-      // If it's a FormData (probably a file), send as multipart/form-data
-      let contentType = 'application/json';
-      if (newEntity.constructor.name === 'FormData') {
-        contentType = 'multipart/form-data';
-      }
-      return function(dispatch) {
-        return axios.post(
-          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
-          newEntity,
-          {
-            headers: {
-              'Content-Type': contentType
-            },
-            withCredentials: true
-          }
-        ).then(function(response){
-          dispatch({
-            type: 'CREATE_'+dataType+'_SUCCESS',
-            payload: {
-              data: {...newEntity, id: response.data.id}
-            }
-          })
-          return response;
-        });
-      }
-    },
-    put: function(params, data) {
-      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
-      console.log('UPDATE '+dataType);
-      console.log(data);
-      return function(dispatch) {
-        return axios.put(
-          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
-          data,
-          {withCredentials: true}
-        ).then(function(response){
-          dispatch({
-            type: 'UPDATE_'+dataType+'_SUCCESS',
-            payload: {
-              id: data.id,
-              params: params,
-              filters: params //TODO: Here for backwards compatibility. Remove later.
-            }
-          });
-          return response;
-        });
-      }
-    },
-    delete: function(params) {
-      let [pathParams, queryParams] = splitDict(params, pathParamKeys);
-      console.log('DELETE '+dataType);
-      return function(dispatch) {
-        return axios.delete(
-          process.env.REACT_APP_SERVER_ADDRESS+formatString(path,pathParams)+dictToQueryString(queryParams),
-          {withCredentials: true}
-        ).then(function(response) {
-          dispatch({
-            type: 'DELETE_'+dataType+'_SUCCESS',
-            payload: {
-              params: params,
-              filters: params //TODO: Here for backwards compatibility. Remove later.
-            }
-          });
+          updateStore(dispatch, response);
           return response;
         });
       }
@@ -439,5 +271,3 @@ photoActions['create'] = (function(){
     return createPhoto(formData);
   }
 })()
-
-export const getFoodByPhotoId = createActions2('FOOD', '/data/photos/{id}/food')['get'];

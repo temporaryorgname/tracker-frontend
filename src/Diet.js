@@ -1040,7 +1040,8 @@ class ConnectedFoodTable extends Component {
         callback: (x) => that.createChildEntry(
           {date: this.props.date, ...x}
         ).then(function(response){
-          let url = '/food/editor?id='+response.data.ids[0];
+          let newEntry = Object.values(response.data.entities.food)[0];
+          let url = '/food/editor?id='+newEntry.id;
           that.props.notify({
             content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
           });
@@ -1163,7 +1164,7 @@ class FoodRowNewEntry extends Component {
   }
   handleKeyPress(e) {
     if (e.key === 'Enter') {
-      this.addEntry(e);
+      this.addMainEntry(e);
     }
   }
   handleHighlight(entry) {
@@ -1233,7 +1234,7 @@ class FoodRowNewEntry extends Component {
               name='protein' />
         </td>
         <td className='submit'>
-          <i className='material-icons action' onClick={this.addEntry}>save</i>
+          <i className='material-icons action' onClick={this.addMainEntry}>save</i>
         </td>
       </tr>
       <tr className={dataEntered ? '' : 'collapsed'}><td colSpan={999}>

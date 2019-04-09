@@ -12,38 +12,11 @@ function createReducer(entityName) {
   return function(state = initialState, action) {
     switch (action.type) {
       case 'FETCH_'+entityName+'_SUCCESS': {
-        let filters = action.payload.filters || {};
-        let data = action.payload.data;
-        let ids = [];
-        let entities = {};
-        if (data instanceof Array) {
-          data.forEach(function(x){
-            entities[x.id] = x;
-            ids.push(x.id);
-          });
-        } else {
-          entities[data.id] = data;
-          ids.push(data.id);
-        }
-
-        let filterKeys = Object.keys(filters);
-        if (filterKeys.length === 1) {
-          // If we filtered by one criterion, then update the 'by' object
-          let filterKey = filterKeys[0];
-          let filterValue = filters[filterKey];
-          return {...state,
-            by: {
-              ...state.by,
-              [filterKey]: {
-                ...state.by[filterKey],
-                [filterValue]: ids
-              }
-            },
-            entities: {...state.entities, ...entities}
-          };
-        } else {
-          // If there's moe than one filter, then only update the individual entities
-          return {...state,
+        console.log(action);
+        let entities = action.payload.entities;
+        if (entities) {
+          return {
+            ...state,
             entities: {...state.entities, ...entities}
           };
         }
@@ -202,24 +175,16 @@ export function loadingStatusReducer(state = {}, action) {
   }
 }
 
-function foodSummaryReducer(state = {history: null}, action) {
-  switch (action.type) {
-    case 'FETCH_FOOD_SUMMARY_SUCCESS': {
-      let data = action.payload.data;
-      return data;
+function createSummaryReducer(entityName) {
+  return function(state = {}, action) {
+    switch (action.type) {
+      case 'FETCH_'+entityName+'_SUCCESS': {
+        let data = action.payload.summary;
+        return data;
+      }
+      default:
+        return state;
     }
-    default:
-      return state;
-  }
-}
-
-function bodyweightSummaryReducer(state = {}, action) {
-  switch (action.type) {
-    case 'FETCH_BODYWEIGHT_SUMMARY_SUCCESS': {
-      return action.payload.data;
-    }
-    default:
-      return state;
   }
 }
 
@@ -277,14 +242,14 @@ function sessionReducer(state = {}, action) {
 
 const combinedReducer = combineReducers({
   food: createReducer('FOOD'),
-  foodSummary: foodSummaryReducer,
+  foodSummary: createSummaryReducer('FOOD_SUMMARY'),
   photos: createReducer('PHOTOS'),
   photoGroups: createReducer('PHOTO_GROUPS'),
   photoData: createReducer('PHOTO_DATA'),
   tags: createReducer('TAGS'),
   labels: createReducer('LABELS'),
   bodyweight: createReducer('BODYWEIGHT'),
-  bodyweightSummary: bodyweightSummaryReducer,
+  bodyweightSummary: createSummaryReducer('BODYWEIGHT_SUMMARY'),
   loadingStatus: loadingStatusReducer,
   userProfiles: createReducer('USER_PROFILES'),
   notifications: notificationReducer, 
