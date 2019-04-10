@@ -344,7 +344,6 @@
     tr {
       box-sizing: border-box;
       padding: 1px;
-      position: relative;
       &.selected {
         border: 2px solid black;
         padding: 0;
@@ -361,6 +360,7 @@
     }
     td {
       white-space: nowrap;
+      position: relative;
       &[colspan='999'] {
         background-color: inherit;
         font-weight: bold;
