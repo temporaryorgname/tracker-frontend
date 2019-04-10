@@ -419,6 +419,7 @@ class ConnectedGallery extends Component {
     this.state = {
       selectedPhotoIds: new Set(),
       uploadingCount: 0,
+      uploadingProgress: {},
       errors: []
     };
     this.props.fetchPhotos(this.props.uid);
@@ -461,11 +462,28 @@ class ConnectedGallery extends Component {
   }
   uploadFile(file) {
     let that = this;
+    // Find first available index
+    let index = 0;
+    while (index in this.state.uploadingProgress) {
+      index++;
+    }
     this.setState({
-      uploadingCount: this.state.uploadingCount+1
+      uploadingCount: this.state.uploadingCount+1,
+      uploadingProgress: {
+        ...this.state.uploadingProgress,
+        [index]: 0
+      }
     });
     this.props.uploadPhoto(
-      file
+      file,
+      function(progress) {
+        that.setState({
+          uploadingProgress: {
+            ...that.state.uploadingProgress,
+            [index]: progress.loaded/progress.total
+          }
+        });
+      }
     ).then(function(response){
       //that.props.fetchPhotos(false);
       that.setState({
@@ -579,13 +597,13 @@ class ConnectedGallery extends Component {
           }
         );
         let uploadingThumbnails = null;
-        for (let i = 0; i < this.state.uploadingCount; i++) {
+        for (let [k,v] of Object.entries(this.state.uploadingProgress)) {
           uploadingThumbnails = (<>
             {uploadingThumbnails}
             <div className='photo-viewer-thumbnail'
-                key={'uploading-'+i}>
+                key={'uploading-'+k}>
               <div className='thumbnail'>
-                Uploading...
+                Uploading... ({Math.floor(v*100)}%)
               </div>
             </div>
           </>);
@@ -661,8 +679,8 @@ const Gallery = connect(
       updatePhoto: (data) => dispatch(
         photoActions['update'](data)
       ),
-      uploadPhoto: (files) => dispatch(
-        photoActions['create'](files, ownProps.date)
+      uploadPhoto: (files, progressCallback) => dispatch(
+        photoActions['create'](files, progressCallback, ownProps.date)
       ),
       createFood: (data) => dispatch(
         foodActions['create'](data)

@@ -112,7 +112,7 @@ function createActions(dataType, path, autosortProps) {
         });
       }
     },
-    create: function(newEntity) {
+    create: function(newEntity, progressCallback=()=>null) {
       console.log('CREATE '+dataType);
       // Check what kind of entity we're creating
       // If it's a JSON object, then send as application/json
@@ -129,7 +129,8 @@ function createActions(dataType, path, autosortProps) {
             headers: {
               'Content-Type': contentType
             },
-            withCredentials: true
+            withCredentials: true,
+            onUploadProgress: progressCallback
           }
         ).then(function(response){
           updateStore(dispatch, response);
@@ -245,12 +246,12 @@ export const bodyweightSummaryActions = createActions('BODYWEIGHT_SUMMARY', '/da
 
 photoActions['create'] = (function(){
   let createPhoto = photoActions['create'];
-  return function(files, date=null) {
+  return function(files, progressCallback, date=null) {
     var formData = new FormData();
     formData.append("file", files[0]);
     if (date) {
       formData.append("date", date);
     }
-    return createPhoto(formData);
+    return createPhoto(formData, progressCallback);
   }
 })()
