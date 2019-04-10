@@ -418,7 +418,6 @@ class ConnectedGallery extends Component {
     super(props);
     this.state = {
       selectedPhotoIds: new Set(),
-      uploadingCount: 0,
       uploadingProgress: {},
       errors: []
     };
@@ -449,7 +448,7 @@ class ConnectedGallery extends Component {
     });
   }
   handleDelete() {
-    if (!window.confirm('Are you sure you want to delete the '+this.state.selectedPhotoId.size+' selected photos?')) {
+    if (!window.confirm('Are you sure you want to delete the '+this.state.selectedPhotoIds.size+' selected photos?')) {
       return;
     }
     Array.from(this.state.selectedPhotoIds).forEach(this.props.deletePhoto)
@@ -468,7 +467,6 @@ class ConnectedGallery extends Component {
       index++;
     }
     this.setState({
-      uploadingCount: this.state.uploadingCount+1,
       uploadingProgress: {
         ...this.state.uploadingProgress,
         [index]: 0
@@ -486,8 +484,10 @@ class ConnectedGallery extends Component {
       }
     ).then(function(response){
       //that.props.fetchPhotos(false);
+      let progress = {...that.state.uploadingProgress};
+      delete progress[index];
       that.setState({
-        uploadingCount: that.state.uploadingCount-1
+        uploadingProgress: progress
       });
     }).catch(function(error){
       that.setState({
@@ -659,7 +659,7 @@ const Gallery = connect(
       let photoIds = Object.keys(
         state.photos.entities
       ).filter(function(id) {
-        return state.photos.entities[id].date === ownProps.date;
+        return state.photos.entities[id] && state.photos.entities[id].date === ownProps.date;
       });
       // Populate photo by ID and photo ID by group
       for (let photoId of photoIds) {
