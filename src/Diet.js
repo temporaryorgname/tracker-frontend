@@ -467,7 +467,7 @@ class ConnectedGallery extends Component {
     this.props.uploadPhoto(
       file
     ).then(function(response){
-      that.props.fetchPhotos(false);
+      //that.props.fetchPhotos(false);
       that.setState({
         uploadingCount: that.state.uploadingCount-1
       });

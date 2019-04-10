@@ -150,7 +150,7 @@ export const HomePage = connect(
     let total = 0;
     let count = 0;
     let history = state.foodSummary.history;
-    if (history === null) {
+    if (!history) {
       return {uid};
     }
     let today = new Date(formatDate(new Date()));

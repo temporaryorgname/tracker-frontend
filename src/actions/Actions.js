@@ -17,7 +17,6 @@ function createActions(dataType, path, autosortProps) {
   }
 
   function updateStore(dispatch, response) {
-    console.log(response);
     if (response.data.entities) {
       for (let [eType,entities] of Object.entries(response.data.entities)) {
         dispatch({ 
@@ -29,8 +28,6 @@ function createActions(dataType, path, autosortProps) {
       }
     }
     if (response.data.summary) {
-      console.log("summary");
-      console.log(response.data.summary);
       dispatch({ 
         type: 'FETCH_'+dataType+'_SUCCESS',
         payload: {
@@ -47,7 +44,7 @@ function createActions(dataType, path, autosortProps) {
       return function(dispatch, getState) {
         // Send request
         return axios.get(
-          process.env.REACT_APP_SERVER_ADDRESS+path+'/'+id,
+          process.env.REACT_APP_SERVER_ADDRESS+path+'/'+(id || ''),
           {
             withCredentials: true
           }
@@ -135,21 +132,7 @@ function createActions(dataType, path, autosortProps) {
             withCredentials: true
           }
         ).then(function(response){
-          if (contentType === 'application/json') {
-            if (response.data.entities) {
-              updateStore(dispatch, response);
-            } else {
-              dispatch({
-                type: 'CREATE_'+dataType+'_SUCCESS',
-                payload: {
-                  data: {
-                    ...newEntity,
-                    id: response.data.id || response.data.ids[0]
-                  }
-                }
-              });
-            }
-          }
+          updateStore(dispatch, response);
           return response;
         });
       }
