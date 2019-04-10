@@ -839,6 +839,18 @@ class ConnectedFoodTable extends Component {
             status = (
               <div className='empty-view'>
                 You have not yet recorded any food for today.
+                <Link to={'/food/editor?date='+this.props.date}>
+                  <div className='large-button'>
+                    <i className='material-icons'>playlist_add</i>
+                    New Entry
+                  </div>
+                </Link>
+                <Link to={'/food/photos?date='+this.props.date}>
+                  <div className='large-button'>
+                    <i className='material-icons'>photo_camera</i>
+                    View Photos
+                  </div>
+                </Link>
               </div>
             );
           }
@@ -865,38 +877,45 @@ class ConnectedFoodTable extends Component {
         </div>
       );
     }
-    return (
-      <div className='mobile-food-table'>
-        { status ||
-        <div className='total'>
-          Total: {this.props.total.calories} Calories, {this.props.total.protein}g protein
+    if (status) {
+      return (
+        <div className='mobile-food-table'>
+          {status}
+          {this.renderAutocompleteTable()}
         </div>
-        }
-        <div className='entries'>
-          {
-            Object.values(this.props.entries).map(function(entry){
-              return (
-                <FoodRowMobile key={entry.id} 
-                    allEntries={that.props.allEntries}
-                    entry={entry} 
-                    selected={that.state.selected}
-                    onToggleSelected={that.handleToggleSelected} 
-                    deleteEntry={that.deleteOneEntry}
-                    createEntry={that.props.createEntry}/>
-              );
-            })
-          }
+      )
+    } else {
+      return (
+        <div className='mobile-food-table'>
+          <div className='total'>
+            Total: {this.props.total.calories} Calories, {this.props.total.protein}g protein
+          </div>
+          <div className='entries'>
+            {
+              Object.values(this.props.entries).map(function(entry){
+                return (
+                  <FoodRowMobile key={entry.id} 
+                      allEntries={that.props.allEntries}
+                      entry={entry} 
+                      selected={that.state.selected}
+                      onToggleSelected={that.handleToggleSelected} 
+                      deleteEntry={that.deleteOneEntry}
+                      createEntry={that.props.createEntry}/>
+                );
+              })
+            }
+          </div>
+          <Link to={'/food/editor?date='+this.props.date}>
+            <button>New Entry</button>
+          </Link>
+          <Link to={'/food/photos?date='+this.props.date}>
+            <button>Photos</button>
+          </Link>
+          {controls}
+          {this.renderAutocompleteTable()}
         </div>
-        <Link to={'/food/editor?date='+this.props.date}>
-          <button>New Entry</button>
-        </Link>
-        <Link to={'/food/photos?date='+this.props.date}>
-          <button>Photos</button>
-        </Link>
-        {controls}
-        {this.renderAutocompleteTable()}
-      </div>
-    );
+      );
+    }
   }
   renderDesktop() {
     var that = this;
