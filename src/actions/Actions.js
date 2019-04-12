@@ -237,7 +237,7 @@ export const unnotify = function(notification){
 export const userProfileActions = createActions('USER_PROFILES', '/data/user_profiles');
 
 export const foodActions = createActions('FOOD', '/data/food');
-export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
+export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/food/summary');
 
 export const photoActions = createActions('PHOTOS', '/data/photos');
 

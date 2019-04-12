@@ -208,7 +208,7 @@ class FoodNameInput extends Component {
       return;
     }
     var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.props.value), {withCredentials: true})
+    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.props.value), {withCredentials: true})
         .then(function(response){
           window.result = response;
           that.setState({
@@ -1795,7 +1795,7 @@ class ConnectedEntryEditorForm extends Component {
     }
     var that = this;
     axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.state.searchString),
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.state.searchString),
       {withCredentials: true}
     ).then(function(response){
       that.setState({
@@ -2178,7 +2178,7 @@ class SearchTable extends Component {
       loading: true, // Not resetting results here. Makes the page jump.
     });
     axios.get(
-      process.env.REACT_APP_SERVER_ADDRESS+"/data/foods/search?q="+encodeURI(this.state.query),
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.state.query),
       {withCredentials: true}
     ).then(function(response){
       that.setState({
@@ -2274,7 +2274,7 @@ class SearchTable extends Component {
     if (resultsBySection['premade']) {
       results = (<>
         {results}
-        <tr><td colSpan='999'>Premade Foods</td></tr>
+        <tr><td colSpan='999'>Premade Food</td></tr>
         {resultsBySection['premade']}
       </>);
     }
