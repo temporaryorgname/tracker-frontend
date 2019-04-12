@@ -115,6 +115,7 @@ class NavigationBar extends Component {
           </div>
           <ul className={navClasses} onClick={this.toggleMenu}>
             <Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
+            <Link to={"/food/photos?uid="+this.props.uid}><li>Photos</li></Link>
             <Link to={"/body?uid="+this.props.uid}><li>Body Stats</li></Link>
             <Link to="#" onClick={(e) => {e.preventDefault(); this.props.logout();}}><li>Logout</li></Link>
           </ul>
