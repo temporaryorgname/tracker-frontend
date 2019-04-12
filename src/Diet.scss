@@ -370,10 +370,10 @@
     .overlay-controls {
       position: absolute;
       top: 50%;
+      transform: translateY(-50%);
       left: 0;
-      height: 0;
+      z-index: 1;
       button {
-        transform: translateY(-50%);
         margin: 0;
         margin-left: 5px;
         font-size: 10px;

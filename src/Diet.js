@@ -11,7 +11,10 @@ import {
   getLoadingStatus,
   arrayToDict,
   clipFloat,
-  computeDietEntryTotal
+  computeDietEntryTotal,
+  computeScale,
+  splitUnits,
+  fillEntry
 } from './Utils.js';
 import { 
   foodActions,
@@ -320,31 +323,9 @@ export class QuantityInput extends Component {
       return;
     }
 
-    function splitUnits(str) {
-      var val = parseFloat(str);
-      var units = str.substring(val.toString().length).trim();
-      return {val: val, units: units}
-    }
-    // Ignore empty strings
-    if (!this.props.value) {
-      return;
-    }
-    if (this.props.value.length === 0) {
-      return;
-    }
-    // Split numbers and units
-    var oldVals = splitUnits(this.startingValue || '');
-    var newVals = splitUnits(this.props.value || '');
-
-    // Check if the quantities use the same units
-    if (oldVals['units'] !== newVals['units']) {
-      return;
-    }
-
-    var scale = newVals['val']/oldVals['val'];
-
+    let scale = computeScale(this.startingValue, this.props.value);
     // Check if the number is valid
-    if (!isFinite(scale) || scale === 1) {
+    if (scale === null || !isFinite(scale) || scale === 1) {
       return;
     }
 
@@ -710,6 +691,7 @@ class ConnectedFoodTable extends Component {
     this.createMainEntry = this.createMainEntry.bind(this);
     this.createChildEntry = this.createChildEntry.bind(this);
     this.createParentEntry = this.createParentEntry.bind(this);
+    this.fillSelectedEntry = this.fillSelectedEntry.bind(this);
 
     this.renderMobile = this.renderMobile.bind(this);
     this.renderDesktop = this.renderDesktop.bind(this);
@@ -816,6 +798,16 @@ class ConnectedFoodTable extends Component {
   createParentEntry(entry) {
     let selected = this.getSelectedTopLevel();
     // TODO
+  }
+  fillSelectedEntry(entry) {
+    let selected = Array.from(this.getSelectedTopLevel());
+    for (let id of selected) {
+      let selectedEntry = this.props.allEntries[id];
+      let updatedEntry = fillEntry(selectedEntry, entry);
+      console.log('updatedEntry');
+      console.log(updatedEntry);
+      this.props.updateData(updatedEntry);
+    }
   }
 
   handleChangeDate(e) {
@@ -1083,6 +1075,13 @@ class ConnectedFoodTable extends Component {
             content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
           });
         }),
+        requiresSelected: true
+      });
+      searchTableControls.push({
+        value: 'Fill Entry', 
+        callback: (x) => that.fillSelectedEntry(
+          {date: this.props.date, ...x}
+        ),
         requiresSelected: true
       });
     }
@@ -1772,13 +1771,7 @@ class ConnectedEntryEditorForm extends Component {
   }
   handleAutocompleteMainEntry(entryData) {
     this.setState({
-      data: {
-        ...this.state.data,
-        name: this.state.data.name || entryData.name,
-        quantity: this.state.data.quantity || entryData.quantity,
-        calories: this.state.data.calories || entryData.calories,
-        protein: this.state.data.protein || entryData.protein
-      },
+      data: fillEntry(this.state.data, entryData),
       showAutocompleteTable: false
     });
   }

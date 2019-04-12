@@ -8,7 +8,8 @@ import {
   formatString,
   extractPlaceholders,
   splitDict,
-  dictEqual
+  dictEqual,
+  fillEntry
 } from '../Utils.js';
 
 //////////////////////////////////////////////////
@@ -392,4 +393,86 @@ test('dictEqual nested', () => {
 
   output = dictEqual({a: 1, b: 2, c: {d: 3, e: 3}}, {a: 1, b: 2, c: {d: 3, e: 4}});
   expect(output).toBeFalsy();
+});
+
+//////////////////////////////////////////////////
+// fillEntry
+//////////////////////////////////////////////////
+
+test('fillEntry empty dicts', () => {
+  let output = fillEntry({}, {});
+  expect(output).toEqual({});
+});
+
+test('fillEntry empty dest', () => {
+  let output = fillEntry({}, {name: 'thing'});
+  expect(output.name).toEqual('thing');
+
+  output = fillEntry({}, {name: 'thing', quantity: '100g'});
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('100g');
+
+  output = fillEntry({}, {name: 'thing', quantity: '100g', calories: 200});
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('100g');
+  expect(output.calories).toEqual('200');
+});
+
+test('fillEntry sort of empty dest', () => {
+  let output = fillEntry({name: ''}, {name: 'thing'});
+  expect(output.name).toEqual('thing');
+
+  output = fillEntry(
+    {name: '', quantity: ''}, 
+    {name: 'thing', quantity: '100g'}
+  );
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('100g');
+
+  output = fillEntry(
+    {name: '', quantity: '', calories: ''}, 
+    {name: 'thing', quantity: '100g', calories: 200}
+  );
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('100g');
+  expect(output.calories).toEqual('200');
+
+  output = fillEntry(
+    {name: '', quantity: '', calories: ' '}, 
+    {name: 'thing', quantity: '100g', calories: 200}
+  );
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('100g');
+  expect(output.calories).toEqual('200');
+
+  output = fillEntry(
+    {name: '', quantity: '', calories: ' '}, 
+    {name: 'thing', quantity: '100g', calories: 200}
+  );
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('100g');
+  expect(output.calories).toEqual('200');
+});
+
+test('fillEntry with existing data', () => {
+  let output = fillEntry(
+    {name: 'boop'},
+    {name: 'thing'}
+  );
+  expect(output.name).toEqual('boop');
+
+  output = fillEntry(
+    {name: '', quantity: '200g'}, 
+    {name: 'thing', quantity: '100g'}
+  );
+  expect(output.name).toEqual('thing');
+  expect(output.quantity).toEqual('200g');
+
+  output = fillEntry(
+    {name: 'foo', quantity: '', calories: null, protein: null}, 
+    {name: 'bar', quantity: '100g', calories: 200}
+  );
+  expect(output.name).toEqual('foo');
+  expect(output.quantity).toEqual('100g');
+  expect(output.calories).toEqual('200');
 });

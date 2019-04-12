@@ -261,3 +261,50 @@ export function computeDietEntryTotal(entries, property, allEntries) {
   total = clipFloat(total, 1);
   return total;
 }
+
+export function splitUnits(str) {
+  var val = parseFloat(str);
+  var units = str.substring(val.toString().length).trim();
+  return {val: val, units: units}
+}
+
+export function computeScale(qty1, qty2) {
+  // Return the multiplier to go from qty1 to qty2
+  if (!qty1 || !qty2 || qty1.trim().length === 0 || qty2.trim().length === 0) {
+    return null;
+  }
+  qty1 = splitUnits(qty1 || '');
+  qty2 = splitUnits(qty2 || '');
+  if (qty1['units'] !== qty2['units']) {
+    return null;
+  }
+  return qty2['val']/qty1['val'];
+}
+
+export function fillEntry(dest, src) {
+  console.log('dest');
+  console.log(dest);
+  console.log('src');
+  console.log(src);
+  let scalingNeeded = dest.quantity && dest.quantity.trim() !== 0 && src.quantity && src.quantity.trim().length !== 0;
+  let scale = 1;
+  if (scalingNeeded) {
+    scale = computeScale(src.quantity, dest.quantity) || 1;
+  }
+  function foo(val1,val2,scale) {
+    if (val1 && val1.trim().length > 0) {
+      return val1;
+    }
+    if (val2) {
+      return String(val2*scale);
+    }
+    return val1;
+  }
+  return {
+    ...dest,
+    name: dest.name || src.name,
+    quantity: dest.quantity || src.quantity,
+    calories: foo(dest.calories, src.calories, scale),
+    protein: foo(dest.protein, src.protein, scale)
+  }
+}
