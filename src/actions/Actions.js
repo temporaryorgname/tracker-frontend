@@ -7,6 +7,10 @@ import {
   dictToQueryString
 } from '../Utils.js';
 
+function toUpperCaseSnakeCase(str) {
+  return str.split(/(?=[A-Z])/).join('_').toUpperCase()
+}
+
 function createActions(dataType, path, autosortProps) {
   // Process path. If it should start with a / but not end with one.
   if (!path.startsWith('/')) {
@@ -20,7 +24,7 @@ function createActions(dataType, path, autosortProps) {
     if (response.data.entities) {
       for (let [eType,entities] of Object.entries(response.data.entities)) {
         dispatch({ 
-          type: 'FETCH_'+eType.toUpperCase()+'_SUCCESS',
+          type: 'FETCH_'+toUpperCaseSnakeCase(eType)+'_SUCCESS',
           payload: {
             entities: entities
           }
@@ -232,8 +236,7 @@ export const unnotify = function(notification){
 
 export const userProfileActions = createActions('USER_PROFILES', '/data/user_profiles');
 
-export const foodActions = createActions('FOOD', '/data/foods');
-export const foodListActions = createActions('FOOD', '/data/foods');
+export const foodActions = createActions('FOOD', '/data/food');
 export const foodSummaryActions = createActions('FOOD_SUMMARY', '/data/foods/summary');
 
 export const photoActions = createActions('PHOTOS', '/data/photos');
