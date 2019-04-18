@@ -517,7 +517,7 @@ class ConnectedGallery extends Component {
         </div>
       );
     } else if (this.props.photosLoadingStatus.status === 'loaded') {
-      if (Object.keys(this.props.photos).length > 0 || this.state.errors.length > 0 || this.state.uploadingCount > 0) {
+      if (Object.keys(this.props.photos).length > 0 || this.state.errors.length > 0 || Object.keys(this.state.uploadingProgress).length > 0) {
         // Render controls
         let controls = (
           <>
