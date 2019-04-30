@@ -53,7 +53,7 @@ function initDirtyEntityWatcher(entityName, upperEntityName, path, debounceTime)
 }
 
 let debounceTime = 500;
-initDirtyEntityWatcher('food', 'FOOD', '/data/foods/', debounceTime);
+initDirtyEntityWatcher('food', 'FOOD', '/data/food/', debounceTime);
 initDirtyEntityWatcher('photos', 'PHOTOS', '/data/photos/', debounceTime);
 initDirtyEntityWatcher('userProfiles', 'USER_PROFILES', '/data/user_profiles/', debounceTime);
 
