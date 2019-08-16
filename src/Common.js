@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Link } from "react-router-dom";
 import axios from 'axios';
 import { connect } from "react-redux";
 import { 
@@ -322,5 +323,27 @@ class AutocompleteInput extends Component {
   }
 }
 
-export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput };
+class BigButton extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    let {
+      icon = null,
+      text = '',
+      onClick = ()=>null,
+      linkTo = '#'
+    } = this.props;
+    return (
+      <Link to={linkTo}>
+        <div className='large-button' onClick={onClick}>
+          <i className='material-icons'>{icon}</i>
+          {text}
+        </div>
+      </Link>
+    );
+  }
+}
+
+export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton };
 

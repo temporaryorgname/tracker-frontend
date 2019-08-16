@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import './Home.scss';
+import { BigButton } from './Common.js';
 
 import { connect } from "react-redux";
 import { 
@@ -53,24 +54,12 @@ class ConnectedHomePage extends Component {
         <div className='empty-view'>
           Get started by updating your profile and recording what you ate today!
           <div>
-            <Link to={"/user?uid="+this.props.uid}>
-            <div className='large-button'>
-              <i className='material-icons'>account_circle</i>
-              Profile
-            </div>
-            </Link>
-            <Link to={"/food/table?uid="+this.props.uid}>
-              <div className='large-button'>
-                <i className='material-icons'>fastfood</i>
-                Diet
-              </div>
-            </Link>
-            <Link to={"/body?uid="+this.props.uid}>
-            <div className='large-button'>
-              <i className='material-icons'>trending_down</i>
-              Weight
-            </div>
-            </Link>
+            <BigButton linkTo={"/user?uid="+this.props.uid}
+                icon='account_circle' text='Profile' />
+            <BigButton linkTo={"/food/table?uid="+this.props.uid}
+                icon='fastfood' text='Diet' />
+            <BigButton linkTo={"/body?uid="+this.props.uid}
+                icon='trending_down' text='Weight' />
           </div>
           Your progress report will appear here once you have entered some data.
         </div>
@@ -81,12 +70,8 @@ class ConnectedHomePage extends Component {
           You do not currently have anything recorded for the week.
           Go to your diet page and record what you ate today!
           <div>
-            <Link to={"/food/table?uid="+this.props.uid}>
-              <div className='large-button'>
-                <i className='material-icons'>fastfood</i>
-                Diet
-              </div>
-            </Link>
+            <BigButton linkTo={"/food/table?uid="+this.props.uid}
+                icon='fastfood' text='Diet' />
           </div>
           Your progress report will appear here once you have entered some data.
         </div>
@@ -97,12 +82,8 @@ class ConnectedHomePage extends Component {
           You haven't specified your goals.
           Update your profile to see your progress relative to your goals.
           <div>
-            <Link to={"/user?uid="+this.props.uid}>
-            <div className='large-button'>
-              <i className='material-icons'>account_circle</i>
-              Profile
-            </div>
-            </Link>
+            <BigButton linkTo={"/user?uid="+this.props.uid}
+                icon='account_circle' text='Profile' />
           </div>
         </div>
       );
