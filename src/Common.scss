@@ -100,3 +100,64 @@ div.autocomplete-input {
     height: 60px;
   }
 }
+
+.large-button {
+  display: inline-block;
+  border: solid 1px black;
+  border-radius: 5px;
+  width: 150px;
+  height: 150px;
+  margin: 5px;
+  cursor: pointer;
+  box-shadow: 0 4px 4px black;
+  &:hover {
+    background-color: $focus-colour;
+  }
+  &:active {
+    box-shadow: 0 0 2px black;
+    transform: translateY(4px);
+  }
+  i {
+    display: block;
+    width: 70px;
+    height: 70px;
+    margin: 20px auto;
+    font-size: 70px;
+  }
+}
+
+.accordion {
+  background-color: $focus-colour;
+  margin: 10px 0;
+  // Default styles
+  > .heading {
+    cursor: pointer;
+    padding: 3px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: bold;
+    > i.material-icons {
+      animation: ease 0.3s;
+      vertical-align: middle;
+      margin: -3px 0;
+    }
+  }
+  > .content {
+    animation: ease 0.3s;
+    padding: 10px;
+  }
+  // Collapsed
+  &.collapsed > .heading {
+  }
+  &.collapsed > .content {
+    display: none;
+  }
+  // Expanded
+  &.expanded > .heading {
+    i.material-icons {
+      transform: rotate(90deg);
+    }
+  }
+  &.expanded > .content {
+  }
+}

@@ -25,12 +25,22 @@ class ConnectedApp extends Component {
   }
   render() {
     if (this.props.loggedIn) {
+      let routes = [
+        {
+          path: '/food',
+          render: (<DietPage />)
+        }
+      ];
       return (
         <Router>
           <div className="App container-fluid">
-            <NavigationBar loggedIn={this.props.loggedIn}
-                uid={this.props.uid}
-                logout={this.props.logout}/>
+            <Switch>
+              <Route path="/" render={routeProps =>
+                <NavigationBar loggedIn={this.props.loggedIn}
+                    uid={this.props.uid}
+                    logout={this.props.logout}
+                    {...routeProps} />} />
+            </Switch>
             <Switch>
               <Route path="/food" component={DietPage} />
               <Route path="/body" component={BodyStatsPage} />
@@ -49,6 +59,11 @@ class ConnectedApp extends Component {
         <Router>
           <div className="App container-fluid">
             <NavigationBar loggedIn={this.props.loggedIn}/>
+            <Switch>
+              <Route path="/" render={routeProps =>
+                <NavigationBar loggedIn={this.props.loggedIn}
+                    {...routeProps} />} />
+            </Switch>
             <Switch>
               <Route path="/login" component={LoginPage} />
               <Route path="/signup" component={SignupPage} />
@@ -96,6 +111,9 @@ class NavigationBar extends Component {
     });
   }
   render() {
+    let location = this.props.location || {};
+    let path = location.pathname;
+    console.log(path);
     let navClasses = ['nav'];
     if (!this.state.menuVisibile) {
       navClasses.push('hide-mobile');
@@ -107,17 +125,13 @@ class NavigationBar extends Component {
           <div className='toggle-menu' onClick={this.toggleMenu}>
             <i className='material-icons'>menu</i>
           </div>
-          <div className='home'>
-            <Link to="/"><i className='material-icons'>home</i></Link>
-          </div>
-          <div className='user'>
-            <Link to={"/user?uid="+this.props.uid}><i className='material-icons'>account_circle</i></Link>
-          </div>
           <ul className={navClasses} onClick={this.toggleMenu}>
+            <Link to="/"><li>Overview</li></Link>
             <Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
             <Link to={"/food/photos?uid="+this.props.uid}><li>Photos</li></Link>
             <Link to={"/body?uid="+this.props.uid}><li>Body Stats</li></Link>
-            <Link to="#" onClick={(e) => {e.preventDefault(); this.props.logout();}}><li>Logout</li></Link>
+            <Link to={"/user?uid="+this.props.uid}><li>User Profile</li></Link>
+            <Link to={"logout"}><li>Sign Out</li></Link>
           </ul>
         </nav>
       );
@@ -422,3 +436,4 @@ const NotificationContainer = connect(
 )(ConnectedNotificationContainer);
 
 export default App;
+export { App, NavigationBar };

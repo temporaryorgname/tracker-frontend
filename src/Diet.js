@@ -51,6 +51,7 @@ class ConnectedDietPage extends Component {
     this.handleDateChange(newDate);
   }
   render() {
+    console.log(this.props);
     if (!this.props.params.date || !this.props.params.uid) {
       return null;
     }
@@ -686,7 +687,7 @@ class ConnectedFoodTable extends Component {
     [
       'handleToggleSelected', 'createMainEntry', 'createChildEntry',
       'handleChangeDate'
-    ].forEach(x=>this[x].bind(this));
+    ].forEach(x=>this[x]=this[x].bind(this));
 
     this.props.fetchData(this.props.date);
   }

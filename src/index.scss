@@ -1,4 +1,6 @@
 @import '_variables';
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('https://fonts.googleapis.com/css?family=Montserrat&display=swap');
 
 body {
   margin: 0;
@@ -40,19 +42,18 @@ a {
 }
 
 input {
-  &[type=text], &[type=password] {
-    width: 100%;
+  &[type=text], &[type=password], &[type=search], &[type=email], &[type=range], &[type=date], &[type=time], &[type=number], &[type=checkbox], &[type=radio] {
+    //width: 100%;
+    vertical-align: top;
     color: $primary-colour;
     background-color: rgba(0,0,0,0);
-    width: 100%;
+    height: 32px;
     padding: 3px 5px;
-    margin: 5px 0;
+    margin: 5px;
     box-sizing: border-box;
-    border-width: 0 0 1px 0;
-    border-style: solid;
-    border-color: rgba($primary-colour,0.4);
+    border: 1px solid rgba($primary-colour,0.4);
+    border-radius: 5px;
     font-size: 16px;
-    font-family: sans-serif;
 
     transition: 0.3s ease;
     &:focus {
@@ -61,16 +62,11 @@ input {
 
     &.valid {
       box-shadow: 0 0 5px 0 rgba($success-colour,.5);
-      border-radius: 3px;
     }
 
     &.invalid {
       box-shadow: 0 0 5px 0 rgba($error-colour,.5);
-      border-radius: 3px;
     }
-  }
-  &[type=button], &[type=submit] {
-    width: 100%;
   }
 }
 
@@ -280,86 +276,50 @@ table {
 
 @media #{$computer-and-tablet} {
   body {
-    background-image: url('images/background.jpeg');
-    background-attachment: fixed;
-    background-size: cover;
-    background-color: #cbbdb0;
+    //background-image: url('images/background.jpeg');
+    //background-attachment: fixed;
+    //background-size: cover;
+    //background-color: #cbbdb0;
   }
 
   h2 {
     margin-top: 100px;
   }
 
-  .background {
-    position: fixed;
-    width: 100%;
-    max-width: 1000px;
-    top: 0px;
-    bottom: 0px;
-    background: inherit;
-    background-color: #cbbdb0;
-    background-image: url('images/background.jpeg');
-    background-attachment: fixed;
-    background-size: cover;
-    z-index: -1;
-    overflow: hidden;
+  //.background {
+  //  position: fixed;
+  //  width: 100%;
+  //  max-width: 1000px;
+  //  top: 0px;
+  //  bottom: 0px;
+  //  background: inherit;
+  //  background-color: #cbbdb0;
+  //  background-image: url('images/background.jpeg');
+  //  background-attachment: fixed;
+  //  background-size: cover;
+  //  z-index: -1;
+  //  overflow: hidden;
 
-    &::before {
-      content:'';
-      display:block;
-      background:inherit;
-      width:100%;
-      height:100%;
-      filter: blur(15px);
-    }
-    
-    &::after {
-      content: '';
-      display: block;
-      position: absolute;
-      top:0px;
-      bottom:0px;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.1);
-    }
-  }
-
-  nav {
-    background: #000;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 1px solid;
-    box-shadow: 0px 3px 4px rgba(0, 0, 0, .5);
-    border: 0;
-    color: #FFF;
-    ul {
-      display: inline-block;
-    }
-    div {
-      display: inline-block;
-      text-align: right;
-      margin: 15px;
-      vertical-align: top;
-      &.user {
-        float: right;
-      }
-    }
-    li {
-      display: inline-block;
-      margin: 0.1rem 1rem;
-    }
-    a {
-      text-decoration: none;
-      color: #FFF;
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-    .toggle-menu {
-      display: none;
-    }
-  }
+  //  &::before {
+  //    content:'';
+  //    display:block;
+  //    background:inherit;
+  //    width:100%;
+  //    height:100%;
+  //    filter: blur(15px);
+  //  }
+  //  
+  //  &::after {
+  //    content: '';
+  //    display: block;
+  //    position: absolute;
+  //    top:0px;
+  //    bottom:0px;
+  //    width: 100%;
+  //    height: 100%;
+  //    background-color: rgba(0,0,0,0.1);
+  //  }
+  //}
 }
 
 @media #{$computer} {
@@ -381,44 +341,5 @@ table {
 @media #{$mobile} {
   .hide-mobile{
     display: none;
-  }
-
-  nav {
-    background: #000;
-    text-align: left;
-    white-space: nowrap;
-    border-bottom: 1px solid;
-    box-shadow: 0px 3px 4px rgba(0, 0, 0, .5);
-    border: 0;
-    color: #FFF;
-    position: relative;
-    z-index: 1;
-    ul {
-      list-style-type: none;
-      width: 100%;
-      padding: 0px;
-      margin: 0;
-      position: absolute;
-      background-color: black;
-    }
-    div {
-      display: inline-block;
-      text-align: right;
-      margin: 15px;
-      vertical-align: top;
-      &.user {
-        float: right;
-      }
-    }
-    li {
-      margin: 1rem;
-    }
-    a {
-      text-decoration: none;
-      color: #FFF;
-      &:hover {
-        text-decoration: underline;
-      }
-    }
   }
 }

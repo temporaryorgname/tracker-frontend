@@ -6,6 +6,7 @@ import {
   photoActions
 } from './actions/Actions.js';
 import './Common.scss';
+import { storiesOf } from '@storybook/react';
 
 class Checkbox extends Component {
   render() {
@@ -345,5 +346,37 @@ class BigButton extends Component {
   }
 }
 
-export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton };
+class Accordion extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      collapsed: true
+    };
+    ['toggle'].forEach(x=>this[x]=this[x].bind(this));
+  }
+  toggle() {
+    this.setState({
+      collapsed: !this.state.collapsed
+    });
+  }
+  render() {
+    let {
+      children = '',
+      heading = '',
+      collapsed = this.state.collapsed,
+      onClick = this.toggle
+    } = this.props;
+    return (<div className={'accordion ' + (collapsed ? 'collapsed':'expanded')}>
+      <div className='heading' onClick={onClick}>
+        <i className='material-icons'>arrow_right</i>
+        {heading}
+      </div>
+      <div className='content'>
+        {children}
+      </div>
+    </div>);
+  }
+}
+
+export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Accordion };
 
