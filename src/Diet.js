@@ -22,7 +22,7 @@ import {
   notify
 } from './actions/Actions.js';
 
-import { Checkbox, FoodPhotoThumbnail, ThumbnailsList } from './Common.js';
+import { Checkbox, FoodPhotoThumbnail, ThumbnailsList, DropdownMenu } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
@@ -880,37 +880,45 @@ export class EntryEditorForm extends Component {
       }
     };
     [
-      'onChange','handleChange','handleCreateNewMicro'
+      'onChange','updateEntry','handleChange','handleCreateNewMicro'
     ].forEach(x=>this[x]=this[x].bind(this));
   }
-  onChange(entry) {
+  onChange(newEntry) {
     if (this.props.onChange) {
-      this.props.onChange(entry);
-    } else {
-      this.setState({
-        entry: entry
-      });
+      this.props.onChange(newEntry);
     }
+    this.setState({
+      entry: newEntry
+    });
   }
-  handleChange(e) {
+  updateEntry(keys, newValue) {
     let {
       entry = this.state.entry,
     } = this.props;
-    let inputType = e.target.type;
-    let changedField = e.target.name;
-    let newValue = e.target.value;
-    function updateEntry(object, keys, newValue) {
+    function helper(object, keys, newValue) {
       if (keys.length == 0) {
         return newValue;
       }
-      return {
-        ...object,
-        [keys[0]]: updateEntry(object, keys.slice(1), newValue)
-      };
+      if (Array.isArray(object)) {
+        let copy = [...object];
+        copy[keys[0]] = helper(object[keys[0]], keys.slice(1), newValue);
+        return copy;
+      } else {
+        return {
+          ...object,
+          [keys[0]]: helper(object[keys[0]], keys.slice(1), newValue)
+        };
+      }
     }
+    let newEntry = helper(entry, keys, newValue)
+    this.onChange(newEntry);
+  }
+  handleChange(e) {
+    let inputType = e.target.type;
+    let changedField = e.target.name;
+    let newValue = e.target.value;
     let keys = changedField.split('.');
-    let newEntry = updateEntry(entry, keys, newValue)
-    this.onChange(entry);
+    this.updateEntry(keys, newValue);
   }
   handleCreateNewMicro(e) {
     let {
@@ -930,6 +938,7 @@ export class EntryEditorForm extends Component {
       entry = this.state.entry,
     } = this.props;
     let onChange = this.handleChange;
+    let that = this;
     console.log(entry);
     return (
       <form className='new-entry-form'>
@@ -967,18 +976,24 @@ export class EntryEditorForm extends Component {
           <span>Protein (g)</span>
           <input type='text' name='protein' value={entry.protein} onChange={onChange}/>
         </label>
-        {
-          entry.micronutrients.map(function(micro,index){
-            return (<div key={index}>
-              <select>
-                <option>Micro #1</option>
-                <option>Micro #2</option>
-                <option>Micro #3</option>
-              </select>
-              <input type='text' />
-            </div>);
-          })
-        }
+        <label className='micros'>
+          <span>Micronutrients</span>
+          <div>
+            {
+              entry.micronutrients &&
+              entry.micronutrients.map(function(micro,index){
+                return (<div className='micro' key={index}>
+                  <DropdownMenu options={{
+                    'zinc': 'Zinc',
+                    'iron': 'Iron',
+                    'vitamin-a': 'Vitamin A'
+                  }} onChange={val => that.updateEntry(['micronutrients',index,'type'],val)}/>
+                  <input type='text' name={'micronutrients.'+index+'.value'} onChange={onChange}/>
+                </div>);
+              })
+            }
+          </div>
+        </label>
         <div className='add-micro' onClick={this.handleCreateNewMicro}>+ Add Micronutrients</div>
       </form>
     );

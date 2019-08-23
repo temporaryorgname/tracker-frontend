@@ -11,5 +11,5 @@ import '../index.scss';
 
 storiesOf('Organisms|EntryEditorForm', module)
   .add('Default', () => <div>
-    <EntryEditorForm />
+    <EntryEditorForm onChange={action('Entry Change')} />
   </div>);
