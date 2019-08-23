@@ -378,5 +378,138 @@ class Accordion extends Component {
   }
 }
 
-export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Accordion };
+class DropdownMenu extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      collapsed: true,
+      value: null,
+      hoverValue: null
+    };
+    [
+      'toggle','collapse','selectOption','handleKeyDown'
+    ].forEach(x=>this[x]=this[x].bind(this));
+  }
+  getNextValue(val) {
+    let {
+      options = []
+    } = this.props;
+    if (val === null) {
+      if (options.length === 0) {
+        return null;
+      } else {
+        return Object.keys(options)[0];
+      }
+    }
+    let keys = Object.keys(options);
+    let index = keys.indexOf(val);
+    let newIndex = Math.min(index+1,keys.length-1);
+    return keys[newIndex];
+  }
+  getPrevValue(val) {
+    let {
+      options = []
+    } = this.props;
+    if (val === null) {
+      if (options.length === 0) {
+        return null;
+      } else {
+        return Object.keys(options)[0];
+      }
+    }
+    let keys = Object.keys(options);
+    let index = keys.indexOf(val);
+    let newIndex = Math.max(index-1,0);
+    return keys[newIndex];
+  }
+  toggle() {
+    this.setState({
+      collapsed: !this.state.collapsed
+    });
+  }
+  collapse() {
+    this.setState({
+      collapsed: true
+    });
+  }
+  selectOption(value) {
+    if (this.props.onChange) {
+      this.props.onChange(value);
+    }
+    this.setState({
+      hoverValue: value,
+      value: value
+    });
+    this.collapse();
+  }
+  handleKeyDown(e) {
+    const kbEnter = 13;
+    const kbUp = 38;
+    const kbDown = 40;
+    e.preventDefault()
+    let {
+      options = [],
+      value = this.state.value,
+      hoverValue = this.state.hoverValue,
+      collapsed = this.state.collapsed
+    } = this.props;
+    // TODO: Make controllable
+    if (collapsed) {
+      if (e.keyCode === kbUp) {
+        this.selectOption(this.getPrevValue(value));
+      } else if (e.keyCode === kbDown) {
+        this.selectOption(this.getNextValue(value));
+      }
+    } else {
+      if (e.keyCode === kbUp) {
+        this.setState({
+          hoverValue: this.getPrevValue(hoverValue)
+        });
+      } else if (e.keyCode === kbDown) {
+        this.setState({
+          hoverValue: this.getNextValue(hoverValue)
+        });
+      } else if (e.keyCode === kbEnter) {
+        this.selectOption(hoverValue);
+      }
+    }
+  }
+  render() {
+    let {
+      options = [],
+      value = this.state.value,
+      hoverValue = this.state.hoverValue,
+      collapsed = this.state.collapsed
+    } = this.props;
+    let that = this;
+    return (<div className={'dropdown ' + (collapsed ? 'collapsed':'expanded')}>
+      <div className='heading' onClick={this.toggle} onKeyDown={this.handleKeyDown} tabindex='0'>
+        {options[value]}
+        <i className='material-icons'>
+          {collapsed ? 'arrow_drop_down' : 'arrow_drop_up'}
+        </i>
+      </div>
+      <div className='options'>
+        {
+          Object.entries(options).map(function([key,text]){
+            let classNames = 'option'
+            if (value === key) {
+              classNames += ' selected';
+            }
+            if (hoverValue === key) {
+              classNames += ' hover';
+            }
+            return (<div className={classNames}
+                onClick={()=>that.selectOption(key)}
+                key={key}>
+              {text}
+            </div>);
+          })
+        }
+      </div>
+    </div>);
+  }
+}
+
+export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Accordion, DropdownMenu };
 

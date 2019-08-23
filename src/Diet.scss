@@ -7,51 +7,6 @@
   overflow: hidden;
   margin-bottom: 100px;
 
-  .new-entry-form {
-    padding: 0 15px;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    label {
-      display: inline-block;
-      text-align: left;
-      margin-bottom: 15px;
-      span {
-        text-align: left;
-        display: block;
-        margin-bottom: 3px;
-        overflow-x: hidden;
-        white-space: nowrap;
-      }
-      input {
-        box-sizing: border-box;
-        display: block;
-        height: 32px;
-        border: 1px black solid;
-        margin: 0px;
-        border-radius: 5px;
-        width: 100%;
-      }
-      &.name {
-        display: block;
-        width: 100%;
-      }
-      &.date, &.time, &.quantity {
-        width: 30%;
-        vertical-align: top;
-      }
-      &.calories, &.carb, &.fat, &.prot {
-        width: 22%;
-      }
-    }
-    a {
-      font-size: 10px;
-    }
-    div {
-      width: 100%;
-    }
-  }
-
   .empty-view {
     display: inline-block;
     color: rgb(50,50,50);
@@ -404,6 +359,53 @@
         font-size: 10px;
       }
     }
+  }
+}
+
+.new-entry-form {
+  padding: 0 15px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  label {
+    display: inline-block;
+    text-align: left;
+    margin-bottom: 15px;
+    span {
+      text-align: left;
+      display: block;
+      margin-bottom: 3px;
+      overflow-x: hidden;
+      white-space: nowrap;
+    }
+    input {
+      box-sizing: border-box;
+      display: block;
+      height: 32px;
+      border: 1px black solid;
+      margin: 0px;
+      border-radius: 5px;
+      width: 100%;
+    }
+    &.name {
+      display: block;
+      width: 100%;
+    }
+    &.date, &.time, &.quantity {
+      width: 30%;
+      vertical-align: top;
+    }
+    &.calories, &.carb, &.fat, &.prot {
+      width: 22%;
+    }
+  }
+  .add-micro {
+    font-size: 10px;
+    text-align: left;
+    cursor: pointer;
+  }
+  div {
+    width: 100%;
   }
 }
 

@@ -10,10 +10,6 @@ import { NavigationBar } from '../App.js';
 import '../index.scss'
 
 storiesOf('Organisms|NavigationBar/Mobile', module)
-  //.addDecorator(StoryRouter({},{
-  //  initialEntries: ["/food"],
-  //  initialIndex: 0
-  //}))
   .addDecorator(story => (
     <MemoryRouter initialEntries={['/food']} initialIndex={0}>
       {story()}

@@ -863,51 +863,123 @@ class FoodRow extends Component {
   }
 }
 
-class NewEntryForm extends Component {
+export class EntryEditorForm extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      entry: {}
+      entry: {
+        name: '',
+        date: '',
+        time: '',
+        quantity: '',
+        calories: '',
+        carbohydrate: '',
+        fat: '',
+        protein: '',
+        micronutrients: []
+      }
     };
+    [
+      'onChange','handleChange','handleCreateNewMicro'
+    ].forEach(x=>this[x]=this[x].bind(this));
+  }
+  onChange(entry) {
+    if (this.props.onChange) {
+      this.props.onChange(entry);
+    } else {
+      this.setState({
+        entry: entry
+      });
+    }
+  }
+  handleChange(e) {
+    let {
+      entry = this.state.entry,
+    } = this.props;
+    let inputType = e.target.type;
+    let changedField = e.target.name;
+    let newValue = e.target.value;
+    function updateEntry(object, keys, newValue) {
+      if (keys.length == 0) {
+        return newValue;
+      }
+      return {
+        ...object,
+        [keys[0]]: updateEntry(object, keys.slice(1), newValue)
+      };
+    }
+    let keys = changedField.split('.');
+    let newEntry = updateEntry(entry, keys, newValue)
+    this.onChange(entry);
+  }
+  handleCreateNewMicro(e) {
+    let {
+      entry = this.state.entry
+    } = this.props;
+    let newEntry = {
+      ...entry,
+      micronutrients: [
+        ...entry.micronutrients,
+        {type: '', value: ''}
+      ]
+    }
+    this.onChange(newEntry);
   }
   render() {
+    let {
+      entry = this.state.entry,
+    } = this.props;
+    let onChange = this.handleChange;
+    console.log(entry);
     return (
       <form className='new-entry-form'>
         <label className='name'>
           <span>Name</span>
-          <input type='text' name='name'/>
+          <input type='text' name='name' value={entry.name} onChange={onChange}/>
         </label>
 
         <label className='date'>
           <span>Date</span>
-          <input type='date' name='date'/>
+          <input type='date' name='date' value={entry.date} onChange={onChange} />
         </label>
         <label className='time'>
           <span>Time</span>
-          <input type='time' name='time'/>
+          <input type='time' name='time' value={entry.time} onChange={onChange}/>
         </label>
         <label className='quantity'>
           <span>Quantity</span>
-          <input type='text' name='quantity'/>
+          <input type='text' name='quantity' value={entry.quantity} onChange={onChange}/>
         </label>
 
         <label className='calories'>
           <span>Calories</span>
-          <input type='text' name='calories'/>
+          <input type='text' name='calories' value={entry.calories} onChange={onChange}/>
         </label>
         <label className='carb'>
           <span>Carbs (g)</span>
-          <input type='text' name='carb'/>
+          <input type='text' name='carbohydrate' value={entry.carbohydrate} onChange={onChange}/>
         </label>
         <label className='fat'>
           <span>Fats (g)</span>
-          <input type='text' name='fat'/>
+          <input type='text' name='fat' value={entry.fat} onChange={onChange}/>
         </label>
         <label className='prot'>
           <span>Protein (g)</span>
-          <input type='text' name='prot'/>
+          <input type='text' name='protein' value={entry.protein} onChange={onChange}/>
         </label>
-        <a onClick={()=>null}>+ Add Micronutrients</a>
+        {
+          entry.micronutrients.map(function(micro,index){
+            return (<div key={index}>
+              <select>
+                <option>Micro #1</option>
+                <option>Micro #2</option>
+                <option>Micro #3</option>
+              </select>
+              <input type='text' />
+            </div>);
+          })
+        }
+        <div className='add-micro' onClick={this.handleCreateNewMicro}>+ Add Micronutrients</div>
       </form>
     );
   }
@@ -1341,77 +1413,77 @@ class ConnectedEntryEditorForm extends Component {
     }
   }
 }
-const EntryEditorForm = connect(
-  function(state, ownProps) {
-    let date = ownProps.date;
-    // Photos
-    let photos = Object.keys(state.photos.entities).filter(
-      id => state.photos.entities[id].date === date
-    ).map(
-      id => state.photos.entities[id]
-    ).reduce(
-      (acc, entity) => ({...acc, [entity.id]: entity}),
-      {}
-    );
-    let photoLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
-    // Loaded entry
-    let selectedEntry = null;
-    let children = null;
-    if (ownProps.id) {
-      selectedEntry = state.food.entities[ownProps.id];
-      if (selectedEntry) { // If the data is loaded
-        children = selectedEntry.children_ids.map(id => state.food.entities[id]);
-      }
-    } else if (ownProps.photo_ids) {
-      selectedEntry = {
-        id: null,
-        date: date,
-        name: '',
-        time: '',
-        quantity: '',
-        calories: '',
-        protein: '',
-        photo_ids: JSON.parse('['+ownProps.photo_ids+']'),
-        children: [],
-        premade: false
-      };
-    } else {
-      selectedEntry = {
-        id: null,
-        date: date,
-        name: '',
-        time: '',
-        quantity: '',
-        calories: '',
-        protein: '',
-        photo_ids: [],
-        children: [],
-        premade: false
-      };
-    }
-
-    return {
-      photos,
-      photoLoadingStatus,
-      selectedEntry,
-      children,
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
-      fetchFoodByDate: date => dispatch(foodActions['fetchMultiple']({date: date})),
-      fetchPhotosByDate: date => dispatch(photoActions['fetchMultiple']({date})),
-      createFoodEntry: data => dispatch(foodActions['create'](data)),
-      updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
-      deleteFoodEntry: id => dispatch(foodActions['deleteSingle'](id)),
-      uploadPhoto: (files) => dispatch(
-        photoActions['create'](files, ownProps.date)
-      ),
-      notify: x => dispatch(notify(x)),
-    };
-  }
-)(ConnectedEntryEditorForm);
+//const EntryEditorForm = connect(
+//  function(state, ownProps) {
+//    let date = ownProps.date;
+//    // Photos
+//    let photos = Object.keys(state.photos.entities).filter(
+//      id => state.photos.entities[id].date === date
+//    ).map(
+//      id => state.photos.entities[id]
+//    ).reduce(
+//      (acc, entity) => ({...acc, [entity.id]: entity}),
+//      {}
+//    );
+//    let photoLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date})
+//    // Loaded entry
+//    let selectedEntry = null;
+//    let children = null;
+//    if (ownProps.id) {
+//      selectedEntry = state.food.entities[ownProps.id];
+//      if (selectedEntry) { // If the data is loaded
+//        children = selectedEntry.children_ids.map(id => state.food.entities[id]);
+//      }
+//    } else if (ownProps.photo_ids) {
+//      selectedEntry = {
+//        id: null,
+//        date: date,
+//        name: '',
+//        time: '',
+//        quantity: '',
+//        calories: '',
+//        protein: '',
+//        photo_ids: JSON.parse('['+ownProps.photo_ids+']'),
+//        children: [],
+//        premade: false
+//      };
+//    } else {
+//      selectedEntry = {
+//        id: null,
+//        date: date,
+//        name: '',
+//        time: '',
+//        quantity: '',
+//        calories: '',
+//        protein: '',
+//        photo_ids: [],
+//        children: [],
+//        premade: false
+//      };
+//    }
+//
+//    return {
+//      photos,
+//      photoLoadingStatus,
+//      selectedEntry,
+//      children,
+//    }
+//  },
+//  function(dispatch, ownProps) {
+//    return {
+//      fetchFood: id => dispatch(foodActions['fetchSingle'](id)),
+//      fetchFoodByDate: date => dispatch(foodActions['fetchMultiple']({date: date})),
+//      fetchPhotosByDate: date => dispatch(photoActions['fetchMultiple']({date})),
+//      createFoodEntry: data => dispatch(foodActions['create'](data)),
+//      updateFoodEntry: data => dispatch(foodActions['updateNow'](data)),
+//      deleteFoodEntry: id => dispatch(foodActions['deleteSingle'](id)),
+//      uploadPhoto: (files) => dispatch(
+//        photoActions['create'](files, ownProps.date)
+//      ),
+//      notify: x => dispatch(notify(x)),
+//    };
+//  }
+//)(ConnectedEntryEditorForm);
 
 class SmallTable extends Component {
   constructor(props) {

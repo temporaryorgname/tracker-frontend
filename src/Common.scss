@@ -161,3 +161,66 @@ div.autocomplete-input {
   &.expanded > .content {
   }
 }
+
+.dropdown {
+  margin: 5px;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  min-width: 100px;
+  vertical-align: top;
+  // Default styles
+  > .heading {
+    cursor: pointer;
+    height: 0;
+    padding: 16px;
+    padding-right: 0;
+    font-size: 14px;
+    line-height: 0;
+    vertical-align: middle;
+    text-align: left;
+    border: 1px solid black;
+    border-radius: 5px;
+    > i.material-icons {
+      animation: ease 0.3s;
+      vertical-align: middle;
+      margin: 0 5px 0 10px;
+      //position: absolute;
+      //right: 0;
+      line-height: 0;
+      float: right;
+    }
+  }
+  > .options {
+    animation: ease 0.3s;
+    border: 1px solid black;
+    border-radius: 5px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    background-color: $background-colour;
+    > .option {
+      padding: 16px;
+      line-height: 0;
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      &:hover, &.hover {
+        background-color: $focus-colour;
+      }
+    }
+  }
+  // Collapsed
+  &.collapsed > .heading {
+  }
+  &.collapsed > .options {
+    display: none;
+  }
+  // Expanded
+  &.expanded > .heading {
+  }
+  &.expanded > .options {
+  }
+}
