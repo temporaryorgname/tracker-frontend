@@ -678,162 +678,162 @@ const Gallery = connect(
 // Table
 //////////////////////////////////////////////////
 
-class ConnectedFoodTable extends Component {
-  constructor(props){
-    super(props)
-    this.state = {
-      selected: new Set()
-    };
-    [
-      'handleToggleSelected', 'createMainEntry', 'createChildEntry',
-      'handleChangeDate'
-    ].forEach(x=>this[x]=this[x].bind(this));
-
-    this.props.fetchData(this.props.date);
-  }
-  componentDidUpdate(prevProps) {
-    if (prevProps.date !== this.props.date) {
-      this.props.fetchData(this.props.date);
-      this.setState({
-        selected: new Set()
-      });
-    }
-  }
-
-  handleToggleSelected(entry) {
-    /* Callback to be triggered when an entry has been selected. */
-    let setCopy = new Set(this.state.selected);
-    let that = this;
-    if (this.state.selected.has(entry.id)){
-      function unselect(entry) {
-        setCopy.delete(entry.id);
-        // Unselect children
-        entry.children.forEach(unselect);
-        // Unselect all parents if they're selected
-        while (entry) {
-          setCopy.delete(entry.id);
-          entry = that.props.allEntries[entry.parent_id];
-        }
-      }
-      unselect(entry);
-    } else {
-      function select(entry) {
-        setCopy.add(entry.id);
-        entry.children.forEach(select);
-      }
-      select(entry);
-    }
-    this.setState({
-      selected: setCopy
-    });
-  }
-  createMainEntry(entry) {
-    return this.props.createEntry(entry);
-  }
-  createChildEntry(entry) {
-    let selected = this.getSelectedTopLevel();
-    console.log(selected);
-    if (selected.size > 1) {
-      console.error('More than one entry selected. Cannot add child.');
-      return;
-    }
-    if (selected.size === 0) {
-      console.error('No entry selected. Cannot add child.');
-      return;
-    }
-    selected = Array.from(selected)[0];
-    entry.parent_id = selected;
-    return this.props.createEntry(entry);
-  }
-
-  handleChangeDate(e) {
-    let newDate = e.target.value;
-    let confirmMove = window.confirm('Are you sure you want to move the selected entry to '+newDate+'?');
-    if (confirmMove) {
-      let that = this;
-      Array.from(this.state.selected).forEach(function(id){
-        for (var entry of Object.values(that.props.entries)) {
-          if (entry.id === id) {
-            break;
-          }
-        }
-        that.props.updateData({
-          ...entry,
-          date: newDate
-        });
-      });
-      this.setState({
-        selected: new Set()
-      });
-    }
-  }
-
-  render() {
-    let that = this;
-    if (Object.values(this.props.entries).length == 0) {
-      return (<div>
-        No data
-        <NewEntryForm />
-        <button>Create Entry</button>
-      </div>);
-    }
-    return (<>
-      <table className='food-table'>
-        <div className='entries'>
-          {
-            Object.values(this.props.entries).map(function(entry){
-              return (
-                <FoodRow key={entry.id} 
-                    allEntries={that.props.allEntries}
-                    entry={entry} 
-                    selected={that.state.selected}
-                    onToggleSelected={that.handleToggleSelected} 
-                    deleteEntry={that.deleteOneEntry}
-                    createEntry={that.props.createEntry}/>
-              );
-            })
-          }
-        </div>
-      </table>
-    </>);
-  }
-}
-const FoodTable = connect(
-  function(state, ownProps) {
-    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
-
-    let allEntries = Object.values(state.food.entities).filter(
-      entity => entity && entity.date === ownProps.date && (!entity.premade || entity.premade == null)
-    );
-    let entitiesWithoutParent = allEntries.filter(entity => !entity.parent_id);
-    allEntries = arrayToDict(allEntries, 'id');
-    entitiesWithoutParent = arrayToDict(entitiesWithoutParent, 'id');
-    // Add children to entries
-    for (let id of Object.keys(allEntries)) {
-      allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
-    }
-
-    return {
-      loadingStatus,
-      entries: entitiesWithoutParent,
-      allEntries,
-      total: {
-        calories: computeDietEntryTotal(entitiesWithoutParent, 'calories', allEntries),
-        protein: computeDietEntryTotal(entitiesWithoutParent, 'protein', allEntries),
-      },
-      dirty: state.food.dirtyEntities.size > 0
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
-      updateData: entry => dispatch(foodActions['update'](entry)),
-      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids)),
-      createEntry: data => dispatch(foodActions['create'](data)),
-      notify: x => dispatch(notify(x)),
-    };
-  }
-)(ConnectedFoodTable);
+//class ConnectedFoodTable extends Component {
+//  constructor(props){
+//    super(props)
+//    this.state = {
+//      selected: new Set()
+//    };
+//    [
+//      'handleToggleSelected', 'createMainEntry', 'createChildEntry',
+//      'handleChangeDate'
+//    ].forEach(x=>this[x]=this[x].bind(this));
+//
+//    this.props.fetchData(this.props.date);
+//  }
+//  componentDidUpdate(prevProps) {
+//    if (prevProps.date !== this.props.date) {
+//      this.props.fetchData(this.props.date);
+//      this.setState({
+//        selected: new Set()
+//      });
+//    }
+//  }
+//
+//  handleToggleSelected(entry) {
+//    /* Callback to be triggered when an entry has been selected. */
+//    let setCopy = new Set(this.state.selected);
+//    let that = this;
+//    if (this.state.selected.has(entry.id)){
+//      function unselect(entry) {
+//        setCopy.delete(entry.id);
+//        // Unselect children
+//        entry.children.forEach(unselect);
+//        // Unselect all parents if they're selected
+//        while (entry) {
+//          setCopy.delete(entry.id);
+//          entry = that.props.allEntries[entry.parent_id];
+//        }
+//      }
+//      unselect(entry);
+//    } else {
+//      function select(entry) {
+//        setCopy.add(entry.id);
+//        entry.children.forEach(select);
+//      }
+//      select(entry);
+//    }
+//    this.setState({
+//      selected: setCopy
+//    });
+//  }
+//  createMainEntry(entry) {
+//    return this.props.createEntry(entry);
+//  }
+//  createChildEntry(entry) {
+//    let selected = this.getSelectedTopLevel();
+//    console.log(selected);
+//    if (selected.size > 1) {
+//      console.error('More than one entry selected. Cannot add child.');
+//      return;
+//    }
+//    if (selected.size === 0) {
+//      console.error('No entry selected. Cannot add child.');
+//      return;
+//    }
+//    selected = Array.from(selected)[0];
+//    entry.parent_id = selected;
+//    return this.props.createEntry(entry);
+//  }
+//
+//  handleChangeDate(e) {
+//    let newDate = e.target.value;
+//    let confirmMove = window.confirm('Are you sure you want to move the selected entry to '+newDate+'?');
+//    if (confirmMove) {
+//      let that = this;
+//      Array.from(this.state.selected).forEach(function(id){
+//        for (var entry of Object.values(that.props.entries)) {
+//          if (entry.id === id) {
+//            break;
+//          }
+//        }
+//        that.props.updateData({
+//          ...entry,
+//          date: newDate
+//        });
+//      });
+//      this.setState({
+//        selected: new Set()
+//      });
+//    }
+//  }
+//
+//  render() {
+//    let that = this;
+//    if (Object.values(this.props.entries).length == 0) {
+//      return (<div>
+//        No data
+//        <NewEntryForm />
+//        <button>Create Entry</button>
+//      </div>);
+//    }
+//    return (<>
+//      <table className='food-table'>
+//        <div className='entries'>
+//          {
+//            Object.values(this.props.entries).map(function(entry){
+//              return (
+//                <FoodRow key={entry.id} 
+//                    allEntries={that.props.allEntries}
+//                    entry={entry} 
+//                    selected={that.state.selected}
+//                    onToggleSelected={that.handleToggleSelected} 
+//                    deleteEntry={that.deleteOneEntry}
+//                    createEntry={that.props.createEntry}/>
+//              );
+//            })
+//          }
+//        </div>
+//      </table>
+//    </>);
+//  }
+//}
+//const FoodTable = connect(
+//  function(state, ownProps) {
+//    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
+//
+//    let allEntries = Object.values(state.food.entities).filter(
+//      entity => entity && entity.date === ownProps.date && (!entity.premade || entity.premade == null)
+//    );
+//    let entitiesWithoutParent = allEntries.filter(entity => !entity.parent_id);
+//    allEntries = arrayToDict(allEntries, 'id');
+//    entitiesWithoutParent = arrayToDict(entitiesWithoutParent, 'id');
+//    // Add children to entries
+//    for (let id of Object.keys(allEntries)) {
+//      allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
+//    }
+//
+//    return {
+//      loadingStatus,
+//      entries: entitiesWithoutParent,
+//      allEntries,
+//      total: {
+//        calories: computeDietEntryTotal(entitiesWithoutParent, 'calories', allEntries),
+//        protein: computeDietEntryTotal(entitiesWithoutParent, 'protein', allEntries),
+//      },
+//      dirty: state.food.dirtyEntities.size > 0
+//    }
+//  },
+//  function(dispatch, ownProps) {
+//    return {
+//      fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
+//      updateData: entry => dispatch(foodActions['update'](entry)),
+//      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids)),
+//      createEntry: data => dispatch(foodActions['create'](data)),
+//      notify: x => dispatch(notify(x)),
+//    };
+//  }
+//)(ConnectedFoodTable);
 
 class FoodRow extends Component {
   constructor(props){
@@ -996,6 +996,59 @@ export class EntryEditorForm extends Component {
         </label>
         <div className='add-micro' onClick={this.handleCreateNewMicro}>+ Add Micronutrients</div>
       </form>
+    );
+  }
+}
+
+export class FoodTable extends Component {
+  constructor(props) {
+    super(props);
+  }
+  render() {
+    return (
+      <table className='food-table'>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Qty</th>
+            <th>Cal</th>
+            <th>Carb</th>
+            <th>Prot</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Breakfast (2) <i className='material-icons'>create</i></td>
+            <td>-</td>
+            <td>440</td>
+            <td>-</td>
+            <td>21</td>
+          </tr>
+          <tr>
+            <td>Lunch <i className='material-icons'>create</i></td>
+            <td>-</td>
+            <td>600</td>
+            <td>-</td>
+            <td>30</td>
+          </tr>
+          <tr>
+            <td>Dinner (3) <i className='material-icons'>create</i></td>
+            <td>-</td>
+            <td>700</td>
+            <td>-</td>
+            <td>30</td>
+          </tr>
+          <tr className='total'>
+            <td className='new-entry-container'>
+              + New Entry
+            </td>
+            <td></td>
+            <td>1740</td>
+            <td>-</td>
+            <td>81</td>
+          </tr>
+        </tbody>
+      </table>
     );
   }
 }
