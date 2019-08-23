@@ -15,7 +15,30 @@ storiesOf('Organisms|EntryEditorForm', module)
   </div>);
 
 storiesOf('Organisms|FoodTable', module)
+  .addDecorator(StoryRouter())
   .add('Default', () => <div>
-    <FoodTable />
+    <FoodTable entries={{
+      0: {
+        name: 'Breakfast',
+        calories: 440,
+        protein: 21,
+        children: {
+          1: {}, 2: {}
+        }
+      },
+      3: {
+        name: 'Lunch',
+        calories: 600,
+        protein: 31,
+      },
+      4: {
+        name: 'Dinner',
+        calories: 700,
+        protein: 30,
+        children: {
+          5: {}, 6: {}, 7: {}
+        }
+      }
+    }} createNewEntry={action('Create new entry')}/>
   </div>);
 

@@ -429,6 +429,17 @@
 }
 
 .food-table {
+  thead {
+    height: 32px;
+    > tr {
+      height: 32px;
+      > th {
+        height: 0;
+        padding: 16px 10px;
+        line-height: 0;
+      }
+    }
+  }
   tr {
     height: 42px;
     border: 0;

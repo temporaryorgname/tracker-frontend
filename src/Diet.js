@@ -1003,8 +1003,33 @@ export class EntryEditorForm extends Component {
 export class FoodTable extends Component {
   constructor(props) {
     super(props);
+    this.state = {
+      entries: {}
+    };
   }
   render() {
+    let {
+      entries = this.state.entries,
+    } = this.props;
+    let createNewEntry = () => console.error('Missing createNewEntry prop.');
+    if (this.props.createNewEntry) {
+      createNewEntry = this.props.createNewEntry;
+    }
+    function sum(entries, prop) {
+      return Object.values(entries).reduce(function(acc, entry){
+        let val = entry[prop];
+        if (!val && entry.children) {
+          val = sum(entry.children, prop);
+        }
+        if (!val) {
+          return acc;
+        }
+        if (!acc) {
+          return val;
+        }
+        return acc+val;
+      }, null);
+    }
     return (
       <table className='food-table'>
         <thead>
@@ -1017,35 +1042,31 @@ export class FoodTable extends Component {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Breakfast (2) <i className='material-icons'>create</i></td>
-            <td>-</td>
-            <td>440</td>
-            <td>-</td>
-            <td>21</td>
-          </tr>
-          <tr>
-            <td>Lunch <i className='material-icons'>create</i></td>
-            <td>-</td>
-            <td>600</td>
-            <td>-</td>
-            <td>30</td>
-          </tr>
-          <tr>
-            <td>Dinner (3) <i className='material-icons'>create</i></td>
-            <td>-</td>
-            <td>700</td>
-            <td>-</td>
-            <td>30</td>
-          </tr>
+          {
+            Object.entries(entries).map(function([id,entry]){
+              let children_count = '';
+              if (entry.children && Object.keys(entry.children).length > 0) {
+                children_count = '('+Object.keys(entry.children).length+')';
+              }
+              return (
+                <tr>
+                  <td>{entry.name} {children_count} <Link to={'/food?id='+id}><i className='material-icons'>create</i></Link></td>
+                  <td>{entry.quantity || '-'}</td>
+                  <td>{entry.calories || '-'}</td>
+                  <td>{entry.carb || '-'}</td>
+                  <td>{entry.protein || '-'}</td>
+                </tr>
+              );
+            })
+          }
           <tr className='total'>
-            <td className='new-entry-container'>
+            <td className='new-entry-container' onClick={createNewEntry}>
               + New Entry
             </td>
-            <td></td>
-            <td>1740</td>
             <td>-</td>
-            <td>81</td>
+            <td>{sum(entries,'calories') || '-'}</td>
+            <td>{sum(entries,'carb') || '-'}</td>
+            <td>{sum(entries,'protein') || '-'}</td>
           </tr>
         </tbody>
       </table>
