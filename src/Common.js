@@ -35,15 +35,20 @@ class Modal extends Component {
     this.props.toggle();
   }
   render() {
+    let {
+      isOpen = true,
+      toggle = () => console.error('toggle function not provided.'),
+      children = null
+    } = this.props;
     var className = 'modal-background';
-    if (this.props.isOpen) {
+    if (isOpen) {
       className += ' visible';
     }
     return (
       <div className={className} onClick={this.handleClickOutside} ref={(x)=>(this.ref=x)}>
         <div className='modal'>
-          <div className='close' onClick={this.props.toggle}><i className='material-icons action'>close</i></div>
-          {this.props.children}
+          <div className='close' onClick={()=>toggle(false)}><i className='material-icons action'>close</i></div>
+          {children}
         </div>
       </div>
     );
@@ -333,16 +338,25 @@ class BigButton extends Component {
       icon = null,
       text = '',
       onClick = ()=>null,
-      linkTo = '#'
+      linkTo = null
     } = this.props;
-    return (
-      <Link to={linkTo}>
+    if (linkTo === null) {
+      return (
         <div className='large-button' onClick={onClick}>
           <i className='material-icons'>{icon}</i>
           {text}
         </div>
-      </Link>
-    );
+      );
+    } else {
+      return (
+        <Link to={linkTo}>
+          <div className='large-button' onClick={onClick}>
+            <i className='material-icons'>{icon}</i>
+            {text}
+          </div>
+        </Link>
+      );
+    }
   }
 }
 

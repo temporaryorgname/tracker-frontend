@@ -9,7 +9,7 @@ import StoryRouter from 'storybook-react-router';
 import { NavigationBar } from '../App.js';
 import '../index.scss'
 
-storiesOf('Organisms|NavigationBar/Mobile', module)
+storiesOf('Molecules|NavigationBar/Mobile', module)
   .addDecorator(story => (
     <MemoryRouter initialEntries={['/food']} initialIndex={0}>
       {story()}
@@ -17,13 +17,13 @@ storiesOf('Organisms|NavigationBar/Mobile', module)
   ))
   .addParameters({ viewport: { defaultViewport: 'iphone6' }})
   .add('LoggedOut', () => <div>
-      <NavigationBar />
+      <NavigationBar title='Log In' />
     </div>)
   .add('LoggedIn', () => <div>
-      <NavigationBar loggedIn='true' />
+      <NavigationBar loggedIn='true' title='Diet Log' />
     </div>);
 
-storiesOf('Organisms|NavigationBar/Desktop', module)
+storiesOf('Molecules|NavigationBar/Desktop', module)
   .addDecorator(StoryRouter())
   .add('LoggedOut', () => <div>
       <NavigationBar />

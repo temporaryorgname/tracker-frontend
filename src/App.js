@@ -8,7 +8,7 @@ import { login, logout, updateSession } from './actions/User.js';
 import { userProfileActions, notify, unnotify } from './actions/Actions.js';
 
 import { HomePage } from './Home.js'
-import { DietPage } from './Diet.js'
+import { ConnectedDietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 import { UserPage } from './User.js'
 import { DataPage, TagsPage } from './Data.js'
@@ -25,12 +25,6 @@ class ConnectedApp extends Component {
   }
   render() {
     if (this.props.loggedIn) {
-      let routes = [
-        {
-          path: '/food',
-          render: (<DietPage />)
-        }
-      ];
       return (
         <Router>
           <div className="App container-fluid">
@@ -42,7 +36,7 @@ class ConnectedApp extends Component {
                     {...routeProps} />} />
             </Switch>
             <Switch>
-              <Route path="/food" component={DietPage} />
+              <Route path="/food" component={ConnectedDietPage} />
               <Route path="/body" component={BodyStatsPage} />
               <Route path="/user" component={UserPage} />
               <Route path="/data" component={DataPage} />
@@ -111,9 +105,11 @@ class NavigationBar extends Component {
     });
   }
   render() {
-    let location = this.props.location || {};
+    let {
+      location = {},
+      title = ''
+    } = this.props;
     let path = location.pathname;
-    console.log(path);
     let navClasses = ['nav'];
     if (!this.state.menuVisibile) {
       navClasses.push('hide-mobile');
@@ -122,8 +118,11 @@ class NavigationBar extends Component {
     if (this.props.loggedIn) {
       return (
         <nav>
-          <div className='toggle-menu' onClick={this.toggleMenu}>
-            <i className='material-icons'>menu</i>
+          <div>
+            <div className='toggle-menu' onClick={this.toggleMenu}>
+              <i className='material-icons'>menu</i>
+            </div>
+            <span>{title}</span>
           </div>
           <ul className={navClasses} onClick={this.toggleMenu}>
             <Link to="/"><li>Overview</li></Link>
@@ -138,8 +137,11 @@ class NavigationBar extends Component {
     } else {
       return (
         <nav>
-          <div className='toggle-menu' onClick={this.toggleMenu}>
-            <i className='material-icons'>menu</i>
+          <div>
+            <div className='toggle-menu' onClick={this.toggleMenu}>
+              <i className='material-icons'>menu</i>
+            </div>
+            <span>{title}</span>
           </div>
           <ul className={navClasses} onClick={this.toggleMenu}>
             <Link className="nav-link" to="/login"><li>Login</li></Link>
