@@ -38,6 +38,7 @@ export class DietPage extends Component {
       newEntry: {}
     };
     [
+      'onDateChange',
       'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
       'onDeleteEntry'
     ].forEach(x=>this[x]=this[x].bind(this));
@@ -51,10 +52,28 @@ export class DietPage extends Component {
       });
     }
   }
+  onDateChange(date) {
+    let {
+      params = {}
+    } = this.props;
+    params.date = formatDate(date);
+    this.props.history.push(dictToQueryString(params, ['uid', 'date']));
+    this.setState({
+      newEntry: {
+        ...this.state.newEntry,
+        date: date
+      }
+    });
+  }
   showNewEntryForm() {
+    let {
+      date = formatDate(new Date())
+    } = this.props;
     this.setState({
       newEntryFormVisible: true,
-      newEntry: {}
+      newEntry: {
+        date: date
+      }
     });
   }
   onChangeNewEntry(e) {
@@ -93,9 +112,10 @@ export class DietPage extends Component {
     let {
       mainEntry = null,
       entries = {},
+      date = formatDate(new Date())
     } = this.props;
     let mainEntryEditor = (
-      <DateSelector />
+      <DateSelector date={date} onChange={this.onDateChange} />
     );
     let mainEntryControls = null;
     if (mainEntry !== null) {
@@ -142,18 +162,14 @@ export class DietPage extends Component {
 }
 export const ConnectedDietPage = connect(
   function(state, ownProps) {
-    let uid = state.session.uid;
     // Parse Query String
     let queryParams = parseQueryString(ownProps.location.search);
-    if (!queryParams['date']) {
-      queryParams['date'] = formatDate(new Date());
-    }
-    if (!queryParams['uid']) {
-      queryParams['uid'] = uid;
-    }
-    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: ownProps.date});
+    let date = queryParams['date'] || formatDate(new Date());
+    let uid = queryParams['uid'] || state.session.uid;
+    // Get data from state
+    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: date});
     let allEntries = Object.values(state.food.entities).filter(
-      entity => entity && entity.date === queryParams['date'] && (!entity.premade || entity.premade == null)
+      entity => entity && entity.date === date && (!entity.premade || entity.premade == null)
     );
     allEntries = arrayToDict(allEntries, 'id');
     // Add children to entries
@@ -174,7 +190,7 @@ export const ConnectedDietPage = connect(
     subentries = arrayToDict(subentries, 'id');
     return {
       uid,
-      date: queryParams['date'],
+      date,
       params: queryParams,
       mainEntry: mainEntry,
       entries: subentries,
@@ -215,7 +231,7 @@ export class DateSelector extends Component {
       date = this.state.date,
     } = this.props;
     var newDate = new Date(date);
-    newDate.setDate(newDate.getDate()-1);
+    newDate.setDate(newDate.getDate());
     this.onChange(newDate);
   }
   nextDate() {
@@ -223,7 +239,7 @@ export class DateSelector extends Component {
       date = this.state.date,
     } = this.props;
     var newDate = new Date(date);
-    newDate.setDate(newDate.getDate()+1);
+    newDate.setDate(newDate.getDate()+2);
     this.onChange(newDate);
   }
   render() {
