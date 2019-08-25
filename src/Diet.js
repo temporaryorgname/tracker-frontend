@@ -38,7 +38,8 @@ export class DietPage extends Component {
       newEntry: {}
     };
     [
-      'showNewEntryForm','onChangeNewEntry','onCreateNewEntry'
+      'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
+      'onDeleteEntry'
     ].forEach(x=>this[x]=this[x].bind(this));
     this.props.fetchData(this.props.date);
   }
@@ -75,6 +76,19 @@ export class DietPage extends Component {
       newEntry: {}
     });
   }
+  onDeleteEntry() {
+    let {
+      mainEntry
+    } = this.props;
+    if (window.confirm('Delete entry "'+mainEntry.name+'"?')) {
+      this.props.deleteEntries([{id: mainEntry.id}]);
+      if (mainEntry.parent_id === null) {
+        this.props.history.push('/food?date='+formatDate(mainEntry.date));
+      } else {
+        this.props.history.push('/food?id='+mainEntry.parent_id);
+      }
+    }
+  }
   render() {
     let {
       mainEntry = null,
@@ -93,7 +107,7 @@ export class DietPage extends Component {
       </>);
       mainEntryControls = (<>
         <button>Save Changes</button>
-        <button>Delete</button>
+        <button onClick={this.onDeleteEntry}>Delete</button>
       </>);
     }
     return (<main className='diet-page-container'>
@@ -152,11 +166,10 @@ export const ConnectedDietPage = connect(
       mainEntry = allEntries[queryParams['id']];
     }
     let subentries = null;
-    if (mainEntry === null) {
-      subentries = Object.values(allEntries).filter(entity => !entity.parent_id);
-    } else {
-      console.log(mainEntry);
+    if (mainEntry) {
       subentries = Object.values(allEntries).filter(entity => entity.parent_id === mainEntry.id);
+    } else {
+      subentries = Object.values(allEntries).filter(entity => !entity.parent_id);
     }
     subentries = arrayToDict(subentries, 'id');
     return {
@@ -172,7 +185,7 @@ export const ConnectedDietPage = connect(
     return {
       fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
       updateData: entry => dispatch(foodActions['update'](entry)),
-      deleteEntry: ids => dispatch(foodActions['deleteMultiple'](ids)),
+      deleteEntries: ids => dispatch(foodActions['deleteMultiple'](ids)),
       createEntry: data => dispatch(foodActions['create'](data)),
       notify: x => dispatch(notify(x)),
     };
