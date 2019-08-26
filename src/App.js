@@ -24,24 +24,60 @@ class ConnectedApp extends Component {
     }
   }
   render() {
-    if (this.props.loggedIn) {
+    let {
+      loggedIn,
+      uid,
+      logout
+    } = this.props;
+    if (loggedIn) {
+      let loggedInRoutes = [
+        {
+          route: '/food',
+          component: ConnectedDietPage,
+          title: 'Diet Log'
+        },{
+          route: '/body',
+          component: BodyStatsPage,
+          title: 'Body Stats'
+        },{
+          route: '/user',
+          component: UserPage,
+          title: 'User Profile'
+        },{
+          route: '/data',
+          component: DataPage
+        },{
+          route: '/tags',
+          component: TagsPage
+        },{
+          route: '/',
+          component: HomePage,
+          title: 'Overview'
+        }
+      ];
       return (
         <Router>
           <div className="App container-fluid">
             <Switch>
-              <Route path="/" render={routeProps =>
-                <NavigationBar loggedIn={this.props.loggedIn}
-                    uid={this.props.uid}
-                    logout={this.props.logout}
-                    {...routeProps} />} />
+            {
+              loggedInRoutes.map(function(route){
+                return (<Route path={route.route} 
+                  render={routeProps => <NavigationBar 
+                      loggedIn={loggedIn}
+                      uid={uid}
+                      logout={logout}
+                      title={route.title}
+                      {...routeProps} />} />);
+              })
+            }
             </Switch>
             <Switch>
-              <Route path="/food" component={ConnectedDietPage} />
-              <Route path="/body" component={BodyStatsPage} />
-              <Route path="/user" component={UserPage} />
-              <Route path="/data" component={DataPage} />
-              <Route path="/tags" component={TagsPage} />
-              <Route path="/" component={HomePage} />
+              {
+                loggedInRoutes.map(function(route){
+                  return <Route path={route.route}
+                      component={route.component} />
+                })
+              }
               <Route render={() => <ErrorPage404 />}/>
             </Switch>
             <NotificationContainer />
@@ -52,10 +88,10 @@ class ConnectedApp extends Component {
       return (
         <Router>
           <div className="App container-fluid">
-            <NavigationBar loggedIn={this.props.loggedIn}/>
+            <NavigationBar loggedIn={loggedIn}/>
             <Switch>
               <Route path="/" render={routeProps =>
-                <NavigationBar loggedIn={this.props.loggedIn}
+                <NavigationBar loggedIn={loggedIn}
                     {...routeProps} />} />
             </Switch>
             <Switch>
