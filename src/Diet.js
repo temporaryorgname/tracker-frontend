@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { Route, Link, Switch } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import axios from 'axios';
 
-import { connect } from "react-redux";
+import { connect, shallowEqual, useSelector } from "react-redux";
 
 import { 
   getLoadingStatus,
@@ -37,6 +37,18 @@ function toggleSet(s,x) {
     return s;
   } else {
     return new Set(s).add(x);
+  }
+}
+
+function getFoodEntrySelectorById(id) {
+  return (state) => {
+    let status = getLoadingStatus(state.loadingStatus['FOOD'], {id: id});
+    //let entities = state.food.entries || {};
+    //let entity = entities[id];
+    let entity = null;
+    console.log('getFoodEntrySelectorById');
+    console.log(entity);
+    return {entity, status};
   }
 }
 
@@ -127,23 +139,30 @@ export class DietPage extends Component {
       mainEntry = null,
       entries = {},
       date = formatDate(new Date()),
-      uid
+      uid,
+      id
     } = this.props;
-    let mainEntryEditor = (
-      <DateSelector date={date} onChange={this.onDateChange} />
-    );
+    let mainEntryEditor = null;
     let mainEntryControls = null;
-    if (mainEntry !== null) {
-      mainEntryEditor = (<>
-        <h3>{mainEntry.name}</h3>
-        <Accordion heading='Details'>
-          <EntryEditorForm entry={mainEntry} onChange={this.props.updateData}/>
-        </Accordion>
-      </>);
-      mainEntryControls = (<>
-        <button>Save Changes</button>
-        <button onClick={this.onDeleteEntry}>Delete</button>
-      </>);
+    if (id) {
+      if (mainEntry) {
+        mainEntryEditor = (<>
+          <h3>{mainEntry.name}</h3>
+          <Accordion heading='Details'>
+            <EntryEditorForm entry={mainEntry} onChange={this.props.updateData}/>
+          </Accordion>
+        </>);
+        mainEntryControls = (<>
+          <button>Save Changes</button>
+          <button onClick={this.onDeleteEntry}>Delete</button>
+        </>);
+      } else {
+        mainEntryEditor = 'Loading...';
+      }
+    } else {
+      mainEntryEditor = (
+        <DateSelector date={date} onChange={this.onDateChange} />
+      );
     }
     return (<main className='diet-page-container'>
       {mainEntryEditor}
@@ -179,35 +198,68 @@ export const ConnectedDietPage = connect(
   function(state, ownProps) {
     // Parse Query String
     let queryParams = parseQueryString(ownProps.location.search);
-    let date = queryParams['date'] || formatDate(new Date());
     let uid = queryParams['uid'] || state.session.uid;
+    let id = queryParams['id'];
+    let date = id ? null : (queryParams['date'] || formatDate(new Date()));
+
     // Get data from state
-    let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: date});
-    let allEntries = Object.values(state.food.entities).filter(
-      entity => entity && entity.date === date && (!entity.premade || entity.premade == null)
-    );
-    allEntries = arrayToDict(allEntries, 'id');
-    // Add children to entries
-    for (let id of Object.keys(allEntries)) {
-      allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
-    }
-    // Main entry
-    let mainEntry = null;
-    let subentries = null;
-    if (queryParams['id']) {
-      mainEntry = allEntries[queryParams['id']];
-      subentries = Object.values(allEntries).filter(entity => entity.parent_id === mainEntry.id);
+    if (id) {
+      let mainEntry = state.food.entities[id];
+      let mainEntryLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {id: id});
+      if (!mainEntry) {
+        return {
+          uid,
+          date,
+          params: queryParams,
+          mainEntry: mainEntry,
+          entries: [],
+          dirty: state.food.dirtyEntities.size > 0,
+          id
+        }
+      }
+
+      let allEntries = Object.values(state.food.entities).filter(
+        entity => entity && entity.date === mainEntry.date && (!entity.premade || entity.premade == null)
+      );
+      //for (let [id,entry] of Object.entries(allEntries)) {
+      //  entry.children = entry.children_ids
+      //    .map(id=>allEntries[id])
+      //    .filter(entry=>entry);
+      //}
+      for (let id of Object.keys(allEntries)) {
+        allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
+      }
+      let subentries = Object.values(allEntries)
+          .filter(e => e.parent_id == mainEntry.id);
+      let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: mainEntry.date});
+      return {
+        uid,
+        date: mainEntry.date,
+        params: queryParams,
+        mainEntry: mainEntry,
+        entries: arrayToDict(subentries, 'id'),
+        dirty: state.food.dirtyEntities.size > 0,
+        id
+      }
     } else {
-      subentries = Object.values(allEntries).filter(entity => !entity.parent_id);
-    }
-    subentries = arrayToDict(subentries, 'id');
-    return {
-      uid,
-      date,
-      params: queryParams,
-      mainEntry: mainEntry,
-      entries: subentries,
-      dirty: state.food.dirtyEntities.size > 0
+      let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: date});
+      let allEntries = Object.values(state.food.entities).filter(
+        entity => entity && entity.date === date && (!entity.premade || entity.premade == null)
+      );
+      let entriesWithoutParents = allEntries.filter(e => !e.parent_id);
+      allEntries = arrayToDict(allEntries, 'id');
+      entriesWithoutParents = arrayToDict(entriesWithoutParents, 'id');
+      // Add children to entries
+      for (let id of Object.keys(allEntries)) {
+        allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
+      }
+      return {
+        uid,
+        date,
+        params: queryParams,
+        entries: entriesWithoutParents,
+        dirty: state.food.dirtyEntities.size > 0
+      }
     }
   },
   function(dispatch, ownProps) {
