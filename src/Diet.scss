@@ -129,6 +129,15 @@ table.food-table {
   }
 }
 
+.gallery {
+  &.small {
+    .thumbnails {
+      white-space: nowrap;
+      overflow-x: scroll;
+    }
+  }
+}
+
 @media #{$computer-and-tablet} {
   .diet-page-container {
     .food-table {

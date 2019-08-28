@@ -30,6 +30,16 @@ import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
 import './Diet.scss';
 
+function toggleSet(s,x) {
+  if (s.has(x)) {
+    s = new Set(s)
+    s.delete(x);
+    return s;
+  } else {
+    return new Set(s).add(x);
+  }
+}
+
 export class DietPage extends Component {
   constructor(props) {
     super(props);
@@ -42,7 +52,11 @@ export class DietPage extends Component {
       'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
       'onDeleteEntry'
     ].forEach(x=>this[x]=this[x].bind(this));
-    this.props.fetchData(this.props.date);
+    if (this.props.id) {
+      this.props.fetchEntry(this.props.id);
+    } else {
+      this.props.fetchData(this.props.date);
+    }
   }
   componentDidUpdate(prevProps) {
     if (prevProps.date !== this.props.date) {
@@ -112,7 +126,8 @@ export class DietPage extends Component {
     let {
       mainEntry = null,
       entries = {},
-      date = formatDate(new Date())
+      date = formatDate(new Date()),
+      uid
     } = this.props;
     let mainEntryEditor = (
       <DateSelector date={date} onChange={this.onDateChange} />
@@ -151,7 +166,7 @@ export class DietPage extends Component {
         Lorem ipsum
       </Accordion>
       <Accordion heading='Photos'>
-        Lorem ipsum
+        <ConnectedGallery uid={uid} date={date}/>
       </Accordion>
       <Accordion heading='Advanced Details'>
         Lorem ipsum
@@ -178,11 +193,9 @@ export const ConnectedDietPage = connect(
     }
     // Main entry
     let mainEntry = null;
+    let subentries = null;
     if (queryParams['id']) {
       mainEntry = allEntries[queryParams['id']];
-    }
-    let subentries = null;
-    if (mainEntry) {
       subentries = Object.values(allEntries).filter(entity => entity.parent_id === mainEntry.id);
     } else {
       subentries = Object.values(allEntries).filter(entity => !entity.parent_id);
@@ -199,10 +212,29 @@ export const ConnectedDietPage = connect(
   },
   function(dispatch, ownProps) {
     return {
+      // Diet entries
       fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
+      fetchEntry: id => dispatch(foodActions['fetchSingle'](id)),
       updateData: entry => dispatch(foodActions['update'](entry)),
       deleteEntries: ids => dispatch(foodActions['deleteMultiple'](ids)),
       createEntry: data => dispatch(foodActions['create'](data)),
+      // Photos
+      fetchPhotos: (cache) => dispatch(
+        photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date}, cache)
+      ),
+      updatePhoto: (data) => dispatch(
+        photoActions['update'](data)
+      ),
+      uploadPhoto: (files, progressCallback) => dispatch(
+        photoActions['create'](files, progressCallback, ownProps.date)
+      ),
+      createFood: (data) => dispatch(
+        foodActions['create'](data)
+      ),
+      deletePhoto: (id) => dispatch(
+        photoActions['deleteSingle'](id)
+      ),
+      // Misc
       notify: x => dispatch(notify(x)),
     };
   }
@@ -548,7 +580,332 @@ export class QuantityInput extends Component {
 // Photos
 //////////////////////////////////////////////////
 
-class ConnectedGallery extends Component {
+export class Gallery extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedPhotoIds: new Set(),
+      uploadingProgress: {},
+      errors: [],
+      editorVisible: false
+    };
+    [
+      'handleUpload','uploadFile','handleSelectPhoto','handleDelete',
+      'renderEmptyView',
+      'renderThumbnails','renderUploadingThumbnails','renderErrorThumbnails'
+    ].forEach(x=>this[x]=this[x].bind(this));
+    this.props.fetchPhotos(this.props.uid);
+  }
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (prevProps.date !== this.props.date) {
+      this.props.fetchPhotos(this.props.uid);
+    }
+  }
+  handleUpload(event) {
+    this.uploadFile(event.target.files);
+  }
+  uploadFile(file) {
+    let that = this;
+    // Find first available index
+    let index = 0;
+    while (index in this.state.uploadingProgress) {
+      index++;
+    }
+    this.setState({
+      uploadingProgress: {
+        ...this.state.uploadingProgress,
+        [index]: 0
+      }
+    });
+    this.props.uploadPhoto(
+      file,
+      function(progress) {
+        that.setState({
+          uploadingProgress: {
+            ...that.state.uploadingProgress,
+            [index]: progress.loaded/progress.total
+          }
+        });
+      }
+    ).then(function(response){
+      //that.props.fetchPhotos(false);
+      let progress = {...that.state.uploadingProgress};
+      delete progress[index];
+      that.setState({
+        uploadingProgress: progress
+      });
+    }).catch(function(error){
+      that.setState({
+        uploadingCount: that.state.uploadingCount-1,
+        errors: [...that.state.errors, 
+          {
+            error: error.response.data,
+            file: file,
+            retry: function() {
+              that.setState({
+                errors: that.state.errors.filter(e => e.file !== file)
+              });
+              that.uploadFile(file);
+            }
+          }
+        ]
+      });
+    });
+  }
+  handleSelectPhoto(photoIds) {
+    this.setState({
+      selectedPhotoIds: photoIds
+    });
+  }
+  handleDelete() {
+    if (!window.confirm('Are you sure you want to delete the '+this.state.selectedPhotoIds.size+' selected photos?')) {
+      return;
+    }
+    Array.from(this.state.selectedPhotoIds).forEach(this.props.deletePhoto)
+    this.setState({
+      selectedPhotoIds: new Set()
+    });
+  }
+  handleCreateEntryFromPhotos() {
+  }
+  render() {
+    let {
+      photosLoadingStatus,
+      selectedPhotoIds = this.state.selectedPhotoIds,
+      photos,
+      date
+    } = this.props;
+    if (!photosLoadingStatus) {
+      return (
+        <div>
+          Waiting to load
+        </div>
+      );
+    } else if (photosLoadingStatus.status === 'loading') {
+      return (
+        <div>
+          LOADING...
+        </div>
+      );
+    } else if (photosLoadingStatus.status === 'error') {
+      return (
+        <div className='error-message'>
+          {photosLoadingStatus.error}
+        </div>
+      );
+    } else if (photosLoadingStatus.status === 'loaded') {
+      // Check if there's any data to render
+      let photosAvail = Object.keys(this.props.photos).length > 0;
+      let errorsAvail = this.state.errors.length > 0;
+      let uploadAvail = Object.keys(this.state.uploadingProgress).length > 0;
+      if (photosAvail || errorsAvail || uploadAvail) {
+        // Render controls
+        let controls = [];
+        controls.push(
+          <label>
+            <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
+            <button>Upload</button>
+          </label>
+        );
+        controls.push(
+          <button>Select Photos</button>
+        );
+        if (selectedPhotoIds.size > 0) {
+          controls.push(
+            <button onClick={this.handleDelete}>Delete</button>
+          );
+          // Compute editor URL
+          let foodIds = new Set();
+          let photoIds = Array.from(selectedPhotoIds);
+          for (let pid of photoIds) {
+            foodIds.add(this.props.photos[pid].food_id);
+          }
+          if (foodIds.size > 1) {
+            //queryString = null;
+          } else if (foodIds.size === 1 && !foodIds.has(null)) {
+            let queryString = 'id='+foodIds.values().next().value;
+            controls.push(
+              <Link to={'/food/editor?'+queryString}>
+                <button>Edit Entry</button>
+              </Link>
+            );
+          } else {
+            let openForm = function() {
+              this.setState({
+                newEntry: {
+                  date: date,
+                  photo_ids: photoIds
+                },
+                editorVisible: true
+              });
+            }.bind(this);
+            let toggleForm = function(x) {
+              this.setState({
+                editorVisible: x
+              });
+            }.bind(this);
+            let createEntry = function() {
+              this.setState({
+                editorVisible: false,
+                selectedPhotoIds: new Set()
+              });
+              this.props.createFood(this.state.newEntry);
+            }.bind(this);
+            controls.push(
+              <>
+              <button onClick={openForm}>New Entry</button>
+              <EntryEditorFormModal
+                  isOpen={this.state.editorVisible}
+                  entry={this.state.newEntry}
+                  onChange={e => this.setState({newEntry: e})} 
+                  toggle={toggleForm}
+                  controls={[
+                    {text: 'Create', callback: createEntry}
+                  ]}/>
+              </>
+            );
+          }
+        }
+        // Render thumbnails
+        let thumbnails = this.renderThumbnails();
+        let uploadingThumbnails = this.renderUploadingThumbnails();
+        let errorThumbnails = this.renderErrorThumbnails();
+        return (
+          <div className='gallery small'>
+            <div className='thumbnails'>
+              {thumbnails}
+              {uploadingThumbnails}
+              {errorThumbnails}
+            </div>
+            <div className='controls'>{controls}</div>
+          </div>
+        );
+      } else {
+        return this.renderEmptyView();
+      }
+    }
+  }
+  renderEmptyView() {
+    return (
+      <div className='gallery empty-view'>
+        <div>There are no photos to show.</div>
+        <label>
+          <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
+          <BigButton icon='add_a_photo' text='Upload Photo' />
+        </label>
+      </div>
+    );
+  }
+  renderThumbnails() {
+    let {
+      photos,
+      selectedPhotoIds = this.state.selectedPhotoIds,
+      disabledPhotos = new Set(),
+      onSelectPhoto = this.handleSelectPhoto,
+    } = this.props;
+    let that = this;
+    return Object.entries(photos).map(
+      function([photoId,photo]){
+        photoId = parseInt(photoId);
+        if (disabledPhotos.has(photoId)) {
+          return (
+            <div className='photo-viewer-thumbnail disabled'
+                key={photoId} >
+              <FoodPhotoThumbnail photoId={photoId}
+                  selected={selectedPhotoIds.has(photoId)}/>
+            </div>
+          );
+        } else {
+          return (
+            <div className='photo-viewer-thumbnail'
+                key={photoId}
+                onClick={()=>onSelectPhoto(toggleSet(selectedPhotoIds,photoId))} >
+              <FoodPhotoThumbnail photoId={photoId}
+                  url={photo.url}
+                  selected={selectedPhotoIds.has(photoId)}/>
+            </div>
+          );
+        }
+      }
+    );
+  }
+  renderUploadingThumbnails() {
+    return Object.entries(this.state.uploadingProgress).map(function([k,v]) {
+      return (
+        <div className='photo-viewer-thumbnail'
+            key={'uploading-'+k}>
+          <div className='thumbnail'>
+            Uploading... ({Math.floor(v*100)}%)
+          </div>
+        </div>
+      );
+    });
+  }
+  renderErrorThumbnails() {
+    return this.state.errors.map(function(e,i){
+      return (
+        <div className='photo-viewer-thumbnail'
+            key={'error-'+i}
+            onClick={()=>null}>
+          <div className='thumbnail error-message'>
+            {e.error}
+          </div>
+        </div>
+      );
+    });
+  }
+}
+const ConnectedGallery = connect(
+  function(state, ownProps) {
+    let {
+      date,
+      uid
+    } = ownProps;
+    let photos = {};
+    let photosLoadingStatus = getLoadingStatus(
+      state.loadingStatus['PHOTOS'],
+      {user_id: uid, date: date}
+    );
+    let photosReady = photosLoadingStatus && photosLoadingStatus.status === 'loaded';
+    if (photosReady) {
+      // Get all photos for the given date
+      let photoIds = Object.keys(
+        state.photos.entities
+      ).filter(function(id) {
+        return state.photos.entities[id] && state.photos.entities[id].date === ownProps.date;
+      });
+      // Populate photo by ID and photo ID by group
+      for (let photoId of photoIds) {
+        photos[photoId] = state.photos.entities[photoId];
+      }
+    }
+    return {
+      photosLoadingStatus,
+      photos
+    };
+  },
+  function(dispatch, ownProps) {
+    return {
+      fetchPhotos: (cache) => dispatch(
+        photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date}, cache)
+      ),
+      updatePhoto: (data) => dispatch(
+        photoActions['update'](data)
+      ),
+      uploadPhoto: (files, progressCallback) => dispatch(
+        photoActions['create'](files, progressCallback, ownProps.date)
+      ),
+      createFood: (data) => dispatch(
+        foodActions['create'](data)
+      ),
+      deletePhoto: (id) => dispatch(
+        photoActions['deleteSingle'](id)
+      ),
+    };
+  }
+)(Gallery);
+
+class Gallery2 extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -781,7 +1138,7 @@ class ConnectedGallery extends Component {
     }
   }
 }
-const Gallery = connect(
+const ConnectedGallery2 = connect(
   function(state, ownProps) {
     let photos = {};
     let photosLoadingStatus = getLoadingStatus(
@@ -825,7 +1182,7 @@ const Gallery = connect(
       ),
     };
   }
-)(ConnectedGallery);
+)(Gallery2);
 
 //////////////////////////////////////////////////
 // Table
