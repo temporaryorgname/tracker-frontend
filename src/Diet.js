@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, Fragment } from 'react';
 import { Route, Link, Switch } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -62,17 +62,18 @@ export class DietPage extends Component {
     [
       'onDateChange',
       'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
-      'onDeleteEntry'
+      'onDeleteEntry',
+      'renderAutocompleteTable'
     ].forEach(x=>this[x]=this[x].bind(this));
     if (this.props.id) {
       this.props.fetchEntry(this.props.id);
     } else {
-      this.props.fetchData(this.props.date);
+      this.props.fetchEntries(this.props.date);
     }
   }
   componentDidUpdate(prevProps) {
     if (prevProps.date !== this.props.date) {
-      this.props.fetchData(this.props.date);
+      this.props.fetchEntries(this.props.date);
       this.setState({
         selected: new Set()
       });
@@ -134,6 +135,57 @@ export class DietPage extends Component {
       }
     }
   }
+  renderAutocompleteTable() {
+    let {
+      id,
+      date,
+      mainEntry,
+      createEntry,
+      updateEntry,
+      notify
+    } = this.props
+    let searchTableControls = null;
+    if (id) {
+      searchTableControls = [{
+        value: 'Add', 
+        callback: (x) => createEntry(
+          {date: date, parent_id: id, ...x}
+        ).then(function(response){
+          let newEntry = Object.values(response.data.entities.food)[0];
+          let url = '/food?id='+newEntry.id;
+          notify({
+            content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
+          });
+        }),
+        requiresSelected: true
+      },{
+        value: 'Fill Entry', 
+        callback: (x) => updateEntry(
+          fillEntry(mainEntry,{date: date, ...x})
+        ),
+        requiresSelected: true
+      }];
+    } else {
+      searchTableControls = [
+        {
+          value: 'Add', 
+          callback: (x) => createEntry(
+            {date: date, ...x, photo_ids: [], parent_id: null}
+          ).then(function(response){
+            let newEntry = Object.values(response.data.entities.food)[0];
+            let url = '/food?id='+newEntry.id;
+            notify({
+              content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
+            });
+          }),
+          requiresSelected: true
+        }
+      ];
+    }
+    return (
+      <SearchTable controls={searchTableControls} editable={true} />
+    );
+  }
   render() {
     let {
       mainEntry = null,
@@ -149,7 +201,7 @@ export class DietPage extends Component {
         mainEntryEditor = (<>
           <h3>{mainEntry.name}</h3>
           <Accordion heading='Details'>
-            <EntryEditorForm entry={mainEntry} onChange={this.props.updateData}/>
+            <EntryEditorForm entry={mainEntry} onChange={this.props.updateEntry}/>
           </Accordion>
         </>);
         mainEntryControls = (<>
@@ -186,6 +238,9 @@ export class DietPage extends Component {
       </Accordion>
       <Accordion heading='Photos'>
         <ConnectedGallery uid={uid} date={date} foodId={id}/>
+      </Accordion>
+      <Accordion heading='Search Past Entries'>
+        {this.renderAutocompleteTable()}
       </Accordion>
       <Accordion heading='Advanced Details'>
         Lorem ipsum
@@ -265,9 +320,9 @@ export const ConnectedDietPage = connect(
   function(dispatch, ownProps) {
     return {
       // Diet entries
-      fetchData: date => dispatch(foodActions['fetchMultiple']({date: date})),
+      fetchEntries: date => dispatch(foodActions['fetchMultiple']({date: date})),
       fetchEntry: id => dispatch(foodActions['fetchSingle'](id)),
-      updateData: entry => dispatch(foodActions['update'](entry)),
+      updateEntry: entry => dispatch(foodActions['update'](entry)),
       deleteEntries: ids => dispatch(foodActions['deleteMultiple'](ids)),
       createEntry: data => dispatch(foodActions['create'](data)),
       // Photos
@@ -569,9 +624,9 @@ export class QuantityInput extends Component {
 
     // Scale values
     let scalableValues = null;
-    if (this.props.scalableValues) {
+    if (this.props.scalablevalues) {
       scalableValues = {};
-      for (let [k,v] of Object.entries(this.props.scalableValues)) {
+      for (let [k,v] of Object.entries(this.props.scalablevalues)) {
         if (v && isFinite(v)) {
           if (typeof v === 'string') {
             if (v.length > 0) {
@@ -754,17 +809,17 @@ export class Gallery extends Component {
         // Render controls
         let controls = [];
         controls.push(
-          <label>
+          <label key='upload'>
             <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
             <button>Upload</button>
           </label>
         );
         controls.push(
-          <button>Select Photos</button>
+          <button key='select'>Select Photos</button>
         );
         if (selectedPhotoIds.size > 0) {
           controls.push(
-            <button onClick={this.handleDelete}>Delete</button>
+            <button key='delete' onClick={this.handleDelete}>Delete</button>
           );
           // Compute editor URL
           let foodIds = new Set();
@@ -777,7 +832,7 @@ export class Gallery extends Component {
           } else if (foodIds.size === 1 && !foodIds.has(null)) {
             let queryString = 'id='+foodIds.values().next().value;
             controls.push(
-              <Link to={'/food/editor?'+queryString}>
+              <Link to={'/food/editor?'+queryString} key='edit'>
                 <button>Edit Entry</button>
               </Link>
             );
@@ -804,7 +859,7 @@ export class Gallery extends Component {
               this.props.createFood(this.state.newEntry);
             }.bind(this);
             controls.push(
-              <>
+              <Fragment key='new'>
               <button onClick={openForm}>New Entry</button>
               <EntryEditorFormModal
                   isOpen={this.state.editorVisible}
@@ -814,7 +869,7 @@ export class Gallery extends Component {
                   controls={[
                     {text: 'Create', callback: createEntry}
                   ]}/>
-              </>
+              </Fragment>
             );
           }
         }
@@ -974,6 +1029,84 @@ const ConnectedGallery = connect(
 // Table
 //////////////////////////////////////////////////
 
+export class FoodTable extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      entries: {}
+    };
+  }
+  render() {
+    let {
+      entries = this.state.entries,
+    } = this.props;
+    let createNewEntry = () => console.error('Missing createNewEntry prop.');
+    if (this.props.createNewEntry) {
+      createNewEntry = this.props.createNewEntry;
+    }
+    function sum(entries, prop) {
+      return Object.values(entries).reduce(function(acc, entry){
+        let val = entry[prop];
+        if (!val && entry.children) {
+          val = sum(entry.children, prop);
+        }
+        if (!val) {
+          return acc;
+        }
+        if (!acc) {
+          return val;
+        }
+        return acc+val;
+      }, null);
+    }
+    return (
+      <table className='food-table'>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Qty</th>
+            <th>Cal</th>
+            <th>Carb</th>
+            <th>Prot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            Object.entries(entries).map(function([id,entry]){
+              let children_count = '';
+              if (entry.children && Object.keys(entry.children).length > 0) {
+                children_count = '('+Object.keys(entry.children).length+')';
+              }
+              return (
+                <tr>
+                  <td>{entry.name} {children_count} <Link to={'/food?id='+id}><i className='material-icons'>create</i></Link></td>
+                  <td>{entry.quantity || '-'}</td>
+                  <td>{entry.calories || '-'}</td>
+                  <td>{entry.carb || '-'}</td>
+                  <td>{entry.protein || '-'}</td>
+                </tr>
+              );
+            })
+          }
+          <tr className='total'>
+            <td className='new-entry-container' onClick={createNewEntry}>
+              + New Entry
+            </td>
+            <td>-</td>
+            <td>{sum(entries,'calories') || '-'}</td>
+            <td>{sum(entries,'carb') || '-'}</td>
+            <td>{sum(entries,'protein') || '-'}</td>
+          </tr>
+        </tbody>
+      </table>
+    );
+  }
+}
+
+//////////////////////////////////////////////////
+// Editor
+//////////////////////////////////////////////////
+
 export class EntryEditorForm extends Component {
   constructor(props) {
     super(props);
@@ -1073,18 +1206,18 @@ export class EntryEditorForm extends Component {
 
         <label className='date'>
           <span>Date</span>
-          <input type='date' name='date' value={entry.date} onChange={onChange} />
+          <input type='date' name='date' value={entry.date || ''} onChange={onChange} />
         </label>
         <label className='time'>
           <span>Time</span>
-          <input type='time' name='time' value={entry.time} onChange={onChange}/>
+          <input type='time' name='time' value={entry.time || ''} onChange={onChange}/>
         </label>
         <label className='quantity'>
           <span>Quantity</span>
           <QuantityInput name='quantity' value={entry.quantity || ''}
               onChange={onChange}
               onScale={this.handleScale}
-              scalableValues={{
+              scalablevalues={{
                 calories: entry.calories,
                 carbohydrate: entry.carbohydrate,
                 fat: entry.fat,
@@ -1132,80 +1265,6 @@ export class EntryEditorForm extends Component {
   }
 }
 
-export class FoodTable extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      entries: {}
-    };
-  }
-  render() {
-    let {
-      entries = this.state.entries,
-    } = this.props;
-    let createNewEntry = () => console.error('Missing createNewEntry prop.');
-    if (this.props.createNewEntry) {
-      createNewEntry = this.props.createNewEntry;
-    }
-    function sum(entries, prop) {
-      return Object.values(entries).reduce(function(acc, entry){
-        let val = entry[prop];
-        if (!val && entry.children) {
-          val = sum(entry.children, prop);
-        }
-        if (!val) {
-          return acc;
-        }
-        if (!acc) {
-          return val;
-        }
-        return acc+val;
-      }, null);
-    }
-    return (
-      <table className='food-table'>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Qty</th>
-            <th>Cal</th>
-            <th>Carb</th>
-            <th>Prot</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            Object.entries(entries).map(function([id,entry]){
-              let children_count = '';
-              if (entry.children && Object.keys(entry.children).length > 0) {
-                children_count = '('+Object.keys(entry.children).length+')';
-              }
-              return (
-                <tr>
-                  <td>{entry.name} {children_count} <Link to={'/food?id='+id}><i className='material-icons'>create</i></Link></td>
-                  <td>{entry.quantity || '-'}</td>
-                  <td>{entry.calories || '-'}</td>
-                  <td>{entry.carb || '-'}</td>
-                  <td>{entry.protein || '-'}</td>
-                </tr>
-              );
-            })
-          }
-          <tr className='total'>
-            <td className='new-entry-container' onClick={createNewEntry}>
-              + New Entry
-            </td>
-            <td>-</td>
-            <td>{sum(entries,'calories') || '-'}</td>
-            <td>{sum(entries,'carb') || '-'}</td>
-            <td>{sum(entries,'protein') || '-'}</td>
-          </tr>
-        </tbody>
-      </table>
-    );
-  }
-}
-
 export class EntryEditorFormModal extends Component {
   render() {
     let {
@@ -1225,103 +1284,12 @@ export class EntryEditorFormModal extends Component {
           {
             controls.map(function(x){
               return (
-                <button onClick={x.callback}>{x.text}</button>
+                <button key={x.text} onClick={x.callback}>{x.text}</button>
               );
             })
           }
         </ModalFooter>
       </Modal>
-    );
-  }
-}
-
-//////////////////////////////////////////////////
-// Editor
-//////////////////////////////////////////////////
-
-class SmallTable extends Component {
-  constructor(props) {
-    super(props);
-    this.handleChange = this.handleChange.bind(this);
-  }
-  handleChange(data, index) {
-    if (this.props.onChange) {
-      let updatedData = [
-        ...this.props.data,
-      ];
-      updatedData[index] = data;
-      this.props.onChange(updatedData);
-    }
-  }
-  render() {
-    let that = this;
-    let emptyRow = null;
-    if (!this.props.data) {
-      emptyRow = (
-        <tr><td colSpan='999'>{'...'}</td></tr>
-      );
-    } else if (this.props.data.length === 0) {
-      emptyRow = (
-        <tr><td colSpan='999'>{'There are not child entries to show.'}</td></tr>
-      );
-    }
-    return (
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Quantity</th>
-            <th>Calories</th>
-            <th>Protein</th>
-          </tr>
-        </thead>
-        <tbody>
-          {emptyRow || this.props.data.map(function(datum, index){
-            if (datum) {
-              return <SmallTableRow
-                key={index}
-                data={datum} 
-                onChange={x => that.handleChange(x, index)} />
-            } else {
-              return (<tr key={index}><td colSpan='999'>...</td></tr>);
-            }
-          })}
-        </tbody>
-      </table>
-    );
-  }
-}
-
-class SmallTableRow extends Component {
-  constructor(props) {
-    super(props);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleScale = this.handleScale.bind(this);
-  }
-  handleChange(e) {
-    if (this.props.onChange) {
-      let data = {
-        ...this.props.data,
-        [e.target.name]: e.target.value
-      };
-      this.props.onChange(data);
-    }
-  }
-  handleScale(scale, val) {
-    this.props.onChange({
-      ...this.props.data,
-      calories: val['calories'],
-      protein: val['protein']
-    });
-  }
-  render() {
-    return (
-      <tr>
-        <td><input type='text' onChange={this.handleChange} name='name' value={this.props.data.name || ''} /></td>
-        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale} scalableValues={{calories: this.props.data.calories, protein: this.props.data.protein}}/></td>
-        <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories || ''} /></td>
-        <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein || ''} /></td>
-      </tr>
     );
   }
 }

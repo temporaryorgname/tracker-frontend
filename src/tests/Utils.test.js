@@ -476,3 +476,10 @@ test('fillEntry with existing data', () => {
   expect(output.quantity).toEqual('100g');
   expect(output.calories).toEqual('200');
 });
+
+test('fillEntry with number types without error', () => {
+  let output = fillEntry(
+    {name: 'boop', calories: 1},
+    {name: 'thing', protein: 2}
+  );
+});

@@ -292,7 +292,7 @@ export function fillEntry(dest, src) {
     scale = computeScale(src.quantity, dest.quantity) || 1;
   }
   function foo(val1,val2,scale) {
-    if (val1 && val1.trim().length > 0) {
+    if (val1 && String(val1).trim().length > 0) {
       return val1;
     }
     if (val2) {

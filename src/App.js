@@ -61,12 +61,13 @@ class ConnectedApp extends Component {
             <Switch>
             {
               loggedInRoutes.map(function(route){
-                return (<Route path={route.route} 
+                return (<Route path={route.route} key={route.route}
                   render={routeProps => <NavigationBar 
                       loggedIn={loggedIn}
                       uid={uid}
                       logout={logout}
                       title={route.title}
+                      route={route.route}
                       {...routeProps} />} />);
               })
             }
@@ -74,7 +75,7 @@ class ConnectedApp extends Component {
             <Switch>
               {
                 loggedInRoutes.map(function(route){
-                  return <Route path={route.route}
+                  return <Route path={route.route} key={route.route}
                       component={route.component} />
                 })
               }
@@ -143,7 +144,8 @@ class NavigationBar extends Component {
   render() {
     let {
       location = {},
-      title = ''
+      title = '',
+      route
     } = this.props;
     let path = location.pathname;
     let navClasses = ['nav'];
@@ -158,7 +160,7 @@ class NavigationBar extends Component {
             <div className='toggle-menu' onClick={this.toggleMenu}>
               <i className='material-icons'>menu</i>
             </div>
-            <span>{title}</span>
+            <span>{route ? <Link to={route}>{title}</Link> : title}</span>
           </div>
           <ul className={navClasses} onClick={this.toggleMenu}>
             <Link to="/"><li>Overview</li></Link>
