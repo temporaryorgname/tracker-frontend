@@ -243,9 +243,11 @@ export class DietPage extends Component {
       <Accordion heading='Search Past Entries'>
         {this.renderAutocompleteTable()}
       </Accordion>
-      <Accordion heading='Advanced Details'>
-        Lorem ipsum
-      </Accordion>
+      { mainEntry &&
+        <Accordion heading='Advanced Details'>
+          <AdvancedDetailsForm entry={mainEntry} onChange={this.props.updateEntry}/>
+        </Accordion>
+      }
       {mainEntryControls}
     </main>);
   }
@@ -1301,6 +1303,55 @@ export class EntryEditorFormModal extends Component {
           }
         </ModalFooter>
       </Modal>
+    );
+  }
+}
+
+export class AdvancedDetailsForm extends Component {
+  constructor(props) {
+    super(props);
+    [
+      'onChange','handleChange'
+    ].forEach(x=>this[x]=this[x].bind(this));
+  }
+  onChange(newEntry) {
+    if (this.props.onChange) {
+      this.props.onChange(newEntry);
+    } else {
+      this.setState({
+        entry: newEntry
+      });
+    }
+  }
+  handleChange(e) {
+    let inputType = e.target.type;
+    let changedField = e.target.name;
+    let newValue = inputType === 'checkbox' ? e.target.checked : e.target.value;
+    this.onChange({
+      ...this.props.entry,
+      [changedField]: newValue
+    });
+  }
+  render() {
+    let {
+      entry = this.state.entry,
+    } = this.props;
+    let onChange = this.handleChange;
+    let that = this;
+    return (
+      <form className='adv-details-form'>
+        <label className='premade'>
+          <span>Premade</span>
+          <input type='checkbox' name='premade' checked={entry.premade || false} onChange={onChange}/>
+        </label>
+        {
+          entry.premade &&
+          <label className='finished'>
+            <span>Finished</span>
+            <input type='checkbox' name='finished' checked={entry.finished|| false} onChange={onChange}/>
+          </label>
+        }
+      </form>
     );
   }
 }
