@@ -136,6 +136,9 @@ table.food-table {
       overflow-x: scroll;
     }
   }
+  input[type=file] {
+    display: none;
+  }
 }
 
 @media #{$computer-and-tablet} {

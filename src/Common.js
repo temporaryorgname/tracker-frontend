@@ -360,6 +360,14 @@ class BigButton extends Component {
   }
 }
 
+function Button(props) {
+  return (
+    <div className='button' tabindex={0} {...props}>
+      {props.children}
+    </div>
+  );
+}
+
 class Accordion extends Component {
   constructor(props) {
     super(props);
@@ -525,5 +533,5 @@ class DropdownMenu extends Component {
   }
 }
 
-export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Accordion, DropdownMenu };
+export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Button, Accordion, DropdownMenu };
 

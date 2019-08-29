@@ -23,7 +23,8 @@ import {
 } from './actions/Actions.js';
 
 import {
-  Checkbox, FoodPhotoThumbnail, ThumbnailsList, DropdownMenu, Accordion, BigButton,
+  Checkbox, FoodPhotoThumbnail, ThumbnailsList, DropdownMenu, Accordion,
+  BigButton, Button,
   Modal, ModalHeader, ModalBody, ModalFooter
 } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
@@ -811,7 +812,7 @@ export class Gallery extends Component {
         controls.push(
           <label key='upload'>
             <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
-            <button>Upload</button>
+            <Button>Upload</Button>
           </label>
         );
         controls.push(
