@@ -1078,7 +1078,7 @@ export class FoodTable extends Component {
                 children_count = '('+Object.keys(entry.children).length+')';
               }
               return (
-                <tr>
+                <tr key={entry.id}>
                   <td>{entry.name} {children_count} <Link to={'/food?id='+id}><i className='material-icons'>create</i></Link></td>
                   <td>{entry.quantity || '-'}</td>
                   <td>{entry.calories || '-'}</td>

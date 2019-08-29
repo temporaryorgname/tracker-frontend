@@ -282,10 +282,6 @@ export function computeScale(qty1, qty2) {
 }
 
 export function fillEntry(dest, src) {
-  console.log('dest');
-  console.log(dest);
-  console.log('src');
-  console.log(src);
   let scalingNeeded = dest.quantity && dest.quantity.trim() !== 0 && src.quantity && src.quantity.trim().length !== 0;
   let scale = 1;
   if (scalingNeeded) {
