@@ -185,7 +185,7 @@ export class DietPage extends Component {
         Lorem ipsum
       </Accordion>
       <Accordion heading='Photos'>
-        <ConnectedGallery uid={uid} date={date}/>
+        <ConnectedGallery uid={uid} date={date} foodId={id}/>
       </Accordion>
       <Accordion heading='Advanced Details'>
         Lorem ipsum
@@ -911,7 +911,8 @@ const ConnectedGallery = connect(
   function(state, ownProps) {
     let {
       date,
-      uid
+      uid,
+      foodId
     } = ownProps;
     let photos = {};
     let photosLoadingStatus = getLoadingStatus(
@@ -921,15 +922,27 @@ const ConnectedGallery = connect(
     let photosReady = photosLoadingStatus && photosLoadingStatus.status === 'loaded';
     if (photosReady) {
       // Get all photos for the given date
-      let photoIds = Object.keys(
+      photos = Object.values(
         state.photos.entities
-      ).filter(function(id) {
-        return state.photos.entities[id] && state.photos.entities[id].date === ownProps.date;
+      ).filter(function(photo) {
+        return photo && photo.date === date;
       });
-      // Populate photo by ID and photo ID by group
-      for (let photoId of photoIds) {
-        photos[photoId] = state.photos.entities[photoId];
+      if (foodId) {
+        function check(id) {
+          if (id === null) {
+            return false;
+          }
+          if (id === parseInt(foodId)) {
+            return true;
+          }
+          if (!state.food.entities[id]) {
+            return false;
+          }
+          return check(state.food.entities[id].parent_id);
+        }
+        photos = photos.filter(photo => check(photo.food_id));
       }
+      photos = arrayToDict(photos, 'id');
     }
     return {
       photosLoadingStatus,
@@ -956,285 +969,6 @@ const ConnectedGallery = connect(
     };
   }
 )(Gallery);
-
-class Gallery2 extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedPhotoIds: new Set(),
-      uploadingProgress: {},
-      errors: []
-    };
-    this.props.fetchPhotos(this.props.uid);
-    this.handleSelectPhoto = this.handleSelectPhoto.bind(this);
-    this.handleDelete = this.handleDelete.bind(this);
-    this.handleUpload = this.handleUpload.bind(this);
-    this.uploadFile = this.uploadFile.bind(this);
-    this.editSelected = this.editSelected.bind(this);
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.date !== this.props.date) {
-      this.props.fetchPhotos(this.props.uid);
-    }
-  }
-  toggleSet(s,x) {
-    if (s.has(x)) {
-      s = new Set(s)
-      s.delete(x);
-      return s;
-    } else {
-      return new Set(s).add(x);
-    }
-  }
-  handleSelectPhoto(photoIds) {
-    this.setState({
-      selectedPhotoIds: photoIds
-    });
-  }
-  handleDelete() {
-    if (!window.confirm('Are you sure you want to delete the '+this.state.selectedPhotoIds.size+' selected photos?')) {
-      return;
-    }
-    Array.from(this.state.selectedPhotoIds).forEach(this.props.deletePhoto)
-    this.setState({
-      selectedPhotoIds: new Set()
-    });
-  }
-  handleUpload(event) {
-    this.uploadFile(event.target.files);
-  }
-  uploadFile(file) {
-    let that = this;
-    // Find first available index
-    let index = 0;
-    while (index in this.state.uploadingProgress) {
-      index++;
-    }
-    this.setState({
-      uploadingProgress: {
-        ...this.state.uploadingProgress,
-        [index]: 0
-      }
-    });
-    this.props.uploadPhoto(
-      file,
-      function(progress) {
-        that.setState({
-          uploadingProgress: {
-            ...that.state.uploadingProgress,
-            [index]: progress.loaded/progress.total
-          }
-        });
-      }
-    ).then(function(response){
-      //that.props.fetchPhotos(false);
-      let progress = {...that.state.uploadingProgress};
-      delete progress[index];
-      that.setState({
-        uploadingProgress: progress
-      });
-    }).catch(function(error){
-      that.setState({
-        uploadingCount: that.state.uploadingCount-1,
-        errors: [...that.state.errors, 
-          {
-            error: error.response.data,
-            file: file,
-            retry: function() {
-              that.setState({
-                errors: that.state.errors.filter(e => e.file !== file)
-              });
-              that.uploadFile(file);
-            }
-          }
-        ]
-      });
-    });
-  }
-  editSelected() {
-    this.props.onEditEntry(this.state.selectedPhotoIds);
-  }
-  render() {
-    const {
-      selectedPhotoIds = this.state.selectedPhotoIds,
-      onSelectPhoto = this.handleSelectPhoto,
-      disabledPhotos = new Set(),
-    } = this.props;
-    let that = this;
-    if (!this.props.photosLoadingStatus) {
-      return (
-        <div>
-          Waiting to load
-        </div>
-      );
-    } else if (this.props.photosLoadingStatus.status === 'loading') {
-      return (
-        <div>
-          LOADING...
-        </div>
-      );
-    } else if (this.props.photosLoadingStatus.status === 'error') {
-      return (
-        <div className='error-message'>
-          {this.props.photosLoadingStatus.error || this.props.groupsLoadingStatus.error}
-        </div>
-      );
-    } else if (this.props.photosLoadingStatus.status === 'loaded') {
-      if (Object.keys(this.props.photos).length > 0 || this.state.errors.length > 0 || Object.keys(this.state.uploadingProgress).length > 0) {
-        // Render controls
-        let controls = (
-          <>
-            <label>
-              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
-              <i className='material-icons action'>add_a_photo</i>
-            </label>
-          </>
-        );
-        if (selectedPhotoIds.size > 0) {
-          // Compute editor URL
-          let foodIds = new Set();
-          let photoIds = Array.from(selectedPhotoIds);
-          for (let pid of photoIds) {
-            foodIds.add(this.props.photos[pid].food_id);
-          }
-          let queryString;
-          if (foodIds.size > 1) {
-            queryString = null;
-          } else if (foodIds.size === 1 && !foodIds.has(null)) {
-            queryString = 'id='+foodIds.values().next().value;
-          } else {
-            queryString = 'photo_ids='+photoIds.join(',');
-          }
-          controls = (
-            <>
-              <i className='material-icons action' onClick={this.handleDelete}>delete</i>
-              {queryString && 
-                <Link to={'/food/editor?date='+this.props.date+'&'+queryString}>
-                  <i className='material-icons action'>create</i>
-                </Link>
-              }
-            </>
-          );
-        }
-        // Render thumbnails
-        let thumbnails = Object.keys(this.props.photos).map(
-          function(photoId){
-            photoId = parseInt(photoId);
-            if (disabledPhotos.has(photoId)) {
-              return (
-                <div className='photo-viewer-thumbnail disabled'
-                    key={photoId} >
-                  <FoodPhotoThumbnail photoId={photoId}
-                      selected={selectedPhotoIds.has(photoId)}/>
-                </div>
-              );
-            } else {
-              return (
-                <div className='photo-viewer-thumbnail'
-                    key={photoId}
-                    onClick={()=>onSelectPhoto(that.toggleSet(selectedPhotoIds,photoId))} >
-                  <FoodPhotoThumbnail photoId={photoId}
-                      selected={selectedPhotoIds.has(photoId)}/>
-                </div>
-              );
-            }
-          }
-        );
-        let uploadingThumbnails = null;
-        for (let [k,v] of Object.entries(this.state.uploadingProgress)) {
-          uploadingThumbnails = (<>
-            {uploadingThumbnails}
-            <div className='photo-viewer-thumbnail'
-                key={'uploading-'+k}>
-              <div className='thumbnail'>
-                Uploading... ({Math.floor(v*100)}%)
-              </div>
-            </div>
-          </>);
-        }
-        let errorThumbnails = this.state.errors.map(function(e,i){
-          return (
-            <div className='photo-viewer-thumbnail'
-                key={'error-'+i}
-                onClick={()=>null}>
-              <div className='thumbnail error-message'>
-                {e.error}
-              </div>
-            </div>
-          );
-        });
-        return (
-          <div className='gallery'>
-            <div className='controls'>{controls}</div>
-            <div className='thumbnails'>
-              {thumbnails}
-              {uploadingThumbnails}
-              {errorThumbnails}
-            </div>
-          </div>
-        );
-      } else {
-        return (
-          <div className='gallery empty-view'>
-            <div>There are no photos to show.</div>
-            <label>
-              <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
-              <div className='large-button'>
-                <i className='material-icons'>add_a_photo</i>
-                Upload Photo
-              </div>
-            </label>
-          </div>
-        );
-      }
-    }
-  }
-}
-const ConnectedGallery2 = connect(
-  function(state, ownProps) {
-    let photos = {};
-    let photosLoadingStatus = getLoadingStatus(
-      state.loadingStatus['PHOTOS'],
-      {user_id: ownProps.uid, date: ownProps.date}
-    );
-    let photosReady = photosLoadingStatus && photosLoadingStatus.status === 'loaded';
-    if (photosReady) {
-      // Get all photos for the given date
-      let photoIds = Object.keys(
-        state.photos.entities
-      ).filter(function(id) {
-        return state.photos.entities[id] && state.photos.entities[id].date === ownProps.date;
-      });
-      // Populate photo by ID and photo ID by group
-      for (let photoId of photoIds) {
-        photos[photoId] = state.photos.entities[photoId];
-      }
-    }
-    return {
-      photosLoadingStatus,
-      photos
-    };
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchPhotos: (cache) => dispatch(
-        photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date}, cache)
-      ),
-      updatePhoto: (data) => dispatch(
-        photoActions['update'](data)
-      ),
-      uploadPhoto: (files, progressCallback) => dispatch(
-        photoActions['create'](files, progressCallback, ownProps.date)
-      ),
-      createFood: (data) => dispatch(
-        foodActions['create'](data)
-      ),
-      deletePhoto: (id) => dispatch(
-        photoActions['deleteSingle'](id)
-      ),
-    };
-  }
-)(Gallery2);
 
 //////////////////////////////////////////////////
 // Table
