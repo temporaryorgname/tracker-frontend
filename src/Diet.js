@@ -1171,12 +1171,22 @@ export class EntryEditorForm extends Component {
     let {
       entry = this.state.entry
     } = this.props;
-    let newEntry = {
-      ...entry,
-      micronutrients: [
-        ...entry.micronutrients,
-        {type: '', value: ''}
-      ]
+    let newEntry = null;
+    if (entry.micronutrients) {
+      newEntry = {
+        ...entry,
+        micronutrients: [
+          ...entry.micronutrients,
+          {type: '', value: ''}
+        ]
+      };
+    } else {
+      newEntry = {
+        ...entry,
+        micronutrients: [
+          {type: '', value: ''}
+        ]
+      };
     }
     this.onChange(newEntry);
   }
