@@ -569,9 +569,9 @@ export class QuantityInput extends Component {
 
     // Scale values
     let scalableValues = null;
-    if (this.props.scalablevalues) {
+    if (this.props.scalableValues) {
       scalableValues = {};
-      for (let [k,v] of Object.entries(this.props.scalablevalues)) {
+      for (let [k,v] of Object.entries(this.props.scalableValues)) {
         if (v && isFinite(v)) {
           if (typeof v === 'string') {
             if (v.length > 0) {
@@ -991,7 +991,8 @@ export class EntryEditorForm extends Component {
       }
     };
     [
-      'onChange','updateEntry','handleChange','handleCreateNewMicro'
+      'onChange','updateEntry','handleChange','handleCreateNewMicro',
+      'handleScale'
     ].forEach(x=>this[x]=this[x].bind(this));
   }
   onChange(newEntry) {
@@ -1045,6 +1046,18 @@ export class EntryEditorForm extends Component {
     }
     this.onChange(newEntry);
   }
+  handleScale(scale, val) {
+    let {
+      entry = this.state.entry
+    } = this.props;
+    this.onChange({
+      ...entry,
+      calories: val['calories'],
+      carbohydrate: val['carbohydrate'],
+      fat: val['fat'],
+      protein: val['protein']
+    });
+  }
   render() {
     let {
       entry = this.state.entry,
@@ -1068,7 +1081,15 @@ export class EntryEditorForm extends Component {
         </label>
         <label className='quantity'>
           <span>Quantity</span>
-          <input type='text' name='quantity' value={entry.quantity || ''} onChange={onChange}/>
+          <QuantityInput name='quantity' value={entry.quantity || ''}
+              onChange={onChange}
+              onScale={this.handleScale}
+              scalableValues={{
+                calories: entry.calories,
+                carbohydrate: entry.carbohydrate,
+                fat: entry.fat,
+                protein: entry.protein
+              }}/>
         </label>
 
         <label className='calories'>
@@ -1297,7 +1318,7 @@ class SmallTableRow extends Component {
     return (
       <tr>
         <td><input type='text' onChange={this.handleChange} name='name' value={this.props.data.name || ''} /></td>
-        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale} scalablevalues={{calories: this.props.data.calories, protein: this.props.data.protein}}/></td>
+        <td><QuantityInput onChange={this.handleChange} name='quantity' value={this.props.data.quantity || ''} onScale={this.handleScale} scalableValues={{calories: this.props.data.calories, protein: this.props.data.protein}}/></td>
         <td><input type='text' onChange={this.handleChange} name='calories' value={this.props.data.calories || ''} /></td>
         <td><input type='text' onChange={this.handleChange} name='protein' value={this.props.data.protein || ''} /></td>
       </tr>
