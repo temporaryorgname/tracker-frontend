@@ -29,82 +29,80 @@ class ConnectedApp extends Component {
       uid,
       logout
     } = this.props;
-    if (loggedIn) {
-      let loggedInRoutes = [
-        {
-          route: '/food',
-          component: ConnectedDietPage,
-          title: 'Diet Log'
-        },{
-          route: '/body',
-          component: BodyStatsPage,
-          title: 'Body Stats'
-        },{
-          route: '/user',
-          component: UserPage,
-          title: 'User Profile'
-        },{
-          route: '/data',
-          component: DataPage
-        },{
-          route: '/tags',
-          component: TagsPage
-        },{
-          route: '/',
-          component: HomePage,
-          title: 'Overview'
-        }
-      ];
-      return (
-        <Router>
-          <div className="App container-fluid">
-            <Switch>
-            {
-              loggedInRoutes.map(function(route){
-                return (<Route path={route.route} key={route.route}
-                  render={routeProps => <NavigationBar 
-                      loggedIn={loggedIn}
-                      uid={uid}
-                      logout={logout}
-                      title={route.title}
-                      route={route.route}
-                      {...routeProps} />} />);
-              })
-            }
-            </Switch>
-            <Switch>
-              {
-                loggedInRoutes.map(function(route){
-                  return <Route path={route.route} key={route.route}
-                      component={route.component} />
-                })
-              }
-              <Route render={() => <ErrorPage404 />}/>
-            </Switch>
-            <NotificationContainer />
-          </div>
-        </Router>
-      );
-    } else {
-      return (
-        <Router>
-          <div className="App container-fluid">
-            <NavigationBar loggedIn={loggedIn}/>
-            <Switch>
-              <Route path="/" render={routeProps =>
-                <NavigationBar loggedIn={loggedIn}
-                    {...routeProps} />} />
-            </Switch>
-            <Switch>
-              <Route path="/login" component={LoginPage} />
-              <Route path="/signup" component={SignupPage} />
-              <Route component={LoginPage} />
-            </Switch>
-            <NotificationContainer />
-          </div>
-        </Router>
-      );
-    }
+		let loggedInRoutes = [
+			{
+				route: '/food',
+				component: ConnectedDietPage,
+				title: 'Diet Log'
+			},{
+				route: '/body',
+				component: BodyStatsPage,
+				title: 'Body Stats'
+			},{
+				route: '/user',
+				component: UserPage,
+				title: 'User Profile'
+			},{
+				route: '/data',
+				component: DataPage
+			},{
+				route: '/tags',
+				component: TagsPage
+			},{
+				route: '/logout',
+				component: ConnectedLogoutPage
+			},{
+				route: '/',
+				component: HomePage,
+				title: 'Overview'
+			}
+		];
+		let loggedOutRoutes = [
+			{
+				route: '/login',
+				component: LoginPage,
+				title: 'Log In'
+			},{
+				route: '/signup',
+				component: SignupPage,
+				title: 'Sign Up'
+			},{
+				route: '/',
+				component: LoginPage,
+				title: 'Log In'
+			}
+		];
+		let routes = loggedIn ? loggedInRoutes : loggedOutRoutes;
+		return (
+			<Router>
+				<div className="App">
+					<Switch>
+					{
+						routes.map(function(route){
+							return (<Route path={route.route} key={route.route}
+								render={routeProps => <NavigationBar 
+										loggedIn={loggedIn}
+										uid={uid}
+										logout={logout}
+										title={route.title}
+										route={route.route}
+										{...routeProps} />} />);
+						})
+					}
+					</Switch>
+					<Switch>
+						{
+							routes.map(function(route){
+								return <Route path={route.route} key={route.route}
+										component={route.component} />
+							})
+						}
+						<Route render={() => <ErrorPage404 />}/>
+					</Switch>
+					<NotificationContainer />
+				</div>
+			</Router>
+		);
   }
 }
 const App = connect(
@@ -153,39 +151,35 @@ class NavigationBar extends Component {
       navClasses.push('hide-mobile');
     }
     navClasses = navClasses.join(' ');
+		let navLinks = null;
     if (this.props.loggedIn) {
-      return (
-        <nav>
-					<span className='title'>{route ? <Link to={route}>{title}</Link> : title}</span>
-					<div className='toggle-menu' onClick={this.toggleMenu}>
-						<i className='material-icons'>menu</i>
-					</div>
-          <ul className={navClasses} onClick={this.toggleMenu}>
-            <Link to="/"><li>Overview</li></Link>
-            <Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
-            <Link to={"/food/photos?uid="+this.props.uid}><li>Photos</li></Link>
-            <Link to={"/body?uid="+this.props.uid}><li>Body Stats</li></Link>
-            <Link to={"/user?uid="+this.props.uid}><li>User Profile</li></Link>
-            <Link to={"logout"}><li>Sign Out</li></Link>
-          </ul>
-        </nav>
+      navLinks = (
+				<ul className={navClasses} onClick={this.toggleMenu}>
+					<Link to="/"><li>Overview</li></Link>
+					<Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
+					<Link to={"/food/photos?uid="+this.props.uid}><li>Photos</li></Link>
+					<Link to={"/body?uid="+this.props.uid}><li>Body Stats</li></Link>
+					<Link to={"/user?uid="+this.props.uid}><li>User Profile</li></Link>
+					<Link to={"/logout"}><li>Sign Out</li></Link>
+				</ul>
       );
     } else {
-      return (
-        <nav>
-          <div>
-            <div className='toggle-menu' onClick={this.toggleMenu}>
-              <i className='material-icons'>menu</i>
-            </div>
-            <span>{title}</span>
-          </div>
-          <ul className={navClasses} onClick={this.toggleMenu}>
-            <Link className="nav-link" to="/login"><li>Login</li></Link>
-            <Link className="nav-link" to="/signup"><li>Sign Up</li></Link>
-          </ul>
-        </nav>
+      navLinks = (
+				<ul className={navClasses} onClick={this.toggleMenu}>
+					<Link className="nav-link" to="/login"><li>Login</li></Link>
+					<Link className="nav-link" to="/signup"><li>Sign Up</li></Link>
+				</ul>
       );
     }
+		return (
+			<nav>
+				<span className='title'>{route ? <Link to={route}>{title}</Link> : title}</span>
+				<div className='toggle-menu' onClick={this.toggleMenu}>
+					<i className='material-icons'>menu</i>
+				</div>
+				{navLinks}
+			</nav>
+		);
   }
 }
 
@@ -378,20 +372,28 @@ class Signup extends Component {
           })
         }
         <div className="form-group">
-          <label>Display Name: </label>
-          <input className='form-control' type='text' name='name' onChange={this.handleFormChange}/>
+          <label>
+						<span>Display Name:</span>
+						<input className='form-control' type='text' name='name' onChange={this.handleFormChange}/>
+					</label>
         </div>
         <div className="form-group">
-          <label>E-mail: </label>
-          <input className='form-control' type='text' name='email' onChange={this.handleFormChange}/>
+          <label>
+						<span>E-mail:</span>
+						<input className='form-control' type='text' name='email' onChange={this.handleFormChange}/>
+					</label>
         </div>
         <div className="form-group">
-          <label>Password: </label>
-          <input className='form-control' type='password' name='password' onChange={this.handleFormChange}/>
+          <label>
+						<span>Password:</span>
+						<input className='form-control' type='password' name='password' onChange={this.handleFormChange}/>
+					</label>
         </div>
         <div className="form-group">
-          <label>Retype Password: </label>
-          <input className='form-control' type='password' name='password2' onChange={this.handleFormChange}/>
+          <label>
+						<span>Retype Password:</span>
+						<input className='form-control' type='password' name='password2' onChange={this.handleFormChange}/>
+					</label>
         </div>
         <input className='btn btn-primary' type='submit' value={this.state.signingUp ? 'Signing up...' : 'Sign Up'} />
       </form>
@@ -428,6 +430,23 @@ const SignupPage = connect(
     }
   }
 )(ConnectedSignupPage);
+
+function LogoutPage(props) {
+	props.logout().then(() => {
+		console.log('logged out');
+	});
+	return 'Logging out...';
+}
+const ConnectedLogoutPage = connect(
+  function(state, ownProps) {
+    return {};
+  },
+  function(dispatch, ownProps) {
+    return {
+      logout: () => dispatch(logout())
+    }
+  }
+)(LogoutPage);
 
 class ErrorPage404 extends Component {
   render() {

@@ -112,6 +112,58 @@ input[type=button], input[type=submit], button, .button {
   }
 }
 
+  label {
+    display: inline-block;
+    text-align: left;
+    margin-bottom: 15px;
+    span {
+      text-align: left;
+      display: block;
+      margin-bottom: 3px;
+      overflow-x: hidden;
+      white-space: nowrap;
+    }
+    input {
+      box-sizing: border-box;
+      //display: block;
+      //height: 32px;
+      //border: 1px black solid;
+      margin: 0px;
+      border-radius: 5px;
+      width: 100%;
+    }
+    &.name {
+      display: block;
+      width: 100%;
+    }
+    &.date, &.time, &.quantity {
+      width: 30%;
+      vertical-align: top;
+    }
+    &.calories, &.carb, &.fat, &.prot {
+      width: 22%;
+    }
+    &.micros {
+      width: 100%;
+      > div {
+        .micro {
+          display: flex;
+          justify-content: space-between;
+          margin: 5px 0;
+          .dropdown {
+            display: inline-block;
+            margin: 0;
+            width: 70%;
+          }
+          input[type=text] {
+            width: 23%;
+            margin: 0px;
+          }
+        }
+      }
+    }
+  }
+
 svg {
   width: 100%;
   height: 100%;
