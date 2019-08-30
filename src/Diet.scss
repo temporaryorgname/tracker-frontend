@@ -141,3 +141,85 @@ table.food-table {
   }
 }
 
+.search-table-container {
+	box-sizing: border-box;
+	margin: 20px 0;
+	padding: 10px;
+	border-radius: 10px;
+	//border: 1px solid grey;
+	text-align: center;
+	width: 100%;
+	.search {
+		position: relative;
+		box-sizing: border-box;
+		display: inline-block;
+		color: grey;
+		padding: 10px;
+		margin-bottom: 1rem;
+		width: 50%;
+		transition: 0.3s ease;
+		i.material-icons {
+			position: absolute;
+			line-height: 0;
+			top: 50%;
+			left: 20px;
+		}
+		input {
+			border: 1px solid grey;
+			border-radius: 10px;
+			padding: 10px 20px 10px 50px;
+			color: grey;
+		}
+		&:focus-within {
+			color: black;
+			width: 100%;
+			input {
+				color: black;
+				border-color: black;
+			}
+		}
+	}
+	.search-table {
+		display: inline-block;
+		max-width: 100%;
+		overflow-x: scroll;
+	}
+	tr {
+		box-sizing: border-box;
+		padding: 1px;
+		&.selected {
+			border: 2px solid black;
+			padding: 0;
+			td {
+				padding-top: 4px;
+			}
+			td:first-of-type {
+				padding-left: 19px;
+			}
+			td:last-of-type {
+				padding-right: 19px;
+			}
+		}
+	}
+	td {
+		white-space: nowrap;
+		position: relative;
+		&[colspan='999'] {
+			background-color: inherit;
+			font-weight: bold;
+			border: 1px solid grey;
+		}
+	}
+	.overlay-controls {
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		left: 0;
+		z-index: 1;
+		button {
+			margin: 0;
+			margin-left: 5px;
+			font-size: 10px;
+		}
+	}
+}

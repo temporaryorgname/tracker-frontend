@@ -156,12 +156,10 @@ class NavigationBar extends Component {
     if (this.props.loggedIn) {
       return (
         <nav>
-          <div>
-            <div className='toggle-menu' onClick={this.toggleMenu}>
-              <i className='material-icons'>menu</i>
-            </div>
-            <span>{route ? <Link to={route}>{title}</Link> : title}</span>
-          </div>
+					<span className='title'>{route ? <Link to={route}>{title}</Link> : title}</span>
+					<div className='toggle-menu' onClick={this.toggleMenu}>
+						<i className='material-icons'>menu</i>
+					</div>
           <ul className={navClasses} onClick={this.toggleMenu}>
             <Link to="/"><li>Overview</li></Link>
             <Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
