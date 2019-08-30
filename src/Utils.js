@@ -120,6 +120,9 @@ export const clipFloat = function(val, decimalPlaces) {
     val = parseFloat(val);
   }
   let intPart = Math.floor(val);
+  if (decimalPlaces === 0) {
+    return String(intPart);
+  }
   let decimalPart = val-intPart;
   let decimalString = String(decimalPart).substr(1, decimalPlaces+1);
   return String(intPart)+decimalString;
@@ -236,30 +239,28 @@ export function updateLoadingStatus(tree, filters, status, keysToCheck=null) {
 }
 
 // Diet utils
-export function computeDietEntryTotal(entries, property, allEntries) {
-  let total = Object.values(entries).map(function(entry) {
-    if (entry[property]) {
-      return entry[property];
-    } else {
-      if (entry.children_id && allEntries) {
-        return computeDietEntryTotal(
-          entry.children_ids.map(id => allEntries[id]).filter(entry => entry),
-          property
-        );
-      } else if (entry.children) {
-        return computeDietEntryTotal(
-          entry.children,
-          property
-        );
+export function computeDietEntryTotal(entries) {
+  if (!entries) {
+    return {};
+  }
+  return entries.reduce((acc,entry) => {
+    let total = {...acc};
+    let childrenTotal = computeDietEntryTotal(entry.children);
+    let keys = new Set(Object.keys(entry));
+    for (let k of Object.keys(childrenTotal)) {
+      keys.add(k);
+    }
+    keys.delete('children');
+    for (let k of keys.values()) {
+      let v = parseFloat(entry[k] || childrenTotal[k]);
+      if (total[k]) {
+        total[k] = total[k] + v;
+      } else {
+        total[k] = v;
       }
     }
-  }).filter(
-    val => val && isFinite(val)
-  ).reduce(
-    (acc, val) => acc+parseFloat(val), 0
-  );
-  total = clipFloat(total, 1);
-  return total;
+    return total;
+  }, {});
 }
 
 export function splitUnits(str) {

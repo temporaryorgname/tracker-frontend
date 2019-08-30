@@ -1080,13 +1080,23 @@ export class FoodTable extends Component {
               if (entry.children && Object.keys(entry.children).length > 0) {
                 children_count = '('+Object.keys(entry.children).length+')';
               }
+              let total = computeDietEntryTotal([entry]);
+              function createRow(entryVal, computedVal, missingVal) {
+                if (entryVal) {
+                  return <td>{clipFloat(entryVal,0)}</td>;
+                } else if (computedVal) {
+                  return <td className='empty'>{clipFloat(computedVal,0)}</td>;
+                } else {
+                  return <td className='empty'>-</td>;
+                }
+              }
               return (
                 <tr key={entry.id}>
                   <td>{entry.name} {children_count} <Link to={'/food?id='+id}><i className='material-icons'>create</i></Link></td>
                   <td>{entry.quantity || '-'}</td>
-                  <td>{entry.calories || '-'}</td>
-                  <td>{entry.carb || '-'}</td>
-                  <td>{entry.protein || '-'}</td>
+                  {createRow(entry.calories,total.calories)}
+                  {createRow(entry.carb,total.carb)}
+                  {createRow(entry.protein,total.protein)}
                 </tr>
               );
             })
@@ -1096,9 +1106,9 @@ export class FoodTable extends Component {
               + New Entry
             </td>
             <td>-</td>
-            <td>{sum(entries,'calories') || '-'}</td>
-            <td>{sum(entries,'carb') || '-'}</td>
-            <td>{sum(entries,'protein') || '-'}</td>
+            <td>{clipFloat(sum(entries,'calories'),0) || '-'}</td>
+            <td>{clipFloat(sum(entries,'carb'),0) || '-'}</td>
+            <td>{clipFloat(sum(entries,'protein'),0) || '-'}</td>
           </tr>
         </tbody>
       </table>

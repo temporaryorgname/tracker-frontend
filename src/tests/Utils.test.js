@@ -9,7 +9,9 @@ import {
   extractPlaceholders,
   splitDict,
   dictEqual,
-  fillEntry
+  computeDietEntryTotal,
+  fillEntry,
+	clipFloat
 } from '../Utils.js';
 
 //////////////////////////////////////////////////
@@ -243,6 +245,21 @@ test('formatString two values', () => {
 });
 
 //////////////////////////////////////////////////
+// clipFloat
+//////////////////////////////////////////////////
+
+test('formatString two values', () => {
+  let output = clipFloat(1.2345, 2);
+  expect(output).toEqual('1.23');
+
+  output = clipFloat(1.2345, 1);
+  expect(output).toEqual('1.2');
+
+  output = clipFloat(1.2345, 0);
+  expect(output).toEqual('1');
+});
+
+//////////////////////////////////////////////////
 // extractPlaceholders
 //////////////////////////////////////////////////
 
@@ -393,6 +410,53 @@ test('dictEqual nested', () => {
 
   output = dictEqual({a: 1, b: 2, c: {d: 3, e: 3}}, {a: 1, b: 2, c: {d: 3, e: 4}});
   expect(output).toBeFalsy();
+});
+
+//////////////////////////////////////////////////
+// computeDietEntryTotal
+//////////////////////////////////////////////////
+
+test('computeDietEntryTotal empty inputs', () => {
+  let output = computeDietEntryTotal([]);
+  expect(output).toEqual({});
+});
+
+test('computeDietEntryTotal shallow sum 1 val', () => {
+  let output = computeDietEntryTotal([
+    {a: 1}, {a: 2}
+  ]);
+  expect(output).toEqual({a: 3});
+
+  output = computeDietEntryTotal([
+    {a: 1}, {a: 2}, {}
+  ]);
+  expect(output).toEqual({a: 3});
+});
+
+test('computeDietEntryTotal shallow sum 2 vals', () => {
+  let output = computeDietEntryTotal([
+    {a: 1, b: 1}, {a: 2}, {b: 3}
+  ]);
+  expect(output).toEqual({a: 3, b: 4});
+});
+
+test('computeDietEntryTotal nested 1 val', () => {
+  let output = computeDietEntryTotal([
+    {a: 1}, {a: 2}, {children: [{a: 3}, {a: 4}]}
+  ]);
+  expect(output).toEqual({a: 10});
+});
+
+test('computeDietEntryTotal nested 2 vals', () => {
+  let output = computeDietEntryTotal([
+    {a: 1}, {a: 2}, {children: [{a: 3, b: 1}, {a: 4}]}
+  ]);
+  expect(output).toEqual({a: 10, b: 1});
+
+  output = computeDietEntryTotal([
+    {a: 1}, {a: 2}, {b:2, children: [{a: 3, b: 1}, {a: 4}]}
+  ]);
+  expect(output).toEqual({a: 10, b: 2});
 });
 
 //////////////////////////////////////////////////
