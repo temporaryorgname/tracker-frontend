@@ -45,7 +45,7 @@ a {
 input {
   &[type=text], &[type=password], &[type=search], &[type=email], &[type=range], &[type=date], &[type=time], &[type=number], &[type=checkbox], &[type=radio] {
     //width: 100%;
-    vertical-align: top;
+    vertical-align: middle;
     color: $primary-colour;
     background-color: rgba(0,0,0,0);
     height: 32px;

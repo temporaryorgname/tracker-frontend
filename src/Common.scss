@@ -110,6 +110,7 @@ div.autocomplete-input {
   margin: 5px;
   cursor: pointer;
   box-shadow: 0 4px 4px black;
+  text-align: center;
   &:hover {
     background-color: $focus-colour;
   }
