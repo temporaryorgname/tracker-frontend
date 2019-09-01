@@ -1,4 +1,4 @@
-import React, { Component, useState, Fragment } from 'react';
+import React, { Component, useState, useEffect, Fragment } from 'react';
 import { Route, Link, Switch } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -235,7 +235,13 @@ export class DietPage extends Component {
           ]}/>
       </div>
       <Accordion heading='Suggestions'>
-        Lorem ipsum
+        <Suggestions date={date}
+            parent={mainEntry ? mainEntry.name : null}
+            siblings={Object.entries(entries).map(e => e.name).filter(x => x)}
+            onSelect={name => this.props.createEntry({
+              date, name,
+              parent_id: mainEntry ? mainEntry.id : null
+            })}/>
       </Accordion>
       <Accordion heading='Photos'>
         <ConnectedGallery uid={uid} date={date} foodId={id}/>
@@ -1585,6 +1591,72 @@ class SearchTable extends Component {
         {successMessage}
         {this.renderAutocompleteTable()}
         {this.renderControls()}
+      </div>
+    );
+  }
+}
+
+//////////////////////////////////////////////////
+// Suggestions
+//////////////////////////////////////////////////
+
+function Suggestions(props){
+  const [suggestions, setSuggestions] = useState([
+    {name: 'Thing', score: 1},
+    {name: 'Thing 2', score: 1},
+    {name: 'Thing 3', score: 1},
+  ]);
+  const [loading, setLoading] = useState(false);
+  const [numDisplayed, setNumDisplayed] = useState(5);
+  let {
+    date,
+    parent = null,
+    siblings = [],
+    onSelect = console.log
+  } = props;
+  useEffect(() => {
+    let params = {}
+    if (parent) {
+      params.parent = parent;
+    }
+    if (siblings.length > 0) {
+      params.siblings = siblings.join(',');
+    }
+    setLoading(true);
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/predict"+dictToQueryString(params), {withCredentials: true}
+    ).then(function(response){
+      setSuggestions(response.data.data);
+      setLoading(false);
+      setNumDisplayed(5);
+    }).catch(function(error){
+      console.error(error);
+      setLoading(false);
+    });
+  }, [parent, ...siblings]);
+  if (loading) {
+    return (
+      <div className='suggestions-container'>
+        Loading...
+      </div>
+    );
+  } else {
+    return (
+      <div className='suggestions-container'>
+        {
+          suggestions.slice(0,numDisplayed).map(suggestion => {
+            return (
+              <div className='suggestion'>
+                <i className='material-icons'
+                    onClick={()=>onSelect(suggestion.name)}>add</i>
+                <span>{suggestion.name}</span>
+              </div>
+            );
+          })
+        }
+        <button onClick={()=>setNumDisplayed(numDisplayed+5)}>
+          Show More
+        </button>
       </div>
     );
   }

@@ -40,7 +40,7 @@ export const dictToQueryString = function(query, keys=null) {
       continue;
     }
     if (query.hasOwnProperty(k)) {
-      output.push([k,query[k]].join('='))
+      output.push([k,encodeURI(query[k])].join('='))
     }
   }
   return '?'+output.join('&');
