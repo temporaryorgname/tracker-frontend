@@ -209,7 +209,7 @@ class ConnectedUserProfile extends Component {
             <span>Prefered Units</span>
             <select name='prefered_units' value={this.state.form.prefered_units} onChange={this.handleFormChange}>
               <option value='lbs'>Imperial (lbs)</option>
-              <option value='kg'>Metric (kg)</option>
+              <option value='kgs'>Metric (kg)</option>
             </select>
           </label>
           <button onClick={this.handleSaveProfile}>Save</button>
