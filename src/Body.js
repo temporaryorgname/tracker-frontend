@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useRef, useEffect } from 'react';
 
 import { select } from "d3-selection";
 import { line } from "d3-shape";
@@ -7,7 +7,7 @@ import { extent } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
 import { } from "d3-transition"; // Needed for selection.transition
 
-import { connect } from "react-redux";
+import { connect, useSelector, useDispatch } from "react-redux";
 import {
   bodyweightActions,
   bodyweightSummaryActions
@@ -62,7 +62,6 @@ class ConnectedBodyWeightTable extends Component {
     var that = this;
     let status = null;
     if (this.props.loadingStatus) {
-      console.log(this.props.loadingStatus);
       switch (this.props.loadingStatus.status) {
         case 'loading':
           status = (
@@ -233,135 +232,120 @@ const NewBodyWeightEntryForm = connect(
   }
 )(ConnectedNewBodyWeightEntryForm);
 
-class ConnectedBodyWeightTimeSeries extends Component {
-  constructor(props) {
-    super(props);
-    this.updateSVG = this.updateSVG.bind(this);
-    this.props.updateData();
+function BodyWeightTimeSeries(props) {
+  let history = useSelector(state => 
+    state.bodyweightSummary.history || {}
+  );
+  let loadingStatus = useSelector(state =>
+    getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {}
+  );
+  let dispatch = useDispatch();
+  let updateDate = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
+  let svg = useRef(null);
+  let [svgDims, setSvgDims] = useState([null,null]);
+  function updateDims() {
+    setSvgDims([svg.current.clientWidth, svg.current.clientHeight]);
   }
-  updateSVG(firstRender=false) {
-    window.svg = this.svg;
+  useEffect(() => {
+    if (!svg.current) {
+      return;
+    }
+    window.addEventListener('resize', updateDims);
+    return () => {
+      window.removeEventListener('resize', updateDims);
+    };
+  }, [svg.current]);
+  useEffect(() => {
+    console.log('RENDERING');
     // Check if data is loaded
-    if (this.props.loadingStatus.status !== 'loaded') {
-      return null;
+    if (loadingStatus.status !== 'loaded') {
+      return;
+    }
+    if (!svg.current) {
+      return;
     }
     // Process data
-    let startDate = new Date(this.props.startDate);
-    let endDate = new Date(this.props.endDate);
-    let diff = (endDate-startDate)/this.props.data.length;
-    let data = this.props.data.map(function(datum, index){
+    let startDate = new Date(history.start_date);
+    let endDate = new Date(history.end_date);
+    let diff = (endDate-startDate)/history.data.length;
+    let data = history.data.map(function(datum, index){
       return {
         date: new Date(startDate.getTime()+diff*index),
         value: datum
       };
     }).filter((x) => x.value !== null);
-    if (!this.svg) {
-      return null;
-    }
     // Render data
-    var width = this.svg.width.baseVal.value;
-    var height = this.svg.height.baseVal.value;
-    if (width < 1 || height < 1) {
-      // FIXME: Hacky fix. Plot would not rerender when moving away from this page and back.
-      setTimeout(this.updateSVG, 1);
-      return;
-    }
-    var padding = 45;
+    var width = svg.current.width.baseVal.value;
+    var height = svg.current.height.baseVal.value;
+    let scale = height/svg.current.clientHeight;
+    let fontSize = 14*scale;
+    var paddingLeft = fontSize*4;
+    var paddingBottom = fontSize*3;
     var xScale = scaleTime()
       .domain(extent(data, p => p.date))
-      .range([padding,width]);
+      .range([paddingLeft,width]);
     var yScale = scaleLinear()
       .domain(extent(data, p => p.value))
-      .range([height-padding,0]);
-    var xAxis = axisBottom(xScale);
-    var yAxis = axisLeft(yScale);
+      .range([height-paddingBottom,0]);
+    var xAxis = axisBottom(xScale)
+      .ticks(svg.current.clientWidth/100);
+    var yAxis = axisLeft(yScale)
+      .ticks(svg.current.clientHeight/30);
     var lineGenerator = line()
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
-    // Animation
-    if (firstRender) {
-      var path = select(this.svg)
-        .select('.curves')
-        .select('path')
-        .attr('d',lineGenerator(data));
-      var totalLength = path.node().getTotalLength();
-      path.attr("stroke-dasharray", totalLength + " " + totalLength)
-        .attr("stroke-dashoffset", -totalLength)
-      window.p = path;
-      path.transition()
-        .duration(2000)
-        .attr("stroke-dashoffset", 0);
-    } else {
-      select(this.svg)
-        .select('.curves')
-        .select('path')
-        .transition()
-        .duration(500)
-        .attr('d',lineGenerator(data));
-    }
-    select(this.svg)
+    // Curve
+    select(svg.current)
+      .select('.curves')
+      .select('path')
+      .transition()
+      .duration(300)
+      .attr('d',lineGenerator(data));
+    // Axis + ticks
+    select(svg.current)
       .select('g.x-axis')
-      .attr('transform', 'translate(0,'+(height-padding)+')')
+      .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
+      .attr("font-size", fontSize)
       .transition()
-      .duration(1000)
+      .duration(300)
       .call(xAxis);
-    select(this.svg)
+    select(svg.current)
       .select('g.y-axis')
-      .attr('transform', 'translate('+(padding)+',0)')
+      .attr('transform', 'translate('+(paddingLeft)+',0)')
+      .attr("font-size", fontSize)
       .transition()
-      .duration(1000)
+      .duration(300)
       .call(yAxis);
-    select(this.svg)
+    // Axis labels
+    select(svg.current)
       .select('text.x-axis')
       .style("text-anchor", "middle")
-      .attr('transform', 'translate('+((width-padding)/2+padding)+','+(height)+')')
+      .attr("font-size", fontSize)
+      .attr('transform', 'translate('+(width/2)+','+(height-fontSize/2)+')')
       .text('Date');
-    select(this.svg)
+    select(svg.current)
       .select('text.y-axis')
       .style("text-anchor", "middle")
-      .attr('transform', 'translate(10,'+((height-padding)/2)+') rotate(-90)')
+      .attr("font-size", fontSize)
+      .attr('transform', 'translate('+fontSize+','+((height-paddingBottom)/2)+') rotate(-90)')
       .text('Weight');
-  }
-  componentDidMount() {
-    this.updateSVG();
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    this.updateSVG();
-  }
-  render() {
-    // Convert the data to numerical form
-    return (
-      <div className='bodyweight-plot-container'>
-      <svg ref={x => this.svg = x}>
-        <g className='x-axis'></g>
-        <g className='y-axis'></g>
-        <text className='x-axis'></text>
-        <text className='y-axis'></text>
+  }, [svg.current, ...svgDims, history.data, loadingStatus.status]);
+  return (
+    <div className='bodyweight-plot-container'>
+    <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+      <g className='x-axis'></g>
+      <g className='y-axis'></g>
+      <text className='x-axis'></text>
+      <text className='y-axis'></text>
+      <svg ref={svg} viewBox='0 0 800 300'>
         <g className='curves'>
           <path d=""></path>
         </g>
       </svg>
-      </div>
-    );
-  }
+    </svg>
+    </div>
+  )
 }
-const BodyWeightTimeSeries = connect(
-  function(state, ownProps) {
-    let history = state.bodyweightSummary.history || {};
-    let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {};
-    return {
-      loadingStatus,
-      startDate: history.start_date,
-      endDate: history.end_date,
-      data: history.data
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      updateData: () => dispatch(bodyweightSummaryActions['fetchMultiple']())
-    };
-  }
-)(ConnectedBodyWeightTimeSeries);
 
 class ConnectedBodyWeightScatterPlot extends Component {
   constructor(props) {
@@ -389,7 +373,6 @@ class ConnectedBodyWeightScatterPlot extends Component {
     // Setup
     var width = this.svg.width.baseVal.value;
     var height = this.svg.height.baseVal.value;
-    console.log('updateSVG '+width+' '+height);
     if (width < 1 || height < 1) {
       // FIXME: Hacky fix. Plot would not rerender when moving away from this page and back.
       setTimeout(this.updateSVG, 1);
