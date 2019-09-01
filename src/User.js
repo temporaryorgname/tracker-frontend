@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 
 import { connect } from "react-redux";
 
+import axios from 'axios';
+
 //import './User.scss';
 import {
   parseQueryString
@@ -59,6 +61,7 @@ class ConnectedUserProfile extends Component {
     this.handleFormChange = this.handleFormChange.bind(this);
     this.handleSaveProfile = this.handleSaveProfile.bind(this);
     this.handleSaveGoals = this.handleSaveGoals.bind(this);
+    this.handleChangePassword = this.handleChangePassword.bind(this);
   }
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (this.props.userInfo !== prevProps.userInfo && this.props.userInfo) {
@@ -142,6 +145,47 @@ class ConnectedUserProfile extends Component {
       });
     });
   }
+  handleChangePassword(event) {
+    event.preventDefault();
+    if (this.state.new_pass !== this.state.new_pass2) {
+      this.setState({
+        passSuccessMessage: null,
+        passErrorMessage: 'Passwords do not match.'
+      });
+      return;
+    }
+    let data = {
+      password: this.state.form.current_pass,
+      new_password: this.state.form.new_pass
+    };
+    console.log(data);
+    axios.post(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/users/change_password",
+      data,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      }
+    ).then(response => {
+      this.setState({
+        passSuccessMessage: 'Password changed successfully.',
+        passErrorMessage: null,
+        form: {
+          ...this.state.form,
+          current_pass: '',
+          new_pass: '',
+          new_pass2: ''
+        }
+      });
+    }).catch(error => {
+      this.setState({
+        passSuccessMessage: null,
+        passErrorMessage: error.response.data.error
+      });
+    });
+  }
   render() {
     let form = (
       <>
@@ -199,19 +243,31 @@ class ConnectedUserProfile extends Component {
         </form>
         <h3>Change Password</h3>
         <form>
+          <div className='success-message'>
+            {this.state.passSuccessMessage}
+          </div>
+          <div className='error-message'>
+            {this.state.passErrorMessage}
+          </div>
           <label>
             <span>Current password</span>
-            <input type='password' name='current_pass' />
+            <input type='password' name='current_pass'
+              value={this.state.form.current_pass || ''}
+              onChange={this.handleFormChange}/>
           </label>
           <label>
             <span>New password</span>
-            <input type='password' name='new_pass' />
+            <input type='password' name='new_pass'
+              value={this.state.form.new_pass || ''}
+              onChange={this.handleFormChange}/>
           </label>
           <label>
             <span>Reenter New password</span>
-            <input type='password' name='new_pass2' />
+            <input type='password' name='new_pass2'
+              value={this.state.form.new_pass2 || ''}
+              onChange={this.handleFormChange}/>
           </label>
-          <button>Save</button>
+          <button onClick={this.handleChangePassword}>Save</button>
         </form>
       </>
     );
