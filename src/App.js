@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import axios from 'axios';
 import './App.scss';
@@ -126,61 +126,54 @@ const App = connect(
   }
 )(ConnectedApp);
 
-class NavigationBar extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      menuVisibile: false
-    }
-    this.toggleMenu = this.toggleMenu.bind(this);
+function NavigationBar(props) {
+  const [menuVisible, setMenuVisible] = useState(false);
+  const toggleMenu = () => setMenuVisible(!menuVisible);
+  let {
+    location = {},
+    title = '',
+    route,
+    loggedIn,
+    uid
+  } = props;
+  let path = location.pathname;
+  let navClasses = ['nav'];
+  if (!menuVisible) {
+    //navClasses.push('hide-mobile');
+    navClasses.push('closed');
+  } else {
+    navClasses.push('open');
   }
-  toggleMenu() {
-    this.setState({
-      menuVisibile: !this.state.menuVisibile
-    });
+  navClasses = navClasses.join(' ');
+  let navLinks = null;
+  if (loggedIn) {
+    navLinks = (
+      <ul className={navClasses} onClick={toggleMenu}>
+        <Link to="/"><li>Overview</li></Link>
+        <Link to={"/food/table?uid="+uid}><li>Diet</li></Link>
+        <Link to={"/food/photos?uid="+uid}><li>Photos</li></Link>
+        <Link to={"/body?uid="+uid}><li>Body Stats</li></Link>
+        <Link to={"/user?uid="+uid}><li>User Profile</li></Link>
+        <Link to={"/logout"}><li>Sign Out</li></Link>
+      </ul>
+    );
+  } else {
+    navLinks = (
+      <ul className={navClasses} onClick={toggleMenu}>
+        <Link className="nav-link" to="/login"><li>Login</li></Link>
+        <Link className="nav-link" to="/signup"><li>Sign Up</li></Link>
+      </ul>
+    );
   }
-  render() {
-    let {
-      location = {},
-      title = '',
-      route
-    } = this.props;
-    let path = location.pathname;
-    let navClasses = ['nav'];
-    if (!this.state.menuVisibile) {
-      navClasses.push('hide-mobile');
-    }
-    navClasses = navClasses.join(' ');
-		let navLinks = null;
-    if (this.props.loggedIn) {
-      navLinks = (
-				<ul className={navClasses} onClick={this.toggleMenu}>
-					<Link to="/"><li>Overview</li></Link>
-					<Link to={"/food/table?uid="+this.props.uid}><li>Diet</li></Link>
-					<Link to={"/food/photos?uid="+this.props.uid}><li>Photos</li></Link>
-					<Link to={"/body?uid="+this.props.uid}><li>Body Stats</li></Link>
-					<Link to={"/user?uid="+this.props.uid}><li>User Profile</li></Link>
-					<Link to={"/logout"}><li>Sign Out</li></Link>
-				</ul>
-      );
-    } else {
-      navLinks = (
-				<ul className={navClasses} onClick={this.toggleMenu}>
-					<Link className="nav-link" to="/login"><li>Login</li></Link>
-					<Link className="nav-link" to="/signup"><li>Sign Up</li></Link>
-				</ul>
-      );
-    }
-		return (
-			<nav>
-				<span className='title'>{route ? <Link to={route}>{title}</Link> : title}</span>
-				<div className='toggle-menu' onClick={this.toggleMenu}>
-					<i className='material-icons'>menu</i>
-				</div>
-				{navLinks}
-			</nav>
-		);
-  }
+  return (
+    <nav>
+      <span className='title'>{route ? <Link to={route}>{title}</Link> : title}</span>
+      <div className='toggle-menu' onClick={toggleMenu}>
+        <i className='material-icons'>menu</i>
+      </div>
+      {navLinks}
+    </nav>
+  );
 }
 
 class ConnectedLoginPrompt extends Component {
