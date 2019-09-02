@@ -11,7 +11,8 @@ import {
   dictEqual,
   computeDietEntryTotal,
   fillEntry,
-	clipFloat
+	clipFloat,
+  foodEntriesToTrees
 } from '../Utils.js';
 
 //////////////////////////////////////////////////
@@ -546,4 +547,26 @@ test('fillEntry with number types without error', () => {
     {name: 'boop', calories: 1},
     {name: 'thing', protein: 2}
   );
+});
+
+//////////////////////////////////////////////////
+// foodEntriesToTrees
+//////////////////////////////////////////////////
+
+test('foodEntriesToTrees no input', () => {
+  let output = foodEntriesToTrees([]);
+  expect(output).toEqual([]);
+
+  output = foodEntriesToTrees({});
+  expect(output).toEqual({});
+});
+
+test('foodEntriesToTrees arrays', () => {
+  let output = foodEntriesToTrees([
+    {id: 0, val: 0},
+    {id: 1, parent_id: 0, val: 1},
+  ]);
+  expect(output).toEqual([
+    {id: 0, val: 0, children: [{id: 1, parent_id: 0, val: 1, children: []}]}
+  ]);
 });

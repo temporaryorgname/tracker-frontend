@@ -308,3 +308,29 @@ export function fillEntry(dest, src) {
     protein: foo(dest.protein, src.protein, scale)
   }
 }
+
+export function foodEntriesToTrees(entries) {
+  let isArray = Array.isArray(entries);
+  if (!isArray) {
+    entries = Object.values(entries);
+  }
+  entries = entries.map(e => {
+    let dup = {...e, children: e.children || []};
+    delete dup['children_ids'];
+    return dup;
+  });
+  entries = arrayToDict(entries,'id');
+  let result = [];
+  for (let e of Object.values(entries)) {
+    if (e.parent_id === null || e.parent_id === undefined) {
+      result.push(e);
+      continue;
+    }
+    entries[e.parent_id].children.push(e)
+  }
+  if (isArray) {
+    return result;
+  } else {
+    return arrayToDict(result,'id');
+  }
+}

@@ -58,12 +58,15 @@ export class DietPage extends Component {
     super(props);
     this.state = {
       newEntryFormVisible: false,
-      newEntry: {}
+      newEntry: {},
+      dupEntryFormVisible: false,
+      dupEntry: {}
     };
     [
       'onDateChange',
       'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
       'onDeleteEntry',
+      'onDuplicateEntry','onChangeDupEntry','onCreateDupEntry',
       'renderAutocompleteTable'
     ].forEach(x=>this[x]=this[x].bind(this));
     if (this.props.id) {
@@ -109,6 +112,11 @@ export class DietPage extends Component {
       newEntry: e
     });
   }
+  onChangeDupEntry(e) {
+    this.setState({
+      dupEntry: e
+    });
+  }
   onCreateNewEntry() {
     if (this.props.mainEntry) {
       this.props.createEntry({
@@ -123,6 +131,16 @@ export class DietPage extends Component {
       newEntry: {}
     });
   }
+  onCreateDupEntry() {
+    this.props.createEntry({
+      ...this.state.dupEntry,
+      parent_id: null
+    });
+    this.setState({
+      dupEntryFormVisible: false,
+      dupEntry: {}
+    });
+  }
   onDeleteEntry() {
     let {
       mainEntry
@@ -134,6 +152,23 @@ export class DietPage extends Component {
       } else {
         this.props.history.push('/food?id='+mainEntry.parent_id);
       }
+    }
+  }
+  onDuplicateEntry() {
+    if (this.props.mainEntry) {
+      function clean(entry) {
+        let cleanedEntry = {...entry};
+        delete cleanedEntry.id;
+        delete cleanedEntry.parent_id;
+        cleanedEntry.children = cleanedEntry.children.map(clean);
+        return cleanedEntry;
+      }
+      let dupEntry = clean(this.props.mainEntry);
+      dupEntry.copied_from = this.props.mainEntry.id;
+      this.setState({
+        dupEntryFormVisible: true,
+        dupEntry: dupEntry
+      });
     }
   }
   renderAutocompleteTable() {
@@ -207,7 +242,7 @@ export class DietPage extends Component {
           </Accordion>
         </>);
         mainEntryControls = (<>
-          <button>Save Changes</button>
+          <button onClick={this.onDuplicateEntry}>Duplicate</button>
           <button onClick={this.onDeleteEntry}>Delete</button>
         </>);
       } else {
@@ -233,6 +268,14 @@ export class DietPage extends Component {
           toggle={x => this.setState({newEntryFormVisible: x})} 
           controls={[
             {text: 'Create Entry', callback: this.onCreateNewEntry}
+          ]}/>
+      <EntryEditorFormModal
+          entry={this.state.dupEntry}
+          onChange={this.onChangeDupEntry}
+          isOpen={this.state.dupEntryFormVisible}
+          toggle={x => this.setState({dupEntryFormVisible: x})} 
+          controls={[
+            {text: 'Create Entry', callback: this.onCreateDupEntry}
           ]}/>
       </div>
       <Accordion heading='Suggestions'>
@@ -295,16 +338,12 @@ export const ConnectedDietPage = connect(
       let allEntries = Object.values(state.food.entities).filter(
         entity => entity && entity.date === mainEntry.date && (!entity.premade || entity.premade == null)
       );
-      //for (let [id,entry] of Object.entries(allEntries)) {
-      //  entry.children = entry.children_ids
-      //    .map(id=>allEntries[id])
-      //    .filter(entry=>entry);
-      //}
       for (let id of Object.keys(allEntries)) {
         allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
       }
       let subentries = Object.values(allEntries)
           .filter(e => e.parent_id == mainEntry.id);
+      mainEntry.children = subentries;
       let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: mainEntry.date});
       return {
         uid,
@@ -1727,7 +1766,7 @@ function NutritionSearch(props){
               <div className='nutrition' key={result.id}
                   onClick={()=>onSelect(result)}
                   onKeyPress={getKeyPressHandler(result)}
-                  tabindex={0}>
+                  tabIndex={0}>
                 <span className='name'>{result.name}</span>
                 <span>{result.date}</span>
                 {result.quantity && <span>{result.quantity}</span>}
