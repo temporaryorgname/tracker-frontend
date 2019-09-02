@@ -193,7 +193,8 @@ export class DietPage extends Component {
       entries = {},
       date = formatDate(new Date()),
       uid,
-      id
+      id,
+      updateEntry,
     } = this.props;
     let mainEntryEditor = null;
     let mainEntryControls = null;
@@ -250,8 +251,17 @@ export class DietPage extends Component {
         {this.renderAutocompleteTable()}
       </Accordion>
       { mainEntry &&
+        <Accordion heading='Nutrition Search'>
+          <NutritionSearch name={mainEntry.name}
+            units={splitUnits(mainEntry.quantity).units} 
+            onSelect={(x) => updateEntry(
+              fillEntry(mainEntry,x)
+            )}/>
+        </Accordion>
+      }
+      { mainEntry &&
         <Accordion heading='Advanced Details'>
-          <AdvancedDetailsForm entry={mainEntry} onChange={this.props.updateEntry}/>
+          <AdvancedDetailsForm entry={mainEntry} onChange={this.props.updateEntry} />
         </Accordion>
       }
       {mainEntryControls}
@@ -1657,6 +1667,82 @@ function Suggestions(props){
         <button onClick={()=>setNumDisplayed(numDisplayed+5)}>
           Show More
         </button>
+      </div>
+    );
+  }
+}
+
+//////////////////////////////////////////////////
+// Nutrition Search
+//////////////////////////////////////////////////
+
+function NutritionSearch(props){
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [numDisplayed, setNumDisplayed] = useState(5);
+  let {
+    name,
+    units,
+    onSelect = console.log
+  } = props;
+  // Load data
+  useEffect(() => {
+    // Load results
+    let params = {
+      name: name,
+      units: units
+    }
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/nutrition/search"+dictToQueryString(params), {withCredentials: true}
+    ).then(function(response){
+      setResults(response.data.history.all);
+      setLoading(false);
+      setNumDisplayed(5);
+    }).catch(function(error){
+      console.error(error);
+      setLoading(false);
+    });
+  }, [props.name, props.units]);
+  // Callback for key presses
+  function getKeyPressHandler(entry) {
+    return e => {
+      if (e.keyCode || e.which === 13) {
+        onSelect(entry);
+      }
+    }
+  }
+  // Render
+  if (loading) {
+    return (
+      <div className='suggestions-container'>
+        Loading...
+      </div>
+    );
+  } else {
+    return (
+      <div className='nutrition-search-container'>
+        {
+          results.slice(0,numDisplayed).map(result => {
+            return (
+              <div className='nutrition' key={result.id}
+                  onClick={()=>onSelect(result)}
+                  onKeyPress={getKeyPressHandler(result)}
+                  tabindex={0}>
+                <span className='name'>{result.name}</span>
+                <span>{result.date}</span>
+                {result.quantity && <span>{result.quantity}</span>}
+                {result.calories && <span>{clipFloat(result.calories,1)} kCals</span>}
+                {result.protein && <span>{clipFloat(result.protein,1)}g protein</span>}
+              </div>
+            );
+          })
+        }
+        {
+          numDisplayed < results.length &&
+          <button onClick={()=>setNumDisplayed(numDisplayed+5)}>
+            Show More
+          </button>
+        }
       </div>
     );
   }

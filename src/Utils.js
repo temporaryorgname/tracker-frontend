@@ -264,8 +264,11 @@ export function computeDietEntryTotal(entries) {
 }
 
 export function splitUnits(str) {
-  var val = parseFloat(str);
-  var units = str.substring(val.toString().length).trim();
+  if (str === null) {
+    return {val: null, units: null}
+  }
+  let val = parseFloat(str);
+  let units = str.substring(val.toString().length).trim();
   return {val: val, units: units}
 }
 
