@@ -137,6 +137,8 @@ function NavigationBar(props) {
     uid
   } = props;
   let path = location.pathname;
+
+  // Class names
   let navClasses = ['nav'];
   if (!menuVisible) {
     //navClasses.push('hide-mobile');
@@ -145,6 +147,8 @@ function NavigationBar(props) {
     navClasses.push('open');
   }
   navClasses = navClasses.join(' ');
+
+  // Render
   let navLinks = null;
   if (loggedIn) {
     navLinks = (

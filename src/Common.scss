@@ -138,13 +138,14 @@ div.autocomplete-input {
     font-size: 14px;
     font-weight: bold;
     > i.material-icons {
-      animation: ease 0.3s;
+      transition: all .3s ease;
       vertical-align: middle;
       margin: -3px 0;
     }
   }
   > .content {
-    animation: ease 0.3s;
+    transition: all .3s ease;
+    transform-origin: top;
     padding: 10px;
   }
   // Collapsed

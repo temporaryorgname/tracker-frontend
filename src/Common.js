@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import { connect } from "react-redux";
@@ -329,34 +329,29 @@ class AutocompleteInput extends Component {
   }
 }
 
-class BigButton extends Component {
-  constructor(props) {
-    super(props);
-  }
-  render() {
-    let {
-      icon = null,
-      text = '',
-      onClick = ()=>null,
-      linkTo = null
-    } = this.props;
-    if (linkTo === null) {
-      return (
+function BigButton(props) {
+  let {
+    icon = null,
+    text = '',
+    onClick = ()=>null,
+    linkTo = null
+  } = props;
+  if (linkTo === null) {
+    return (
+      <div className='large-button' onClick={onClick}>
+        <i className='material-icons'>{icon}</i>
+        {text}
+      </div>
+    );
+  } else {
+    return (
+      <Link to={linkTo}>
         <div className='large-button' onClick={onClick}>
           <i className='material-icons'>{icon}</i>
           {text}
         </div>
-      );
-    } else {
-      return (
-        <Link to={linkTo}>
-          <div className='large-button' onClick={onClick}>
-            <i className='material-icons'>{icon}</i>
-            {text}
-          </div>
-        </Link>
-      );
-    }
+      </Link>
+    );
   }
 }
 
@@ -368,36 +363,22 @@ function Button(props) {
   );
 }
 
-class Accordion extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      collapsed: true
-    };
-    ['toggle'].forEach(x=>this[x]=this[x].bind(this));
-  }
-  toggle() {
-    this.setState({
-      collapsed: !this.state.collapsed
-    });
-  }
-  render() {
-    let {
-      children = '',
-      heading = '',
-      collapsed = this.state.collapsed,
-      onClick = this.toggle
-    } = this.props;
-    return (<div className={'accordion ' + (collapsed ? 'collapsed':'expanded')}>
-      <div className='heading' onClick={onClick}>
-        <i className='material-icons'>arrow_right</i>
-        {heading}
-      </div>
-      <div className='content'>
-        {children}
-      </div>
-    </div>);
-  }
+function Accordion(props) {
+  let [collapsed, setCollapsed] = useState(true);
+  let toggle = () => setCollapsed(!collapsed);
+  let {
+    children = '',
+    heading = ''
+  } = props;
+  return (<div className={'accordion ' + (collapsed ? 'collapsed':'expanded')}>
+    <div className='heading' onClick={toggle}>
+      <i className='material-icons'>arrow_right</i>
+      {heading}
+    </div>
+    <div className='content'>
+      {children}
+    </div>
+  </div>);
 }
 
 class DropdownMenu extends Component {
