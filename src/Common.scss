@@ -173,6 +173,7 @@ div.autocomplete-input {
   vertical-align: top;
   // Default styles
   > .heading {
+    box-sizing: border-box;
     cursor: pointer;
     height: 0;
     padding: 16px;
@@ -194,6 +195,7 @@ div.autocomplete-input {
     }
   }
   > .options {
+    box-sizing: border-box;
     animation: ease 0.3s;
     border: 1px solid black;
     border-radius: 5px;
@@ -202,8 +204,12 @@ div.autocomplete-input {
     left: 0;
     right: 0;
     z-index: 1;
+    box-shadow: $shadow;
     background-color: $background-colour;
+    transition: all .3s ease;
+    transform-origin: top;
     > .option {
+      box-sizing: border-box;
       padding: 16px;
       line-height: 0;
       text-align: left;
@@ -218,7 +224,7 @@ div.autocomplete-input {
   &.collapsed > .heading {
   }
   &.collapsed > .options {
-    display: none;
+    transform: scaleY(0);
   }
   // Expanded
   &.expanded > .heading {

@@ -84,7 +84,7 @@ input[type=button], input[type=submit], button, .button {
   border-radius: 5px;
   cursor: pointer;
   outline: none;
-  box-shadow: 2px 4px 4px $primary-colour;
+  box-shadow: $shadow;
 
   &:active {
     transform: translateY(4px);

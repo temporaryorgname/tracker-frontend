@@ -7,6 +7,9 @@ $focus-colour: rgba($primary-colour, 0.1);
 $success-colour: green;
 $error-colour: red;
 
+$shadow-colour: rgba($primary-colour, 0.5);
+$shadow: 2px 4px 4px $shadow-colour;
+
 $modal-z: 10000;
 $sticky-z: 1;
 
