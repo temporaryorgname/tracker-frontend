@@ -93,6 +93,9 @@ nav {
     ul {
       display: block;
       position: static;
+      &.closed {
+        transform: scaleY(1);
+      }
     }
     div {
       display: inline-block;
