@@ -13,7 +13,7 @@ import {
   clipFloat
 } from './Utils.js';
 
-class ConnectedHomePage extends Component {
+class OverviewPage extends Component {
   constructor(props) {
     super(props);
     this.props.fetchFoodData();
@@ -105,7 +105,7 @@ class ConnectedHomePage extends Component {
       );
     }
     return (
-      <main className='home-page-container'>
+      <main className='overview-page-container'>
         <div className='background'>
         </div>
         <h2>Hello {this.props.name}</h2>
@@ -117,7 +117,7 @@ class ConnectedHomePage extends Component {
     );
   }
 }
-export const HomePage = connect(
+export const ConnectedOverviewPage = connect(
   function(state, ownProps) {
     let uid = state.session.uid;
 
@@ -174,7 +174,7 @@ export const HomePage = connect(
       fetchBodyData: (id) => dispatch(bodyweightSummaryActions['fetchMultiple'](id)),
     };
   }
-)(ConnectedHomePage);
+)(OverviewPage);
 
 class ResponsiveSVG extends Component {
   constructor(props) {

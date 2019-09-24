@@ -7,7 +7,7 @@ import { connect } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
 import { userProfileActions, notify, unnotify } from './actions/Actions.js';
 
-import { HomePage } from './Home.js'
+import { ConnectedOverviewPage } from './Home.js'
 import { ConnectedDietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 import { UserPage } from './User.js'
@@ -53,7 +53,7 @@ class ConnectedApp extends Component {
 				component: ConnectedLogoutPage
 			},{
 				route: '/',
-				component: HomePage,
+				component: ConnectedOverviewPage,
 				title: 'Overview'
 			}
 		];

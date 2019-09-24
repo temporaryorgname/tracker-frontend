@@ -1,5 +1,55 @@
 @import '_variables';
 
+.overview-page-container {
+  text-align: center;
+
+  .empty-view {
+    display: inline-block;
+    width: 100%;
+    color: rgb(50,50,50);
+    margin: auto;
+
+    .large-button {
+      margin: 20px 5px;
+    }
+  }
+
+  .progress-report {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+  }
+
+  span {
+    font-weight: bold;
+  }
+
+  .progress-bar {
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  svg {
+    width: unset;
+    rect.total {
+      fill: rgba(white,0.5);
+      stroke: black;
+      stroke-width: 1px;
+    }
+    rect.progress{
+      fill: green;
+      stroke: black;
+      stroke-width: 1px;
+    }
+    text {
+      font-size: 16px;
+      &.left, &.right {
+        display: none;
+      }
+    }
+  }
+}
+
 @media #{$computer-and-tablet} {
   .home-page-container {
     text-align: center;
@@ -78,74 +128,3 @@
 @media #{$tablet} {
 }
 
-@media #{$mobile} {
-  .home-page-container {
-    text-align: center;
-
-    .empty-view {
-      display: inline-block;
-      width: 100%;
-      color: rgb(50,50,50);
-      margin: auto;
-
-      .large-button {
-        display: inline-block;
-        border: solid 1px black;
-        border-radius: 5px;
-        width: 150px;
-        height: 150px;
-        margin: 5px;
-        cursor: pointer;
-        &:hover {
-          background-color: rgb(200,200,200);
-        }
-        i {
-          display: block;
-          width: 70px;
-          height: 70px;
-          margin: 20px auto;
-          font-size: 70px;
-        }
-      }
-    }
-
-    .progress-report {
-      width: 100%;
-      padding: 15px;
-      box-sizing: border-box;
-    }
-
-    input[type='text'] {
-      width: 100px;
-    }
-
-    span {
-      font-weight: bold;
-    }
-
-    .progress-bar {
-      text-align: center;
-      margin-top: 20px;
-      margin-bottom: 20px;
-    }
-    svg {
-      width: unset;
-      rect.total {
-        fill: rgba(white,0.5);
-        stroke: black;
-        stroke-width: 1px;
-      }
-      rect.progress{
-        fill: green;
-        stroke: black;
-        stroke-width: 1px;
-      }
-      text {
-        font-size: 16px;
-        &.left, &.right {
-          display: none;
-        }
-      }
-    }
-  }
-}
