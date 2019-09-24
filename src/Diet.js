@@ -25,7 +25,8 @@ import {
 import {
   Checkbox, FoodPhotoThumbnail, ThumbnailsList, DropdownMenu, Accordion,
   BigButton, Button,
-  Modal, ModalHeader, ModalBody, ModalFooter
+  Modal, ModalHeader, ModalBody, ModalFooter,
+  Breadcrumbs
 } from './Common.js';
 import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
 
@@ -67,7 +68,7 @@ export class DietPage extends Component {
       'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
       'onDeleteEntry',
       'onDuplicateEntry','onChangeDupEntry','onCreateDupEntry',
-      'renderAutocompleteTable'
+      'renderAutocompleteTable','renderBreadcrumbs'
     ].forEach(x=>this[x]=this[x].bind(this));
     if (this.props.id) {
       this.props.fetchEntry(this.props.id);
@@ -222,6 +223,40 @@ export class DietPage extends Component {
       <SearchTable controls={searchTableControls} editable={true} />
     );
   }
+  renderBreadcrumbs() {
+    let {
+      mainEntry,
+      allEntries = {},
+    } = this.props;
+    if (mainEntry) {
+      let path = [];
+      let entry = mainEntry;
+      while (entry.parent_id) {
+        entry = allEntries[entry.parent_id];
+        if (entry) {
+          path.push({
+            text: entry.name || '(Unnamed Entry)',
+            url: '/food?id='+entry.id
+          });
+        } else {
+          path.push({
+            text: '...',
+            url: '#'
+          });
+          break;
+        }
+      }
+      path.push({
+        text: mainEntry.date,
+        url: 'food?date='+mainEntry.date
+      });
+      return (
+        <Breadcrumbs data={path.reverse()} />
+      );
+    } else {
+      return null;
+    }
+  }
   render() {
     let {
       mainEntry = null,
@@ -254,6 +289,7 @@ export class DietPage extends Component {
       );
     }
     return (<main className='diet-page-container'>
+      {this.renderBreadcrumbs()}
       {mainEntryEditor}
       <div className='food-table-container'>
       {
@@ -351,6 +387,7 @@ export const ConnectedDietPage = connect(
         params: queryParams,
         mainEntry: mainEntry,
         entries: arrayToDict(subentries, 'id'),
+        allEntries: arrayToDict(allEntries, 'id'),
         dirty: state.food.dirtyEntities.size > 0,
         id
       }
@@ -371,6 +408,7 @@ export const ConnectedDietPage = connect(
         date,
         params: queryParams,
         entries: entriesWithoutParents,
+        allEntries: allEntries,
         dirty: state.food.dirtyEntities.size > 0
       }
     }

@@ -514,5 +514,28 @@ class DropdownMenu extends Component {
   }
 }
 
+export function Breadcrumbs(props) {
+  let {
+    data = []
+  } = props;
+  return (<div className='breadcrumbs'>
+    {
+      data.map(crumb => {
+        let {
+          text,
+          url
+        } = crumb;
+        return (
+          <Link to={url}>{text}</Link>
+        );
+      }).reduce((output,elem,i) => {
+        output.push(elem);
+        output.push(<div className='separator'></div>);
+        return output;
+      }, [])
+    }
+  </div>);
+}
+
 export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Button, Accordion, DropdownMenu };
 

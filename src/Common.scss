@@ -281,3 +281,17 @@ div.modal-background {
     }
   }
 }
+
+div.breadcrumbs {
+  text-align: left;
+  padding: 10px;
+  > a {
+    margin: 0 5px;
+  }
+  > .separator {
+    display: inline-block;
+    &::after {
+      content: '/';
+    }
+  }
+}
