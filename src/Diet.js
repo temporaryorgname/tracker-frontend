@@ -302,6 +302,7 @@ export class DietPage extends Component {
           onChange={this.onChangeNewEntry}
           isOpen={this.state.newEntryFormVisible}
           toggle={x => this.setState({newEntryFormVisible: x})} 
+          onSubmit={this.onCreateNewEntry}
           controls={[
             {text: 'Create Entry', callback: this.onCreateNewEntry}
           ]}/>
@@ -310,6 +311,7 @@ export class DietPage extends Component {
           onChange={this.onChangeDupEntry}
           isOpen={this.state.dupEntryFormVisible}
           toggle={x => this.setState({dupEntryFormVisible: x})} 
+          onSubmit={this.onCreateDupEntry}
           controls={[
             {text: 'Create Entry', callback: this.onCreateDupEntry}
           ]}/>
@@ -962,6 +964,7 @@ export class Gallery extends Component {
                   entry={this.state.newEntry}
                   onChange={e => this.setState({newEntry: e})} 
                   toggle={toggleForm}
+                  onSubmit={createEntry}
                   controls={[
                     {text: 'Create', callback: createEntry}
                   ]}/>
@@ -1230,8 +1233,8 @@ export class EntryEditorForm extends Component {
       }
     };
     [
-      'onChange','updateEntry','handleChange','handleCreateNewMicro',
-      'handleScale'
+      'onChange','updateEntry','handleChange','handleKeyPress',
+      'handleCreateNewMicro','handleScale'
     ].forEach(x=>this[x]=this[x].bind(this));
   }
   onChange(newEntry) {
@@ -1271,6 +1274,15 @@ export class EntryEditorForm extends Component {
     let newValue = e.target.value;
     let keys = changedField.split('.');
     this.updateEntry(keys, newValue);
+  }
+  handleKeyPress(e) {
+    let {
+      onSubmit = () => {},
+      entry = this.state.entry,
+    } = this.props;
+    if (e.key === 'Enter') {
+      onSubmit(entry);
+    }
   }
   handleCreateNewMicro(e) {
     let {
@@ -1312,21 +1324,31 @@ export class EntryEditorForm extends Component {
       entry = this.state.entry,
     } = this.props;
     let onChange = this.handleChange;
+    let onKeyPress = this.handleKeyPress;
     let that = this;
     return (
       <form className='new-entry-form'>
         <label className='name'>
           <span>Name</span>
-          <input type='text' name='name' value={entry.name || ''} onChange={onChange}/>
+          <input type='text' name='name'
+              value={entry.name || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
 
         <label className='date'>
           <span>Date</span>
-          <input type='date' name='date' value={entry.date || ''} onChange={onChange} />
+          <input type='date' name='date'
+              value={entry.date || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
         <label className='time'>
           <span>Time</span>
-          <input type='time' name='time' value={entry.time || ''} onChange={onChange}/>
+          <input type='time' name='time'
+              value={entry.time || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
         <label className='quantity'>
           <span>Quantity</span>
@@ -1343,19 +1365,31 @@ export class EntryEditorForm extends Component {
 
         <label className='calories'>
           <span>Calories</span>
-          <input type='text' name='calories' value={entry.calories || ''} onChange={onChange}/>
+          <input type='text' name='calories'
+              value={entry.calories || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
         <label className='carb'>
           <span>Carbs (g)</span>
-          <input type='text' name='carbohydrate' value={entry.carbohydrate || ''} onChange={onChange}/>
+          <input type='text' name='carbohydrate'
+              value={entry.carbohydrate || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
         <label className='fat'>
           <span>Fats (g)</span>
-          <input type='text' name='fat' value={entry.fat || ''} onChange={onChange}/>
+          <input type='text' name='fat'
+              value={entry.fat || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
         <label className='prot'>
           <span>Protein (g)</span>
-          <input type='text' name='protein' value={entry.protein || ''} onChange={onChange}/>
+          <input type='text' name='protein'
+              value={entry.protein || ''}
+              onChange={onChange}
+              onKeyPress={onKeyPress}/>
         </label>
         <label className='micros'>
           <span>Micronutrients</span>
@@ -1388,13 +1422,16 @@ export class EntryEditorFormModal extends Component {
       isOpen,
       entry,
       onChange,
-      controls = []
+      controls = [],
+      onSubmit = () => {}
     } = this.props;
     return (
       <Modal toggle={toggle} isOpen={isOpen}>
         <ModalHeader>New Entry</ModalHeader>
         <ModalBody>
-          <EntryEditorForm entry={entry} onChange={onChange} />
+          <EntryEditorForm entry={entry}
+              onChange={onChange}
+              onSubmit={onSubmit}/>
         </ModalBody>
         <ModalFooter>
           {

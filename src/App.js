@@ -154,8 +154,8 @@ function NavigationBar(props) {
     navLinks = (
       <ul className={navClasses} onClick={toggleMenu}>
         <Link to="/"><li>Overview</li></Link>
-        <Link to={"/food/table?uid="+uid}><li>Diet</li></Link>
-        <Link to={"/food/photos?uid="+uid}><li>Photos</li></Link>
+        <Link to={"/food?uid="+uid}><li>Diet</li></Link>
+        <Link to={"/photos?uid="+uid}><li>Photos</li></Link>
         <Link to={"/body?uid="+uid}><li>Body Stats</li></Link>
         <Link to={"/user?uid="+uid}><li>User Profile</li></Link>
         <Link to={"/logout"}><li>Sign Out</li></Link>
