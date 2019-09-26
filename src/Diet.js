@@ -1339,6 +1339,7 @@ export class EntryEditorForm extends Component {
         <label className='date'>
           <span>Date</span>
           <input type='date' name='date'
+              tabindex='-1'
               value={entry.date || ''}
               onChange={onChange}
               onKeyPress={onKeyPress}/>
@@ -1346,6 +1347,7 @@ export class EntryEditorForm extends Component {
         <label className='time'>
           <span>Time</span>
           <input type='time' name='time'
+              tabindex='-1'
               value={entry.time || ''}
               onChange={onChange}
               onKeyPress={onKeyPress}/>
