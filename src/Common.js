@@ -449,7 +449,6 @@ class DropdownMenu extends Component {
     const kbEnter = 13;
     const kbUp = 38;
     const kbDown = 40;
-    e.preventDefault()
     let {
       options = [],
       value = this.state.value,
@@ -460,20 +459,25 @@ class DropdownMenu extends Component {
     if (collapsed) {
       if (e.keyCode === kbUp) {
         this.selectOption(this.getPrevValue(value));
+        e.preventDefault();
       } else if (e.keyCode === kbDown) {
         this.selectOption(this.getNextValue(value));
+        e.preventDefault();
       }
     } else {
       if (e.keyCode === kbUp) {
         this.setState({
           hoverValue: this.getPrevValue(hoverValue)
         });
+        e.preventDefault();
       } else if (e.keyCode === kbDown) {
         this.setState({
           hoverValue: this.getNextValue(hoverValue)
         });
+        e.preventDefault();
       } else if (e.keyCode === kbEnter) {
         this.selectOption(hoverValue);
+        e.preventDefault();
       }
     }
   }
