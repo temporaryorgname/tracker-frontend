@@ -12,6 +12,7 @@ import { ConnectedDietPage } from './Diet.js'
 import { BodyStatsPage } from './Body.js'
 import { UserPage } from './User.js'
 import { DataPage, TagsPage } from './Data.js'
+import { PhotosPage } from './Photos.js'
 
 class ConnectedApp extends Component {
   constructor(props) {
@@ -34,6 +35,10 @@ class ConnectedApp extends Component {
 				route: '/food',
 				component: ConnectedDietPage,
 				title: 'Diet Log'
+			},{
+				route: '/photos',
+				component: PhotosPage,
+				title: 'Photos'
 			},{
 				route: '/body',
 				component: BodyStatsPage,
