@@ -1,11 +1,11 @@
 import React, { Component, useState, useEffect, Fragment } from 'react';
-import { Route, Link, Switch } from "react-router-dom";
+import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import axios from 'axios';
 
-import { connect, shallowEqual, useSelector } from "react-redux";
+import { connect } from "react-redux";
 
 import { 
   getLoadingStatus,
@@ -23,7 +23,7 @@ import {
 } from './actions/Actions.js';
 
 import {
-  Checkbox, FoodPhotoThumbnail, ThumbnailsList, DropdownMenu, Accordion,
+  Checkbox, FoodPhotoThumbnail, DropdownMenu, Accordion,
   BigButton, Button,
   Modal, ModalHeader, ModalBody, ModalFooter,
   Breadcrumbs
