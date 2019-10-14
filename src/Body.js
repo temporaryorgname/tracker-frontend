@@ -416,18 +416,15 @@ function BodyWeightHourlyStats(props) {
     let maxChange = data.reduce((a,d)=>d.value > a ? d.value : a, 0);
     let normalizedStd = hourly_std.map((datum,index) => datum/mean_weight);
     let maxNormalizedStd = normalizedStd.reduce((a,b) => Math.abs(a) > Math.abs(b) ? a : b, 0);
-    let stdData = hourly_std
+    let stdData = normalizedStd
       .map(function(datum, index){
-        let std = datum/mean_weight*(maxChange/maxNormalizedStd);
+        let std = datum*(maxChange/maxNormalizedStd);
         return {
           time: hours[index],
           value0: data[index].value+std,
           value1: data[index].value-std
         };
       });
-    console.log(hourly_std);
-    window.std = hourly_std;
-    window.stdData = stdData;
 
     var width = svg.current.width.baseVal.value;
     var height = svg.current.height.baseVal.value;
