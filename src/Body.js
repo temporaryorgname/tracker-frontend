@@ -446,7 +446,7 @@ class ConnectedBodyWeightScatterPlot extends Component {
 const BodyWeightScatterPlot = connect(
   function(state, ownProps) {
     let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {};
-    let data = state.bodyweightSummary.by_time;
+    let data = state.bodyweightSummary.hourly_mean;
     return {
       loadingStatus,
       data
