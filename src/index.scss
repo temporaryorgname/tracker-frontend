@@ -202,6 +202,9 @@ svg {
       stroke-width: 1px;
     }
   }
+  text.x-axis, text.y-axis {
+    font-weight: bold;
+  }
 
   .curves {
     path {

@@ -309,36 +309,28 @@ function BodyWeightTimeSeries(props) {
     select(svg.current)
       .select('.curves')
       .select('path')
-      .transition()
-      .duration(300)
       .attr('d',lineGenerator(data));
     // Draw gridlines
     select(svg.current)
       .select('g.x-gridlines')
       .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
-      .transition()
       .call(xGridlines);
     select(svg.current)
       .select('g.y-gridlines')
       .attr('transform', 'translate('+(paddingLeft)+',0)')
       .attr("font-size", fontSize)
-      .transition()
       .call(yGridlines);
     // Axis + ticks
     select(svg.current)
       .select('g.x-axis')
       .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
-      .transition()
-      .duration(300)
       .call(xAxis);
     select(svg.current)
       .select('g.y-axis')
       .attr('transform', 'translate('+(paddingLeft)+',0)')
       .attr("font-size", fontSize)
-      .transition()
-      .duration(300)
       .call(yAxis);
     // Axis labels
     select(svg.current)
@@ -462,26 +454,22 @@ function BodyWeightHourlyStats(props) {
       .select('g.x-gridlines')
       .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
-      .transition()
       .call(xGridlines);
     select(svg.current)
       .select('g.y-gridlines')
       .attr('transform', 'translate('+(paddingLeft)+',0)')
       .attr("font-size", fontSize)
-      .transition()
       .call(yGridlines);
     // Draw axes
     select(svg.current)
       .select('g.x-axis')
       .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
-      .transition()
       .call(xAxis);
     select(svg.current)
       .select('g.y-axis')
       .attr('transform', 'translate('+(paddingLeft)+',0)')
       .attr("font-size", fontSize)
-      .transition()
       .call(yAxis);
     select(svg.current)
       .select('text.x-axis')
@@ -495,7 +483,7 @@ function BodyWeightHourlyStats(props) {
       .attr('transform', 'translate('+fontSize+','+((vbHeight-paddingBottom)/2)+') rotate(-90)')
       .attr("font-size", fontSize)
       .text('Weight');
-  }, [svg.current, ...svgDims, hourly_mean, loadingStatus.status]);
+  }, [svg.current, svgDims, hourly_mean, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
     <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
