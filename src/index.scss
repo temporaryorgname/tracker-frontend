@@ -195,6 +195,12 @@ svg {
       stroke: rgba(0,0,0,0.5);
     }
   }
+  .x-gridlines, .y-gridlines {
+    line {
+      stroke: rgba($primary-colour, 0.3);
+      stroke-width: 1px;
+    }
+  }
 
   .curves {
     path {

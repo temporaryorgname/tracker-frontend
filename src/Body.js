@@ -414,6 +414,12 @@ function BodyWeightHourlyStats(props) {
       .tickFormat(t => visibleTicks.includes(t) ? t : '');
     var yAxis = axisLeft(yScale)
       .ticks(svg.current.clientHeight/30);
+    var xGridlines = axisBottom(xScale)
+      .tickSizeInner(-height,0)
+      .tickFormat('');
+    var yGridlines = axisLeft(yScale)
+      .tickSizeInner(-width,0)
+      .tickFormat('');
     var lineGenerator = line()
       .x(p => xScale(p.time))
       .y(p => yScale(p.value));
@@ -423,20 +429,31 @@ function BodyWeightHourlyStats(props) {
       .select('.curves')
       .select('path')
       .attr('d',lineGenerator(data));
+    // Draw gridlines
+    select(svg.current)
+      .select('g.x-gridlines')
+      .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
+      .attr("font-size", fontSize)
+      .transition()
+      .call(xGridlines);
+    select(svg.current)
+      .select('g.y-gridlines')
+      .attr('transform', 'translate('+(paddingLeft)+',0)')
+      .attr("font-size", fontSize)
+      .transition()
+      .call(yGridlines);
     // Draw axes
     select(svg.current)
       .select('g.x-axis')
       .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
       .attr("font-size", fontSize)
       .transition()
-      .duration(1000)
       .call(xAxis);
     select(svg.current)
       .select('g.y-axis')
       .attr('transform', 'translate('+(paddingLeft)+',0)')
       .attr("font-size", fontSize)
       .transition()
-      .duration(1000)
       .call(yAxis);
     select(svg.current)
       .select('text.x-axis')
@@ -454,6 +471,8 @@ function BodyWeightHourlyStats(props) {
   return (
     <div className='bodyweight-plot-container'>
     <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+      <g className='x-gridlines'></g>
+      <g className='y-gridlines'></g>
       <g className='x-axis'></g>
       <g className='y-axis'></g>
       <text className='x-axis'></text>
