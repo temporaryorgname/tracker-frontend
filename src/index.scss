@@ -212,6 +212,13 @@ svg {
       stroke-linejoin: round;
     }
   }
+  .std {
+    path {
+      fill: rgba(green,0.3);
+      stroke: none;
+      stroke-linejoin: round;
+    }
+  }
 }
 
 i.action {

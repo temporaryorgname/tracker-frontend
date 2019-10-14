@@ -1,7 +1,7 @@
 import React, { Component, useState, useRef, useEffect } from 'react';
 
 import { select } from "d3-selection";
-import { line } from "d3-shape";
+import { line, area } from "d3-shape";
 import { scaleTime, scaleLinear, scalePoint } from "d3-scale";
 import { extent } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
@@ -370,6 +370,9 @@ function BodyWeightHourlyStats(props) {
   let hourly_mean = useSelector(state => 
     state.bodyweightSummary.hourly_mean
   );
+  let hourly_std = useSelector(state => 
+    state.bodyweightSummary.hourly_std
+  );
   let loadingStatus = useSelector(state =>
     getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {}
   );
@@ -410,6 +413,20 @@ function BodyWeightHourlyStats(props) {
           value: (datum-mean_weight)/mean_weight
         };
       });
+    let maxChange = data.reduce((a,d)=>d.value > a ? d.value : a, 0);
+    console.log(maxChange);
+    let stdData = hourly_std
+      .map(function(datum, index){
+        let std = datum/mean_weight*maxChange;
+        return {
+          time: hours[index],
+          value0: data[index].value+std,
+          value1: data[index].value-std
+        };
+      });
+    console.log(hourly_std);
+    window.std = hourly_std;
+    window.stdData = stdData;
 
     var width = svg.current.width.baseVal.value;
     var height = svg.current.height.baseVal.value;
@@ -425,7 +442,13 @@ function BodyWeightHourlyStats(props) {
       .domain(hours)
       .range([paddingLeft,vbWidth]);
     var yScale = scaleLinear()
-      .domain(extent(data, p => p.value))
+      .domain(
+        extent(
+          extent(data, p => p.value).concat(
+          extent(stdData, p => p.value0)).concat(
+          extent(stdData, p => p.value1))
+        )
+      )
       .range([vbHeight-paddingBottom,0]);
     // Axis
     let numTicks = Math.floor(vbWidth/(fontSize*6));
@@ -445,12 +468,20 @@ function BodyWeightHourlyStats(props) {
     var lineGenerator = line()
       .x(p => xScale(p.time))
       .y(p => yScale(p.value));
+    let areaGenerator = area()
+      .x(p => xScale(p.time))
+      .y0(p => yScale(p.value0))
+      .y1(p => yScale(p.value1));
 
     // Draw line
     select(svg.current)
       .select('.curves')
       .select('path')
       .attr('d',lineGenerator(data));
+    select(svg.current)
+      .select('.std')
+      .select('path')
+      .attr('d',areaGenerator(stdData));
     // Draw gridlines
     select(svg.current)
       .select('g.x-gridlines')
@@ -485,7 +516,7 @@ function BodyWeightHourlyStats(props) {
       .attr('transform', 'translate('+fontSize+','+((vbHeight-paddingBottom)/2)+') rotate(-90)')
       .attr("font-size", fontSize)
       .text('Weight');
-  }, [svg.current, svgDims, hourly_mean, loadingStatus.status]);
+  }, [svg.current, svgDims, hourly_mean, hourly_std, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
     <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
@@ -496,6 +527,9 @@ function BodyWeightHourlyStats(props) {
       <text className='x-axis'></text>
       <text className='y-axis'></text>
       <svg ref={svg} viewBox='0 0 800 300'>
+        <g className='std'>
+          <path d=""></path>
+        </g>
         <g className='curves'>
           <path d=""></path>
         </g>
