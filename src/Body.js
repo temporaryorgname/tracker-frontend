@@ -275,23 +275,33 @@ function BodyWeightTimeSeries(props) {
         value: datum
       };
     }).filter((x) => x.value !== null);
-    // Render data
+    // Compute sizes and scales
     var width = svg.current.width.baseVal.value;
     var height = svg.current.height.baseVal.value;
-    let scale = height/svg.current.clientHeight;
+    var vbWidth = svg.current.viewBox.baseVal.width;
+    var vbHeight = svg.current.viewBox.baseVal.height;
+    let scale = vbHeight/height;
     let fontSize = 12*scale;
     var paddingLeft = fontSize*4;
     var paddingBottom = fontSize*3;
     var xScale = scaleTime()
       .domain(extent(data, p => p.date))
-      .range([paddingLeft,width]);
+      .range([paddingLeft,vbWidth]);
     var yScale = scaleLinear()
       .domain(extent(data, p => p.value))
-      .range([height-paddingBottom,0]);
+      .range([vbHeight-paddingBottom,0]);
     var xAxis = axisBottom(xScale)
-      .ticks(svg.current.clientWidth/100);
+      .ticks(Math.log(width/10));
     var yAxis = axisLeft(yScale)
-      .ticks(svg.current.clientHeight/30);
+      .ticks(Math.log(height));
+    var xGridlines = axisBottom(xScale)
+      .tickSizeInner(-vbHeight,0)
+      .tickFormat('')
+      .ticks(Math.log(width/10));
+    var yGridlines = axisLeft(yScale)
+      .tickSizeInner(-vbWidth,0)
+      .tickFormat('')
+      .ticks(Math.log(height));
     var lineGenerator = line()
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
@@ -302,10 +312,23 @@ function BodyWeightTimeSeries(props) {
       .transition()
       .duration(300)
       .attr('d',lineGenerator(data));
+    // Draw gridlines
+    select(svg.current)
+      .select('g.x-gridlines')
+      .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
+      .attr("font-size", fontSize)
+      .transition()
+      .call(xGridlines);
+    select(svg.current)
+      .select('g.y-gridlines')
+      .attr('transform', 'translate('+(paddingLeft)+',0)')
+      .attr("font-size", fontSize)
+      .transition()
+      .call(yGridlines);
     // Axis + ticks
     select(svg.current)
       .select('g.x-axis')
-      .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
+      .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
       .transition()
       .duration(300)
@@ -322,18 +345,20 @@ function BodyWeightTimeSeries(props) {
       .select('text.x-axis')
       .style("text-anchor", "middle")
       .attr("font-size", fontSize)
-      .attr('transform', 'translate('+(width/2)+','+(height-fontSize/2)+')')
+      .attr('transform', 'translate('+(vbWidth/2)+','+(vbHeight-fontSize/2)+')')
       .text('Date');
     select(svg.current)
       .select('text.y-axis')
       .style("text-anchor", "middle")
       .attr("font-size", fontSize)
-      .attr('transform', 'translate('+fontSize+','+((height-paddingBottom)/2)+') rotate(-90)')
+      .attr('transform', 'translate('+fontSize+','+((vbHeight-paddingBottom)/2)+') rotate(-90)')
       .text('Weight');
   }, [svg.current, ...svgDims, history.data, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
-    <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+    <svg ref={svg} width='100%' viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+      <g className='x-gridlines'></g>
+      <g className='y-gridlines'></g>
       <g className='x-axis'></g>
       <g className='y-axis'></g>
       <text className='x-axis'></text>
@@ -395,7 +420,9 @@ function BodyWeightHourlyStats(props) {
 
     var width = svg.current.width.baseVal.value;
     var height = svg.current.height.baseVal.value;
-    let scale = height/svg.current.clientHeight;
+    var vbWidth = svg.current.viewBox.baseVal.width;
+    var vbHeight = svg.current.viewBox.baseVal.height;
+    let scale = vbHeight/height;
     let fontSize = 12*scale;
     var paddingLeft = fontSize*5;
     var paddingBottom = fontSize*3;
@@ -403,23 +430,24 @@ function BodyWeightHourlyStats(props) {
     var xScale = scalePoint()
       .padding(0.5)
       .domain(hours)
-      .range([paddingLeft,width]);
+      .range([paddingLeft,vbWidth]);
     var yScale = scaleLinear()
       .domain(extent(data, p => p.value))
-      .range([height-paddingBottom,0]);
+      .range([vbHeight-paddingBottom,0]);
     // Axis
-    let numTicks = Math.floor(svg.current.clientWidth/(fontSize*6));
+    let numTicks = Math.floor(vbWidth/(fontSize*6));
     let visibleTicks = hours.filter((h,i) => i%Math.floor(hours.length/numTicks) === 0);
     var xAxis = axisBottom(xScale)
       .tickFormat(t => visibleTicks.includes(t) ? t : '');
     var yAxis = axisLeft(yScale)
-      .ticks(svg.current.clientHeight/30);
+      .ticks(Math.log(height));
     var xGridlines = axisBottom(xScale)
-      .tickSizeInner(-height,0)
+      .tickSizeInner(-vbHeight,0)
       .tickFormat('');
     var yGridlines = axisLeft(yScale)
-      .tickSizeInner(-width,0)
-      .tickFormat('');
+      .tickSizeInner(-vbWidth,0)
+      .tickFormat('')
+      .ticks(Math.log(height));
     var lineGenerator = line()
       .x(p => xScale(p.time))
       .y(p => yScale(p.value));
@@ -432,7 +460,7 @@ function BodyWeightHourlyStats(props) {
     // Draw gridlines
     select(svg.current)
       .select('g.x-gridlines')
-      .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
+      .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
       .transition()
       .call(xGridlines);
@@ -445,7 +473,7 @@ function BodyWeightHourlyStats(props) {
     // Draw axes
     select(svg.current)
       .select('g.x-axis')
-      .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
+      .attr('transform', 'translate(0,'+(vbHeight-paddingBottom)+')')
       .attr("font-size", fontSize)
       .transition()
       .call(xAxis);
@@ -458,13 +486,13 @@ function BodyWeightHourlyStats(props) {
     select(svg.current)
       .select('text.x-axis')
       .style("text-anchor", "middle")
-      .attr('transform', 'translate('+(width/2)+','+(height-fontSize/2)+')')
+      .attr('transform', 'translate('+(vbWidth/2)+','+(vbHeight-fontSize/2)+')')
       .attr("font-size", fontSize)
       .text('Time');
     select(svg.current)
       .select('text.y-axis')
       .style("text-anchor", "middle")
-      .attr('transform', 'translate('+fontSize+','+((height-paddingBottom)/2)+') rotate(-90)')
+      .attr('transform', 'translate('+fontSize+','+((vbHeight-paddingBottom)/2)+') rotate(-90)')
       .attr("font-size", fontSize)
       .text('Weight');
   }, [svg.current, ...svgDims, hourly_mean, loadingStatus.status]);
