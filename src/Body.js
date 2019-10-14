@@ -39,7 +39,7 @@ export class BodyStatsPage extends Component {
         <h3>Body Weight History</h3>
         <BodyWeightTimeSeries uid={this.state.uid} />
         <h3>Body Weight Fluctuations</h3>
-        <BodyWeightScatterPlot uid={this.state.uid} />
+        <BodyWeightHourlyStats uid={this.state.uid} />
       </main>
     );
   }
@@ -233,14 +233,15 @@ const NewBodyWeightEntryForm = connect(
 )(ConnectedNewBodyWeightEntryForm);
 
 function BodyWeightTimeSeries(props) {
+  let dispatch = useDispatch();
   let history = useSelector(state => 
     state.bodyweightSummary.history || {}
   );
   let loadingStatus = useSelector(state =>
     getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {}
   );
-  let dispatch = useDispatch();
-  let updateDate = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
+  let updateData = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
+  updateData();
   let svg = useRef(null);
   let [svgDims, setSvgDims] = useState([null,null]);
   function updateDims() {
@@ -347,114 +348,113 @@ function BodyWeightTimeSeries(props) {
   )
 }
 
-class ConnectedBodyWeightScatterPlot extends Component {
-  constructor(props) {
-    super(props);
-    this.updateSVG = this.updateSVG.bind(this);
-    this.props.updateData();
+function BodyWeightHourlyStats(props) {
+  let dispatch = useDispatch();
+  let hourly_mean = useSelector(state => 
+    state.bodyweightSummary.hourly_mean
+  );
+  let loadingStatus = useSelector(state =>
+    getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {}
+  );
+  let updateData = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
+  updateData();
+  let svg = useRef(null);
+  let [svgDims, setSvgDims] = useState([null,null]);
+  function updateDims() {
+    setSvgDims([svg.current.clientWidth, svg.current.clientHeight]);
   }
-  updateSVG(firstRender=false) {
-    // Check if we have data
-    if (this.props.loadingStatus.status !== 'loaded') {
-      return null;
+  useEffect(() => {
+    if (!svg.current) {
+      return;
     }
-    // Format data
-    var data = this.props.data
+    window.addEventListener('resize', updateDims);
+    return () => {
+      window.removeEventListener('resize', updateDims);
+    };
+  }, [svg.current]);
+  useEffect(() => {
+    console.log('RENDERING');
+    // Check if data is loaded
+    if (loadingStatus.status !== 'loaded') {
+      return;
+    }
+    if (!svg.current) {
+      return;
+    }
+
+    var data = hourly_mean 
       .map(function(datum, index){
         return {
           date: new Date("0000-01-01 "+index+":00:00"),
           value: datum
         };
-      }).filter(x => x.value !== null);
-    // Check if there's an svg dom element to draw to
-    if (!this.svg) {
-      return null;
-    }
-    // Setup
-    var width = this.svg.width.baseVal.value;
-    var height = this.svg.height.baseVal.value;
-    if (width < 1 || height < 1) {
-      // FIXME: Hacky fix. Plot would not rerender when moving away from this page and back.
-      setTimeout(this.updateSVG, 1);
-      return;
-    }
-    var padding = 45;
+      });
+
+    var width = svg.current.width.baseVal.value;
+    var height = svg.current.height.baseVal.value;
+    let scale = height/svg.current.clientHeight;
+    let fontSize = 14*scale;
+    var paddingLeft = fontSize*4;
+    var paddingBottom = fontSize*3;
     var xScale = scaleTime()
       .domain([new Date('0000-01-01 0:00:01'),new Date('0000-01-01 23:59')])
-      .range([padding,width]);
+      .range([paddingLeft,width]);
     var yScale = scaleLinear()
       .domain(extent(data, p => p.value))
-      .range([height-padding,0]);
-    var xAxis = axisBottom(xScale);
-    var yAxis = axisLeft(yScale);
+      .range([height-paddingBottom,0]);
+    var xAxis = axisBottom(xScale)
+      .ticks(svg.current.clientWidth/100);
+    var yAxis = axisLeft(yScale)
+      .ticks(svg.current.clientHeight/30);
     var lineGenerator = line()
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
     // Draw line
-    select(this.svg)
-      .select('.means')
+    select(svg.current)
+      .select('.curves')
       .select('path')
       .attr('d',lineGenerator(data));
     // Draw axes
-    select(this.svg)
+    select(svg.current)
       .select('g.x-axis')
-      .attr('transform', 'translate(0,'+(height-padding)+')')
+      .attr('transform', 'translate(0,'+(height-paddingBottom)+')')
+      .attr("font-size", fontSize)
       .transition()
       .duration(1000)
       .call(xAxis);
-    select(this.svg)
+    select(svg.current)
       .select('g.y-axis')
-      .attr('transform', 'translate('+(padding)+',0)')
+      .attr('transform', 'translate('+(paddingLeft)+',0)')
+      .attr("font-size", fontSize)
       .transition()
       .duration(1000)
       .call(yAxis);
-    select(this.svg)
+    select(svg.current)
       .select('text.x-axis')
       .style("text-anchor", "middle")
-      .attr('transform', 'translate('+((width-padding)/2+padding)+','+(height)+')')
+      .attr('transform', 'translate('+(width/2)+','+(height-fontSize/2)+')')
+      .attr("font-size", fontSize)
       .text('Time');
-    select(this.svg)
+    select(svg.current)
       .select('text.y-axis')
       .style("text-anchor", "middle")
-      .attr('transform', 'translate(10,'+((height-padding)/2)+') rotate(-90)')
+      .attr('transform', 'translate('+fontSize+','+((height-paddingBottom)/2)+') rotate(-90)')
+      .attr("font-size", fontSize)
       .text('Weight');
-  }
-  componentDidMount() {
-    this.updateSVG();
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.data !== prevProps.data) {
-      this.updateSVG();
-    }
-  }
-  render() {
-    // Convert the data to numerical form
-    return (
-      <div className='bodyweight-plot-container'>
-      <svg ref={x => this.svg = x}>
-        <g className='x-axis'></g>
-        <g className='y-axis'></g>
-        <text className='x-axis'></text>
-        <text className='y-axis'></text>
-        <g className='means'><path/></g>
-        <g className='points'></g>
+  }, [svg.current, ...svgDims, hourly_mean, loadingStatus.status]);
+  return (
+    <div className='bodyweight-plot-container'>
+    <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+      <g className='x-axis'></g>
+      <g className='y-axis'></g>
+      <text className='x-axis'></text>
+      <text className='y-axis'></text>
+      <svg ref={svg} viewBox='0 0 800 300'>
+        <g className='curves'>
+          <path d=""></path>
+        </g>
       </svg>
-      </div>
-    );
-  }
+    </svg>
+    </div>
+  )
 }
-const BodyWeightScatterPlot = connect(
-  function(state, ownProps) {
-    let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT_SUMMARY'], {}) || {};
-    let data = state.bodyweightSummary.hourly_mean;
-    return {
-      loadingStatus,
-      data
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      updateData: () => dispatch(bodyweightSummaryActions['fetchMultiple']())
-    };
-  }
-)(ConnectedBodyWeightScatterPlot);

@@ -193,6 +193,13 @@ svg {
       stroke: rgba(0,0,0,0.5);
     }
   }
+
+  .curves {
+    path {
+      stroke-width: 3px;
+      stroke-linejoin: round;
+    }
+  }
 }
 
 i.action {
