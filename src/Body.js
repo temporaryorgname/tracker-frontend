@@ -2,7 +2,7 @@ import React, { Component, useState, useRef, useEffect } from 'react';
 
 import { select } from "d3-selection";
 import { line } from "d3-shape";
-import { scaleTime, scaleLinear } from "d3-scale";
+import { scaleTime, scaleLinear, scalePoint } from "d3-scale";
 import { extent } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
 import { } from "d3-transition"; // Needed for selection.transition
@@ -279,7 +279,7 @@ function BodyWeightTimeSeries(props) {
     var width = svg.current.width.baseVal.value;
     var height = svg.current.height.baseVal.value;
     let scale = height/svg.current.clientHeight;
-    let fontSize = 14*scale;
+    let fontSize = 12*scale;
     var paddingLeft = fontSize*4;
     var paddingBottom = fontSize*3;
     var xScale = scaleTime()
@@ -381,11 +381,14 @@ function BodyWeightHourlyStats(props) {
     if (!svg.current) {
       return;
     }
-
+    
+    const hours = [
+      '12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM','7 AM','8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM','8 PM','9 PM','10 PM','11 PM'
+    ];
     var data = hourly_mean 
       .map(function(datum, index){
         return {
-          date: new Date("0000-01-01 "+index+":00:00"),
+          time: hours[index],
           value: datum
         };
       });
@@ -393,22 +396,28 @@ function BodyWeightHourlyStats(props) {
     var width = svg.current.width.baseVal.value;
     var height = svg.current.height.baseVal.value;
     let scale = height/svg.current.clientHeight;
-    let fontSize = 14*scale;
-    var paddingLeft = fontSize*4;
+    let fontSize = 12*scale;
+    var paddingLeft = fontSize*5;
     var paddingBottom = fontSize*3;
-    var xScale = scaleTime()
-      .domain([new Date('0000-01-01 0:00:01'),new Date('0000-01-01 23:59')])
+    // Scale
+    var xScale = scalePoint()
+      .padding(0.5)
+      .domain(hours)
       .range([paddingLeft,width]);
     var yScale = scaleLinear()
       .domain(extent(data, p => p.value))
       .range([height-paddingBottom,0]);
+    // Axis
+    let numTicks = Math.floor(svg.current.clientWidth/(fontSize*6));
+    let visibleTicks = hours.filter((h,i) => i%Math.floor(hours.length/numTicks) === 0);
     var xAxis = axisBottom(xScale)
-      .ticks(svg.current.clientWidth/100);
+      .tickFormat(t => visibleTicks.includes(t) ? t : '');
     var yAxis = axisLeft(yScale)
       .ticks(svg.current.clientHeight/30);
     var lineGenerator = line()
-      .x(p => xScale(p.date))
+      .x(p => xScale(p.time))
       .y(p => yScale(p.value));
+
     // Draw line
     select(svg.current)
       .select('.curves')
