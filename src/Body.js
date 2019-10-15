@@ -1,9 +1,9 @@
 import React, { Component, useState, useRef, useEffect } from 'react';
 
-import { select } from "d3-selection";
+import { select, mouse } from "d3-selection";
 import { line, area } from "d3-shape";
 import { scaleTime, scaleLinear, scalePoint } from "d3-scale";
-import { extent } from "d3-array";
+import { extent, bisect } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
 import { } from "d3-transition"; // Needed for selection.transition
 
@@ -12,7 +12,12 @@ import {
   bodyweightActions,
   bodyweightSummaryActions
 } from './actions/Actions.js';
-import { formatDate, parseQueryString, getLoadingStatus } from './Utils.js';
+import {
+  formatDate,
+  parseQueryString,
+  getLoadingStatus,
+  clipFloat,
+} from './Utils.js';
 
 import './Body.scss';
 
@@ -514,6 +519,78 @@ function BodyWeightHourlyStats(props) {
       .attr('transform', 'translate('+fontSize+','+((vbHeight-paddingBottom)/2)+') rotate(-90)')
       .attr("font-size", fontSize)
       .text('Weight');
+    // Hover text
+    let hoverPoint = select(svg.current)
+      .select('g.hover')
+      .append('circle')
+        .style("fill", "none")
+        .attr("stroke", "black")
+        .attr('r', 8.5)
+        .style("opacity", 0);
+    let hoverTextBackground = select(svg.current)
+      .select('g.hover')
+      .append('rect')
+        .style("fill", "white")
+        .style("opacity", 0);
+    let hoverText = select(svg.current)
+      .select('g.hover')
+      .append('text')
+        .style("fill", "black")
+        .style("opacity", 0);
+		function mouseover() {
+			hoverPoint.style("opacity", 1);
+			hoverText.style("opacity", 1);
+			hoverTextBackground.style("opacity", 0.7);
+		}
+		function mousemove() {
+      let x = mouse(this)[0];
+      let domain = xScale.domain();
+      let range = xScale.range();
+      let padding = xScale.padding();
+      let index = Math.floor((x-range[0])/(range[1]-range[0])*domain.length);
+      if (index >= domain.length) {
+        index = domain.length-1;
+      } else if (index < 0) {
+        index = 0;
+      }
+			let datum = data[index];
+      let std = normalizedStd[index];
+      let text = null;
+      if (std) {
+        text = clipFloat(datum.value*100,2)+' ± '+clipFloat(std*100,2)+'%';
+      } else {
+        text = clipFloat(datum.value*100,2)+'%'
+      }
+			hoverPoint
+				.attr("cx", xScale(datum.time))
+				.attr("cy", yScale(datum.value));
+			hoverText
+        .html(text)
+        .attr('text-anchor','start')
+				.attr("x", xScale(datum.time)+10)
+				.attr("y", yScale(datum.value)+10);
+      let bbox = hoverText.node().getBBox();
+      let bgPadding = 5;
+			hoverTextBackground
+        .attr("x", bbox.x - bgPadding)
+        .attr("y", bbox.y - bgPadding)
+        .attr("width", bbox.width + (bgPadding*2))
+        .attr("height", bbox.height + (bgPadding*2))
+    }
+		function mouseout() {
+			hoverPoint.style("opacity", 0);
+			hoverText.style("opacity", 0);
+			hoverTextBackground.style("opacity", 0);
+		}
+	  select(svg.current)
+      .append('rect')
+      .style("fill", "none")
+      .style("pointer-events", "all")
+      .attr('width', vbWidth)
+      .attr('height', vbHeight)
+      .on('mouseover', mouseover)
+      .on('mousemove', mousemove)
+      .on('mouseout', mouseout);
   }, [svg.current, svgDims, hourly_mean, hourly_std, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
@@ -530,6 +607,8 @@ function BodyWeightHourlyStats(props) {
         </g>
         <g className='curves'>
           <path d=""></path>
+        </g>
+        <g className='hover'>
         </g>
       </svg>
     </svg>
