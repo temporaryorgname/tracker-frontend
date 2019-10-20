@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/temporaryorgname/tracker-frontend.svg?branch=master)](https://travis-ci.org/temporaryorgname/tracker-frontend)
+
 # Front End
 
 ##Errors
