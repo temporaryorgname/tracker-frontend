@@ -12,7 +12,9 @@ import {
   computeDietEntryTotal,
   fillEntry,
 	clipFloat,
-  foodEntriesToTrees
+  foodEntriesToTrees,
+  entryStringToEntry,
+  entryToEntryString
 } from '../Utils.js';
 
 //////////////////////////////////////////////////
@@ -569,4 +571,36 @@ test('foodEntriesToTrees arrays', () => {
   expect(output).toEqual([
     {id: 0, val: 0, children: [{id: 1, parent_id: 0, val: 1, children: []}]}
   ]);
+});
+
+//////////////////////////////////////////////////
+// entry string <-> entry conversion functions
+//////////////////////////////////////////////////
+
+test('entryStringToEntry empty string', () => {
+  let output = entryStringToEntry('');
+  expect(output).toEqual(
+    {name: '', quantity: '', calories: '', protein: ''}
+  );
+});
+
+test('entryStringToEntry name only', () => {
+  let output = entryStringToEntry('some name');
+  expect(output).toEqual(
+    {name: 'some name', quantity: '', calories: '', protein: ''}
+  );
+});
+
+test('entryStringToEntry calories only', () => {
+  let output = entryStringToEntry('\\cal 100');
+  expect(output).toEqual(
+    {name: '', quantity: '', calories: '100', protein: ''}
+  );
+});
+
+test('entryStringToEntry', () => {
+  let output = entryStringToEntry('this is a name \\cal 100 \\badinput asdf asdf \\prot 5 \\qty 100 grams');
+  expect(output).toEqual(
+    {name: 'this is a name', quantity: '100 grams', calories: '100', protein: '5'}
+  );
 });

@@ -334,3 +334,58 @@ export function foodEntriesToTrees(entries) {
     return arrayToDict(result,'id');
   }
 }
+
+const entryStringParamMapping = [
+  {key: 'quantity', abbr: 'qty'},
+  {key: 'calories', abbr: 'cal'},
+  {key: 'protein', abbr: 'prot'},
+];
+
+export function entryStringToEntry(entryString) {
+  function splitByParams(str) {
+    const params = entryStringParamMapping.map(x => x.abbr);
+    let tokens = str.split(' ');
+    let currentParam = 'name';
+    let paramVals = {name: []};
+    for (let p of params) {
+      paramVals[p] = [];
+    }
+    for (let t of tokens) {
+      if (t[0] === '\\') {
+        if (params.includes(t.substr(1))) {
+          currentParam = t.substr(1);
+        } else {
+          currentParam = null;
+        }
+      } else {
+        if (currentParam === null) {
+          continue;
+        } else {
+          paramVals[currentParam].push(t);
+        }
+      }
+    }
+    return paramVals;
+  }
+  let parsedEntryString = splitByParams(entryString);
+  let entry = entryStringParamMapping.reduce((acc,cur) => {
+    acc[cur.key] = parsedEntryString[cur.abbr].join(' ')
+    return acc;
+  }, {name: parsedEntryString.name.join(' ')});
+  return entry;
+}
+
+export function entryToEntryString(entry) {
+  let entryString = [entry.name];
+  for (let [k,abbr] of entryStringParamMapping.map(x => [x.key, x.abbr])) {
+    if (entry[k]) {
+      entryString.push('\\'+abbr);
+      entryString.push(entry[k]);
+    }
+  }
+  return entryString.join(' ');
+}
+
+export function extractNameFromEntryString(entryString) {
+  return entryString.split(' \\')[0];
+}

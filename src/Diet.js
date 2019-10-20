@@ -1,11 +1,11 @@
-import React, { Component, useState, useEffect, Fragment } from 'react';
+import React, { Component, useState, useEffect, useRef, Fragment } from 'react';
 import { Link } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import axios from 'axios';
 
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 
 import { 
   getLoadingStatus,
@@ -28,7 +28,10 @@ import {
   Modal, ModalHeader, ModalBody, ModalFooter,
   Breadcrumbs
 } from './Common.js';
-import { parseQueryString, dictToQueryString, formatDate } from './Utils.js';
+import {
+  parseQueryString, dictToQueryString, formatDate,
+  entryToEntryString, entryStringToEntry, extractNameFromEntryString
+} from './Utils.js';
 
 import './Diet.scss';
 
@@ -298,15 +301,6 @@ export class DietPage extends Component {
         : <BigButton icon='fastfood' onClick={this.showNewEntryForm} text='New Entry' />
       }
       <EntryEditorFormModal
-          entry={this.state.newEntry}
-          onChange={this.onChangeNewEntry}
-          isOpen={this.state.newEntryFormVisible}
-          toggle={x => this.setState({newEntryFormVisible: x})} 
-          onSubmit={this.onCreateNewEntry}
-          controls={[
-            {text: 'Create Entry', callback: this.onCreateNewEntry}
-          ]}/>
-      <EntryEditorFormModal
           entry={this.state.dupEntry}
           onChange={this.onChangeDupEntry}
           isOpen={this.state.dupEntryFormVisible}
@@ -316,6 +310,11 @@ export class DietPage extends Component {
             {text: 'Create Entry', callback: this.onCreateDupEntry}
           ]}/>
       </div>
+      <NewEntryField 
+          date={this.props.date}
+          parentId={id}
+          onBlur={() => this.setState({newEntryFormVisible: false})}
+          visible={this.state.newEntryFormVisible}/>
       <Accordion heading='Suggestions'>
         <Suggestions date={date}
             parent={mainEntry ? mainEntry.name : null}
@@ -1862,4 +1861,183 @@ function NutritionSearch(props){
       </div>
     );
   }
+}
+
+//////////////////////////////////////////////////
+// Simple New Entry Field
+//////////////////////////////////////////////////
+
+function NewEntryField(props) {
+  const dispatch = useDispatch();
+  const createEntry = entry => dispatch(foodActions['create'](entry));
+  const [entryString, setEntryString] = useState('');
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
+  const [selectedSuggestion, setSelectedSuggestion] = useState(null);
+  const [error, setError] = useState(null);
+  let inputRef = useRef(null);
+  let suggestionsRef = useRef(null);
+
+  // Toggle visibility based on props
+  useEffect(()=>{
+    if (!inputRef.current) {
+      return;
+    }
+    if (props.visible) {
+      inputRef.current.focus();
+    }
+  }, [props.visible]);
+  // Update suggestions when entry changes
+  useEffect(()=>{
+    setLoadingSuggestions(true);
+    setSelectedSuggestion(null);
+    let entryName = extractNameFromEntryString(entryString);
+    axios.get(
+      process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(entryName),
+      {withCredentials: true}
+    ).then(response => {
+      setSuggestions(response.data.frequent);
+      setLoadingSuggestions(false);
+      setSelectedSuggestion(null);
+      console.log(response.data);
+    }).catch(error => {
+      setError(error.response.data.error);
+      setLoadingSuggestions(false);
+      setSelectedSuggestion(null);
+    });
+  }, [entryString.trim()]);
+
+  // onBlur callback
+  let blurTimeout = null;
+  function onBlur(e) {
+    if (blurTimeout) {
+      return;
+    }
+    blurTimeout = window.setTimeout(() => {
+      if (props.onBlur) {
+        props.onBlur();
+      }
+    }, 50);
+  }
+  function onFocus(e) {
+    if (blurTimeout) {
+      window.clearTimeout(blurTimeout);
+      blurTimeout = null;
+    }
+  }
+  useEffect(() => {
+    clearTimeout(blurTimeout);
+    blurTimeout = null;
+  }, [props.visible]);
+  // Keydown callback
+  function onKeyDown(e) {
+    const kbEnter = 13;
+    const kbUp = 38;
+    const kbDown = 40;
+    const kbEsc = 27;
+    if (!suggestions) {
+      return;
+    }
+    switch (e.keyCode) {
+      case kbUp:
+        if (selectedSuggestion === null) {
+          setSelectedSuggestion(suggestions.length-1);
+        } else {
+          let selected = selectedSuggestion-1;
+          if (selected < 0) {
+            selected = null;
+          }
+          setSelectedSuggestion(selected);
+        }
+        e.preventDefault();
+        break;
+      case kbDown:
+        if (selectedSuggestion === null) {
+          setSelectedSuggestion(0);
+        } else {
+          let selected = selectedSuggestion+1;
+          if (selected >= suggestions.length) {
+            selected = null;
+          }
+          setSelectedSuggestion(selected);
+        }
+        e.preventDefault();
+        break;
+      case kbEnter:
+        if (selectedSuggestion === null) {
+          e.preventDefault();
+          // Parse string for entry details
+          let entry = entryStringToEntry(entryString);
+          entry.date = props.date;
+          if (props.parentId) {
+            entry.parent_id = props.parentId;
+          }
+          createEntry(
+            entry
+          ).then(response => {
+            setEntryString('');
+          });
+        } else {
+          let entry = suggestions[selectedSuggestion];
+          setSelectedSuggestion(null);
+          setEntryString(entryToEntryString(entry));
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  // Render DOM
+  let suggestionsDom = null;
+  if (suggestions) {
+    const details = [{
+      key: 'quantity',
+      label: 'qty:'
+    },{
+      key: 'calories',
+      label: 'kCals:'
+    },{
+      key: 'protein',
+      label: 'prot:'
+    }];
+    suggestionsDom = suggestions.map((s,i) => {
+      let classNames = 'suggestion';
+      if (selectedSuggestion === i) {
+        classNames += ' selected';
+      }
+      return (
+        <div className={classNames}>
+          {s.name}
+          <ul className='details'>
+            {details.map(d => {
+              if (!s[d.key]) {
+                return null;
+              }
+              return (<li key={d.key}>
+                <span className='label'>{d.label}</span>
+                <span className='value'>{clipFloat(s[d.key]),3}</span>
+              </li>);
+            })}
+          </ul>
+        </div>
+      );
+    });
+  } else if (loadingSuggestions) {
+    suggestionsDom = 'Loading...';
+  }
+  return (
+    <div onBlur={onBlur}
+        onFocus={onFocus}
+        className={'new-entry-field-container'+ (props.visible ? '' : ' hidden')}>
+      <input type='text'
+          ref={inputRef}
+          value={entryString}
+          onChange={e => setEntryString(e.target.value)}
+          onKeyDown={onKeyDown}/>
+      <div className='suggestions' tabIndex={-1} ref={suggestionsRef}>
+        { suggestionsDom }
+      </div>
+    </div>
+  );
 }
