@@ -1,7 +1,5 @@
-import React, { Component, useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Route, Link, Switch } from "react-router-dom";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 import axios from 'axios';
 

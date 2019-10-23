@@ -530,11 +530,11 @@ export function Breadcrumbs(props) {
           url
         } = crumb;
         return (
-          <Link to={url}>{text}</Link>
+          <Link to={url} key={url}>{text}</Link>
         );
       }).reduce((output,elem,i) => {
         output.push(elem);
-        output.push(<div className='separator'></div>);
+        output.push(<div className='separator' key={'separator'+i}></div>);
         return output;
       }, [])
     }

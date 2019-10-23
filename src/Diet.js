@@ -494,201 +494,6 @@ export class DateSelector extends Component {
   }
 }
 
-class FoodNameInput extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      suggestions: [],
-      loading: false,
-      focused: false,
-      selected: -1
-    }
-    this.ref = React.createRef();
-    this.loadSuggestions = this.loadSuggestions.bind(this);
-    this.loadSuggestionsTimeout = null;
-    this.handleSelect = this.handleSelect.bind(this);
-    this.handleFocus = this.handleFocus.bind(this);
-    this.handleBlur = this.handleBlur.bind(this);
-    this.handleKeyDown = this.handleKeyDown.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-    this.focus = this.focus.bind(this);
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.value !== this.props.value) {
-      clearTimeout(this.loadSuggestionsTimeout);
-      this.loadSuggestionsTimeout = setTimeout(this.loadSuggestions, 500);
-    }
-    if (this.props.onHighlight && prevState.selected !== this.state.selected) {
-      if (this.state.selected === -1) {
-        this.props.onHighlight({});
-      } else if (this.props.onHighlight) {
-        this.props.onHighlight(this.state.suggestions[this.state.selected]);
-      }
-    }
-  }
-  handleSelect() {
-    // Check if the selection is valid
-    if (this.state.selected === -1) {
-      return;
-    }
-    // Call event handlers
-    if (this.props.onSelect) {
-      this.props.onSelect(this.state.suggestions[this.state.selected]);
-    }
-    // Clear search results and selection
-    this.setState({
-      selected: -1,
-      suggestions: []
-    });
-  }
-  handleBlur(e) {
-    this.setState({
-      focused: false
-    });
-    if (this.props.onBlur) {
-      this.props.onBlur(e);
-    }
-  }
-  handleFocus(e) {
-    this.setState({
-      focused: true
-    });
-    if (this.props.onFocus) {
-      this.props.onFocus(e);
-    }
-  }
-  handleKeyDown(event) {
-    var UP = 38;
-    var DOWN = 40;
-    if (event.keyCode === DOWN) {
-      this.setState({
-        selected: (this.state.selected+2)%(this.state.suggestions.length+1)-1
-      });
-    } else if (event.keyCode === UP) {
-      this.setState({
-        selected: (this.state.selected+this.state.suggestions.length+1)%(this.state.suggestions.length+1)-1
-      });
-    }
-  }
-  handleKeyPress(event) {
-    var RETURN = 13;
-    if ((event.keyCode || event.which || event.charCode) === RETURN && this.state.selected !== -1) {
-      this.handleSelect();
-      // Prevent the key press from affecting other things (e.g. form submission).
-      event.stopPropagation();
-    }
-  }
-  getMouseEnterHandler(index) {
-    var that = this;
-    return function(event) {
-      that.setState({
-        selected: index
-      });
-    }
-  }
-  handleMouseDown(event) {
-    this.handleSelect();
-  }
-  loadSuggestions() {
-    if (!this.props.value || this.props.value.length === 0) {
-      this.setState({
-        suggestions: [],
-        loading: true
-      });
-      return;
-    }
-    var that = this;
-    axios.get(process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(this.props.value), {withCredentials: true})
-        .then(function(response){
-          window.result = response;
-          that.setState({
-            suggestions: response.data.frequent,
-            loading: false
-          });
-        })
-        .catch(function(error){
-          console.error(error);
-        });
-  }
-  focus() {
-    this.ref.current.focus();
-  }
-  render() {
-    var that = this;
-    var inputField = (<input
-              autocomplate='off'
-              type='text'
-              value={this.props.value}
-              onKeyDown={this.handleKeyDown}
-              onKeyPress={this.handleKeyPress}
-              onChange={this.props.onChange}
-              onFocus={this.handleFocus}
-              onBlur={this.handleBlur}
-              name={this.props.name}
-              placeholder={this.props.placeholder}
-              ref={this.ref} />);
-    var suggestions = (
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Cals</th>
-            <th>Prot</th>
-          </tr>
-        </thead>
-        <tbody onMouseDown={this.handleSelect}>
-          {
-            this.state.suggestions.map(function(item,index){
-              var className = that.state.selected === index ? 'selected' : '';
-              return (
-                <tr className={className} key={index} onMouseEnter={that.getMouseEnterHandler(index)}>
-                  <td className='name'>{item.name}</td>
-                  <td className='numbers' data-label='qty'>{item.quantity}</td>
-                  <td className='numbers' data-label='cals'>{item.calories}</td>
-                  <td className='numbers' data-label='prot'>{item.protein}</td>
-                </tr>
-              );
-            })
-          }
-        </tbody>
-      </table>
-    );
-    var loadingSuggestions = (
-      <table>
-        <thead>
-          <tr>
-            <th>name</th>
-            <th>cals</th>
-            <th>prot</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td className='loading' colSpan='3'><div className='loader'></div></td></tr>
-        </tbody>
-      </table>
-    );
-    var s = null;
-    if (this.props.value && this.props.value.length > 0 && this.state.focused) {
-      if (this.state.loading) {
-        s = loadingSuggestions;
-      } else if (this.state.suggestions.length > 0) {
-        s = suggestions;
-      } else {
-        s = null;
-      }
-    }
-    return (
-      <div className='food-name-input'>
-        <form autoComplete='off' onSubmit={e => e.preventDefault()}>
-        {inputField}
-        </form>
-        {s && <div className='table'> {s} </div>}
-      </div>
-    );
-  }
-}
-
 export class QuantityInput extends Component {
   constructor(props) {
     super(props);
@@ -876,7 +681,6 @@ export class Gallery extends Component {
     let {
       photosLoadingStatus,
       selectedPhotoIds = this.state.selectedPhotoIds,
-      photos,
       date
     } = this.props;
     if (!photosLoadingStatus) {
@@ -1008,7 +812,6 @@ export class Gallery extends Component {
       disabledPhotos = new Set(),
       onSelectPhoto = this.handleSelectPhoto,
     } = this.props;
-    let that = this;
     return Object.entries(photos).map(
       function([photoId,photo]){
         photoId = parseInt(photoId);
@@ -1250,7 +1053,7 @@ export class EntryEditorForm extends Component {
       entry = this.state.entry,
     } = this.props;
     function helper(object, keys, newValue) {
-      if (keys.length == 0) {
+      if (keys.length === 0) {
         return newValue;
       }
       if (Array.isArray(object)) {
@@ -1268,7 +1071,6 @@ export class EntryEditorForm extends Component {
     this.onChange(newEntry);
   }
   handleChange(e) {
-    let inputType = e.target.type;
     let changedField = e.target.name;
     let newValue = e.target.value;
     let keys = changedField.split('.');
@@ -1338,7 +1140,7 @@ export class EntryEditorForm extends Component {
         <label className='date'>
           <span>Date</span>
           <input type='date' name='date'
-              tabindex='-1'
+              tabIndex='-1'
               value={entry.date || ''}
               onChange={onChange}
               onKeyPress={onKeyPress}/>
@@ -1346,7 +1148,7 @@ export class EntryEditorForm extends Component {
         <label className='time'>
           <span>Time</span>
           <input type='time' name='time'
-              tabindex='-1'
+              tabIndex='-1'
               value={entry.time || ''}
               onChange={onChange}
               onKeyPress={onKeyPress}/>
@@ -1478,7 +1280,6 @@ export class AdvancedDetailsForm extends Component {
       entry = this.state.entry,
     } = this.props;
     let onChange = this.handleChange;
-    let that = this;
     return (
       <form className='adv-details-form'>
         <label className='premade'>
@@ -1489,7 +1290,7 @@ export class AdvancedDetailsForm extends Component {
           entry.premade &&
           <label className='finished'>
             <span>Finished</span>
-            <input type='checkbox' name='finished' checked={entry.finished|| false} onChange={onChange}/>
+            <Checkbox name='finished' checked={entry.finished|| false} onChange={onChange}/>
           </label>
         }
       </form>
@@ -1734,7 +1535,6 @@ function Suggestions(props){
   const [loading, setLoading] = useState(false);
   const [numDisplayed, setNumDisplayed] = useState(5);
   let {
-    date,
     parent = null,
     siblings = [],
     onSelect = console.log
@@ -1769,9 +1569,9 @@ function Suggestions(props){
     return (
       <div className='suggestions-container'>
         {
-          suggestions.slice(0,numDisplayed).map(suggestion => {
+          suggestions.slice(0,numDisplayed).map((suggestion,i) => {
             return (
-              <div className='suggestion'>
+              <div className='suggestion' key={suggestion.name+i}>
                 <i className='material-icons'
                     onClick={()=>onSelect(suggestion.name)}>add</i>
                 <span>{suggestion.name}</span>
@@ -1891,7 +1691,7 @@ function NewEntryField(props) {
   useEffect(()=>{
     setLoadingSuggestions(true);
     setSelectedSuggestion(null);
-    let entryName = extractNameFromEntryString(entryString);
+    let entryName = extractNameFromEntryString(entryString).trim();
     axios.get(
       process.env.REACT_APP_SERVER_ADDRESS+"/data/food/search?q="+encodeURI(entryName),
       {withCredentials: true}
@@ -1905,36 +1705,35 @@ function NewEntryField(props) {
       setLoadingSuggestions(false);
       setSelectedSuggestion(null);
     });
-  }, [entryString.trim()]);
+  }, [entryString]);
 
   // onBlur callback
-  let blurTimeout = null;
+  let blurTimeout = useRef(null);
   function onBlur(e) {
-    if (blurTimeout) {
+    if (blurTimeout.current) {
       return;
     }
-    blurTimeout = window.setTimeout(() => {
+    blurTimeout.current = window.setTimeout(() => {
       if (props.onBlur) {
         props.onBlur();
       }
     }, 50);
   }
   function onFocus(e) {
-    if (blurTimeout) {
-      window.clearTimeout(blurTimeout);
-      blurTimeout = null;
+    if (blurTimeout.current) {
+      window.clearTimeout(blurTimeout.current);
+      blurTimeout.current = null;
     }
   }
   useEffect(() => {
-    clearTimeout(blurTimeout);
-    blurTimeout = null;
+    clearTimeout(blurTimeout.current);
+    blurTimeout.current = null;
   }, [props.visible]);
   // Keydown callback
   function onKeyDown(e) {
     const kbEnter = 13;
     const kbUp = 38;
     const kbDown = 40;
-    const kbEsc = 27;
     if (!suggestions) {
       return;
     }
@@ -2007,7 +1806,7 @@ function NewEntryField(props) {
         classNames += ' selected';
       }
       return (
-        <div className={classNames}>
+        <div className={classNames} key={i}>
           {s.name}
           <ul className='details'>
             {details.map(d => {
@@ -2016,7 +1815,7 @@ function NewEntryField(props) {
               }
               return (<li key={d.key}>
                 <span className='label'>{d.label}</span>
-                <span className='value'>{clipFloat(s[d.key]),3}</span>
+                <span className='value'>{clipFloat(s[d.key],1)}</span>
               </li>);
             })}
           </ul>
