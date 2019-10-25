@@ -43,7 +43,7 @@ export class BodyStatsPage extends Component {
           </div>
         </div>
         <div className='body-weight-table card col-lg-8 col-sm-12 row-3'>
-          <h2>Log</h2>
+          <h3>Log</h3>
           <BodyWeightTable uid={this.state.uid}/>
         </div>
         <StatsCards />
@@ -269,7 +269,7 @@ function StatsCards(props) {
   );
   return (<>
     <div className='card row-1 col-lg-4 col-sm-4'>
-      <h3>Average Body Weight</h3>
+      <h3>Body Weight Average</h3>
       <span>{avg_weight && avg_weight.toFixed(1)} {units}</span>
     </div>
     <div className='card row-1 col-lg-4 col-sm-4'>
@@ -308,7 +308,6 @@ function BodyWeightTimeSeries(props) {
     };
   }, [svg.current]);
   useEffect(() => {
-    console.log('RENDERING');
     // Check if data is loaded
     if (loadingStatus.status !== 'loaded') {
       return;
@@ -333,8 +332,8 @@ function BodyWeightTimeSeries(props) {
     var vbHeight = svg.current.viewBox.baseVal.height;
     let scale = vbHeight/height;
     let fontSize = 12*scale;
-    var paddingLeft = fontSize*4;
-    var paddingBottom = fontSize*3;
+    var paddingLeft = fontSize*5;
+    var paddingBottom = fontSize*4;
     var xScale = scaleTime()
       .domain(extent(data, p => p.date))
       .range([paddingLeft,vbWidth]);
@@ -342,13 +341,13 @@ function BodyWeightTimeSeries(props) {
       .domain(extent(data, p => p.value))
       .range([vbHeight-paddingBottom,0]);
     var xAxis = axisBottom(xScale)
-      .ticks(Math.log(width/10));
+      .ticks(Math.log(width/5));
     var yAxis = axisLeft(yScale)
       .ticks(Math.log(height));
     var xGridlines = axisBottom(xScale)
       .tickSizeInner(-vbHeight,0)
       .tickFormat('')
-      .ticks(Math.log(width/10));
+      .ticks(Math.log(width/5));
     var yGridlines = axisLeft(yScale)
       .tickSizeInner(-vbWidth,0)
       .tickFormat('')
@@ -485,7 +484,7 @@ function BodyWeightHourlyStats(props) {
     let scale = vbHeight/height;
     let fontSize = 12*scale;
     var paddingLeft = fontSize*5;
-    var paddingBottom = fontSize*3;
+    var paddingBottom = fontSize*4;
     // Scale
     var xScale = scalePoint()
       .padding(0.5)

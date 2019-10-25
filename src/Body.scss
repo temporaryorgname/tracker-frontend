@@ -68,20 +68,6 @@
         }
       }
     }
-    table:hover { // Emphasize bodyweight column when hovered
-      tr {
-        td {
-          color: grey;
-          &:nth-child(3) {
-            //color: $light-colour-2;
-            color: white;
-          }
-        }
-      }
-    }
-    button {
-      //background-color: $light-colour-2;
-    }
   }
 
   .bodyweight-plot-container {
