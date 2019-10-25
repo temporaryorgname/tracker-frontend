@@ -3,6 +3,11 @@ $primary-colour: #000000;
 $secondary-colour: #FFFFFF;
 $faded-primary-colour: rgba($primary-colour, 0.5);
 
+$light-colour-1: #D88181;
+$light-colour-2: #C988DA;
+$dark-colour-2: #3F2942;
+$background-gradient: linear-gradient(to bottom right, $light-colour-1, $light-colour-2);
+
 $focus-colour: rgba($primary-colour, 0.1);
 $success-colour: green;
 $error-colour: red;

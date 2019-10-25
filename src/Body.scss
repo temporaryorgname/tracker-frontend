@@ -2,7 +2,6 @@
 
 .body-page-container {
   text-align: center;
-  background-image: linear-gradient(to bottom right, #D88181, #C988DA);
   box-sizing: border-box;
 
   display: grid;
@@ -15,7 +14,8 @@
     margin: 30px 0px;
     .card {
       display: inline-block;
-      padding: 100px;
+      padding: 100px 0;
+      width: 100%;
     }
     span {
       color: rgb(150,150,150);
@@ -23,14 +23,14 @@
       display: block;
     }
     input {
-      border-color: $primary-colour;
+      border-color: black;
       background-color: white;
       width: 100%;
       max-width: 230px;
     }
   }
   .card {
-    background-color: #3F2942;
+    background-color: $dark-colour-2;
     color: white;
     border-radius: 5px;
     box-shadow: 0 5px 5px 0 rgba(black,.5);
@@ -53,15 +53,34 @@
 
     table {
       width: 100%;
+      th {
+        color: grey;
+      }
       tr {
         cursor: pointer;
         &.selected {
           background-color: rgba(white,0.3);
         }
+        td {
+          padding: 10px 20px;
+          color: white;
+          transition: 0.5s ease;
+        }
       }
-      td {
-        padding: 10px 20px;
+    }
+    table:hover { // Emphasize bodyweight column when hovered
+      tr {
+        td {
+          color: grey;
+          &:nth-child(3) {
+            //color: $light-colour-2;
+            color: white;
+          }
+        }
       }
+    }
+    button {
+      //background-color: $light-colour-2;
     }
   }
 
@@ -72,11 +91,11 @@
         fill: white;
       }
       path {
-        stroke: #C988DA;
+        stroke: $light-colour-2;
       }
       .std path {
         stroke: none;
-        fill: rgba(#C988DA, 0.2);
+        fill: rgba($light-colour-2, 0.2);
       }
       .x-axis, .y-axis {
         path {
@@ -89,6 +108,10 @@
   @media #{$computer-and-tablet} {
     .main-card {
       margin: 100px 0;
+      .card {
+        padding: 100px;
+        width: unset;
+      }
     }
   }
 }

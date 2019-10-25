@@ -91,7 +91,9 @@ function BodyWeightTable(props) {
   const deleteEntries = (ids) => dispatch(
       bodyweightActions['deleteMultiple'](ids));
 
-  useEffect(updateData, []);
+  useEffect(() => {
+    updateData();
+  }, []);
 
   // Callbacks
   const [selectedEntries, setSelectedEntries] = useState(new Set());
@@ -163,7 +165,7 @@ function BodyWeightTable(props) {
           <tr>
             <th>Date</th>
             <th>Time</th>
-            <th>Weight ({user.prefered_units})</th>
+            <th>Weight</th>
           </tr>
         </thead>
         <tbody>
@@ -177,7 +179,7 @@ function BodyWeightTable(props) {
                   onClick={() => toggleSelection(data.id)}>
               <td>{data.date}</td>
               <td>{data.time}</td>
-              <td>{data.bodyweight.toFixed(1)}</td>
+              <td>{data.bodyweight.toFixed(1)} {user.prefered_units}</td>
             </tr>);
           })}
           { status }
@@ -259,18 +261,24 @@ function NewBodyWeightEntryForm(props) {
 }
 
 function StatsCards(props) {
+  let {
+    avg_weight,
+    units
+  } = useSelector(state => 
+    state.bodyweightSummary || {}
+  );
   return (<>
     <div className='card row-1 col-lg-4 col-sm-4'>
       <h3>Average Body Weight</h3>
-      <span>148.9</span>
+      <span>{avg_weight && avg_weight.toFixed(1)} {units}</span>
     </div>
     <div className='card row-1 col-lg-4 col-sm-4'>
       <h3>BMI</h3>
-      <span>21.5</span>
+      <span>(Data unavailable)</span>
     </div>
     <div className='card row-1 col-lg-4 col-sm-4'>
       <h3>Body Weight Change</h3>
-      <span>0.4 lbs/day</span>
+      <span>(Data unavailable)</span>
     </div>
   </>);
 }
