@@ -306,6 +306,18 @@ table {
   display: none;
 }
 
+@for $i from 1 through 12{
+  .col-sm-#{$i}{
+    grid-column-end: span $i;
+  }
+  .col-#{$i}{
+    grid-column-end: span $i;
+  }
+  .row-#{$i}{
+    grid-row-end: span $i;
+  }
+}
+
 @media #{$computer-and-tablet} {
   body {
     //background-image: url('images/background.jpeg');
@@ -314,8 +326,8 @@ table {
     //background-color: #cbbdb0;
   }
 
-  h2 {
-    margin-top: 100px;
+  main {
+    padding-top: 100px;
   }
 
   //.background {
@@ -352,6 +364,12 @@ table {
   //    background-color: rgba(0,0,0,0.1);
   //  }
   //}
+
+  @for $i from 1 through 12{
+    .col-lg-#{$i}{
+      grid-column-end: span $i;
+    }
+  }
 }
 
 @media #{$computer} {

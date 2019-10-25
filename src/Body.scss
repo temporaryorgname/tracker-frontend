@@ -1,5 +1,51 @@
+@import '_variables';
+
 .body-page-container {
   text-align: center;
+  background-image: linear-gradient(to bottom right, #D88181, #C988DA);
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-gap: 15px;
+  padding: 15px;
+
+  .main-card {
+    box-sizing: border-box;
+    margin: 30px 0px;
+    .card {
+      display: inline-block;
+      padding: 100px;
+    }
+    span {
+      color: rgb(150,150,150);
+      font-size: 12px;
+      display: block;
+    }
+    input {
+      border-color: $primary-colour;
+      background-color: white;
+      width: 100%;
+      max-width: 230px;
+    }
+  }
+  .card {
+    background-color: #3F2942;
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 5px 5px 0 rgba(black,.5);
+    overflow: hidden;
+    padding: 15px;
+  }
+  .stats-card {
+    h3 {
+      text-align: left;
+      margin-top: 0;
+    }
+    span {
+      font-size: 32px;
+    }
+  }
 
   .bodyweight-table-container {
     display: inline-block;
@@ -7,11 +53,43 @@
 
     table {
       width: 100%;
+      tr {
+        cursor: pointer;
+        &.selected {
+          background-color: rgba(white,0.3);
+        }
+      }
+      td {
+        padding: 10px 20px;
+      }
     }
   }
 
   .bodyweight-plot-container {
-    //height: 300px;
     padding: 20px;
+    svg {
+      text {
+        fill: white;
+      }
+      path {
+        stroke: #C988DA;
+      }
+      .std path {
+        stroke: none;
+        fill: rgba(#C988DA, 0.2);
+      }
+      .x-axis, .y-axis {
+        path {
+          stroke: white;
+        }
+      }
+    }
+  }
+
+  @media #{$computer-and-tablet} {
+    .main-card {
+      margin: 100px 0;
+    }
   }
 }
+

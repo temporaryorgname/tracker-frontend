@@ -1,7 +1,7 @@
 import React, { Component, useState, useRef, useEffect } from 'react';
 
 import { select, mouse } from "d3-selection";
-import { line, area } from "d3-shape";
+import { line, area, curveBasis } from "d3-shape";
 import { scaleTime, scaleLinear, scalePoint } from "d3-scale";
 import { extent, bisect } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
@@ -37,147 +37,173 @@ export class BodyStatsPage extends Component {
   render() {
     return (
       <main className='body-page-container'>
-        <div className='background'>
+        <div className='main-card col-12'>
+          <div className='card'>
+          <NewBodyWeightEntryForm onAddWeight={this.updateData} uid={this.state.uid}/>
+          </div>
         </div>
-        <h2>Body Stats</h2>
-        <BodyWeightTable uid={this.state.uid}/>
-        <h3>Body Weight History</h3>
-        <BodyWeightTimeSeries uid={this.state.uid} />
-        <h3>Body Weight Fluctuations</h3>
-        <BodyWeightHourlyStats uid={this.state.uid} />
+        <div className='body-weight-table card col-lg-8 col-sm-12 row-3'>
+          <h2>Log</h2>
+          <BodyWeightTable uid={this.state.uid}/>
+        </div>
+        <StatsCards />
+        <div className='card col-12'>
+          <h3>Body Weight History</h3>
+          <BodyWeightTimeSeries uid={this.state.uid} />
+        </div>
+        <div className='card col-12'>
+          <h3>Daily Body Weight Fluctuations</h3>
+          <BodyWeightHourlyStats uid={this.state.uid} />
+        </div>
       </main>
     );
   }
 }
 
-class ConnectedBodyWeightTable extends Component {
-  constructor(props) {
-    super(props);
-    this.props.updateData();
-  }
-  getDeleteHandler(id) {
-    var that = this;
-    return function() {
-      if (window.confirm('Delete entry?')) {
-        that.props.deleteEntry(id);
+function BodyWeightTable(props) {
+  const loadingStatus = useSelector(state => getLoadingStatus(
+      state.loadingStatus['BODYWEIGHT'], {page: 0}));
+  const data = useSelector(state => 
+    Object.values(
+      state.bodyweight.entities
+    ).filter(
+      x => x
+    ).sort((entry1, entry2) => {
+      if (entry1.date < entry2.date) {
+        return 1;
       }
+      if (entry1.date === entry2.date) {
+        if (entry1.time < entry2.time) {
+          return 1;
+        }
+      }
+      return -1;
+    })
+  );
+  const user = useSelector(state => 
+      state.userProfiles.entities[props.uid] || {});
+
+  const dispatch = useDispatch();
+  const updateData = (page=0) => dispatch(
+      bodyweightActions['fetchMultiple']({page}));
+  const deleteEntry = (id) => dispatch(
+      bodyweightActions['deleteSingle'](id));
+  const deleteEntries = (ids) => dispatch(
+      bodyweightActions['deleteMultiple'](ids));
+
+  useEffect(updateData, []);
+
+  // Callbacks
+  const [selectedEntries, setSelectedEntries] = useState(new Set());
+  function toggleSelection(id) {
+    let x = new Set(selectedEntries);
+    if (x.has(id)) {
+      x.delete(id);
+    } else {
+      x.add(id);
+    }
+    setSelectedEntries(x);
+  }
+  function clearSelection() {
+    setSelectedEntries(new Set());
+  }
+  function deleteSelection() {
+    for (let id of Array.from(selectedEntries)) {
+      deleteEntry(id).then(() => {
+        let x = new Set(selectedEntries);
+        x.delete(id);
+        setSelectedEntries(x);
+      });
     }
   }
-  render() {
-    var that = this;
-    let status = null;
-    if (this.props.loadingStatus) {
-      switch (this.props.loadingStatus.status) {
-        case 'loading':
-          status = (
-            <tr className='status'>
-              <td colSpan='999'>LOADING</td>
-            </tr>
-          );
-          break;
-        case 'loaded':
-          if (this.props.data.length === 0) {
-            status = (
-              <tr className='status'>
-                <td colSpan='999'>
-                  <div>
-                    You have no body weights on record.
-                  </div>
-                </td>
-              </tr>
-            );
-          }
-          break;
-        case 'error':
+
+  let status = null;
+  if (loadingStatus) {
+    switch (loadingStatus.status) {
+      case 'loading':
+        status = (
+          <tr className='status'>
+            <td colSpan='999'>LOADING</td>
+          </tr>
+        );
+        break;
+      case 'loaded':
+        if (data.length === 0) {
           status = (
             <tr className='status'>
               <td colSpan='999'>
-                <div className='error-message'>
-                  Error: {this.props.loadingStatus.error}
+                <div>
+                  You have no body weights on record.
                 </div>
               </td>
             </tr>
           );
-          break;
-        default:
-          status = null;
-          break;
-      }
+        }
+        break;
+      case 'error':
+        status = (
+          <tr className='status'>
+            <td colSpan='999'>
+              <div className='error-message'>
+                Error: {this.props.loadingStatus.error}
+              </div>
+            </td>
+          </tr>
+        );
+        break;
+      default:
+        status = null;
+        break;
     }
-    return (
-      <div className='bodyweight-table-container'>
-        <NewBodyWeightEntryForm onAddWeight={this.updateData}/>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th className='hide-mobile'>Time</th>
-              <th>Weight ({this.props.units})</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {this.props.data.map(function(data, index){
-              return (<tr key={data.id}>
-                <td>{data.date}</td>
-                <td className='hide-mobile'>{data.time}</td>
-                <td>{data.bodyweight.toFixed(1)}</td>
-                <td>
-                  <i className='material-icons action' onClick={that.getDeleteHandler(data.id)}>delete</i>
-                </td>
-              </tr>);
-            })}
-            { status }
-          </tbody>
-        </table>
-      </div>
-    );
   }
+  return (
+    <div className='bodyweight-table-container'>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Weight ({user.prefered_units})</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.filter(x => x).map(function(data, index){
+            if (index >= 5) {
+              return null;
+            }
+            let isSelected = selectedEntries.has(data.id);
+            return (<tr key={data.id} 
+                  className={isSelected ? 'selected' : ''}
+                  onClick={() => toggleSelection(data.id)}>
+              <td>{data.date}</td>
+              <td>{data.time}</td>
+              <td>{data.bodyweight.toFixed(1)}</td>
+            </tr>);
+          })}
+          { status }
+        </tbody>
+      </table>
+      <button onClick={clearSelection}>Clear</button>
+      <button onClick={deleteSelection}>Delete</button>
+    </div>
+  );
 }
-const BodyWeightTable = connect(
-  function(state, ownProps) {
-    let loadingStatus = getLoadingStatus(state.loadingStatus['BODYWEIGHT'], {page: 0});
-    let data = Object.values(state.bodyweight.entities)
-      .sort(function(entry1, entry2){
-        if (entry1.date < entry2.date) {
-          return 1;
-        }
-        if (entry1.date === entry2.date) {
-          if (entry1.time < entry2.time) {
-            return 1;
-          }
-        }
-        return -1;
-      });
-    let user = state.userProfiles.entities[ownProps.uid] || {};
-    return {
-      loadingStatus,
-      data,
-      units: user.prefered_units
-    };
-  },
-  function(dispatch, ownProps) {
-    return {
-      updateData: (page=0) => dispatch(bodyweightActions['fetchMultiple']({page})),
-      deleteEntry: (id) => dispatch(bodyweightActions['deleteSingle'](id))
-    };
-  }
-)(ConnectedBodyWeightTable);
 
-class ConnectedNewBodyWeightEntryForm extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      bodyweight: '',
-      successMessage: null,
-      errorMessage: null
-    };
-    this.addWeight = this.addWeight.bind(this);
-    this.handleFormChange = this.handleFormChange.bind(this);
-  }
-  addWeight(event) {
+function NewBodyWeightEntryForm(props) {
+  const [bodyweight, setBodyweight] = useState('');
+  const [statusMessage, setStatusMessage] = useState({
+    success: null, error: null
+  });
+  const dispatch = useDispatch();
+  const createWeight = weight => dispatch(bodyweightActions['create'](weight));
+  const preferedUnits = useSelector(state => {
+    let profile = state.userProfiles.entities[props.uid] || {};
+    return profile.prefered_units;
+  });
+
+  // Callbacks
+  function addWeight(event) {
     event.preventDefault();
-    var that = this;
 
     var now = new Date();
     var nowString = formatDate(now);
@@ -185,57 +211,69 @@ class ConnectedNewBodyWeightEntryForm extends Component {
     var payload = {
       date: nowString,
       time: timeString,
-      bodyweight: parseFloat(this.state.bodyweight)
+      bodyweight: parseFloat(bodyweight)
     }
-    this.props.createWeight(payload)
-      .then(function(response){
-        that.setState({
-          bodyweight: '',
-          successMessage: 'Added successfully!',
-          errorMessage: null
-        });
-      })
-      .catch(function(error){
-        console.error(error);
-        that.setState({
-          successMessage: null,
-          errorMessage: 'Failed to add new entry'
-        })
+    createWeight(
+      payload
+    ).then(response => {
+      setBodyweight('');
+      setStatusMessage({
+        success: 'Added successfully!',
+        error: null
       });
+    }).catch(error => {
+      console.error(error);
+      setStatusMessage({
+        success: null,
+        error: 'Failed to add new entry'
+      });
+    });
   }
-  handleFormChange(e) {
-    var x = {successMessage: null, errorMessage: null};
-    x[e.target.name] = e.target.value;
-    this.setState(x);
+  function handleFormChange(e) {
+    setBodyweight(e.target.value);
+    setStatusMessage({
+      success: null,
+      error: null
+    });
   }
-  render() {
-    var classNames = [];
-    if (this.state.successMessage) {
-      classNames.push('valid');
-    } else if (this.state.errorMessage) {
-      classNames.push('invalid');
-    }
-    classNames = classNames.join(' ');
-    return (
-      <form action='#' onSubmit={this.addWeight}>
-        <label htmlFor='bodyweight'>Body Weight: </label>
-        <input type='text' name='bodyweight' className={classNames} value={this.state.bodyweight} onChange={this.handleFormChange} />
-        <div className='success-message'>{this.state.successMessage}</div>
-        <div className='error-message'>{this.state.errorMessage}</div>
-      </form>
-    );
+
+  var classNames = [];
+  if (statusMessage.success) {
+    classNames.push('valid');
+  } else if (statusMessage.error) {
+    classNames.push('invalid');
   }
+  classNames = classNames.join(' ');
+  return (
+    <form action='#' onSubmit={addWeight}>
+      <h2>Body Weight Log</h2>
+      <span>Record your current body weight ({preferedUnits}):</span>
+      <input type='text' name='bodyweight' className={classNames}
+          placeholder='e.g. 182.6'
+          value={bodyweight}
+          onChange={handleFormChange} />
+      <div className='success-message'>{statusMessage.success}</div>
+      <div className='error-message'>{statusMessage.error}</div>
+    </form>
+  );
 }
-const NewBodyWeightEntryForm = connect(
-  function(state, ownProps) {
-    return {data: state.bodyweight}
-  },
-  function(dispatch, ownProps) {
-    return {
-      createWeight: weight => dispatch(bodyweightActions['create'](weight))
-    };
-  }
-)(ConnectedNewBodyWeightEntryForm);
+
+function StatsCards(props) {
+  return (<>
+    <div className='card row-1 col-lg-4 col-sm-4'>
+      <h3>Average Body Weight</h3>
+      <span>148.9</span>
+    </div>
+    <div className='card row-1 col-lg-4 col-sm-4'>
+      <h3>BMI</h3>
+      <span>21.5</span>
+    </div>
+    <div className='card row-1 col-lg-4 col-sm-4'>
+      <h3>Body Weight Change</h3>
+      <span>0.4 lbs/day</span>
+    </div>
+  </>);
+}
 
 function BodyWeightTimeSeries(props) {
   let dispatch = useDispatch();
@@ -308,6 +346,7 @@ function BodyWeightTimeSeries(props) {
       .tickFormat('')
       .ticks(Math.log(height));
     var lineGenerator = line()
+      .curve(curveBasis)
       .x(p => xScale(p.date))
       .y(p => yScale(p.value));
     // Curve
