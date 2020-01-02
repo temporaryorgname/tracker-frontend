@@ -20,6 +20,15 @@ main {
   width: 100%;
   max-width: 1000px;
   text-align: center;
+
+  .card {
+    background-color: $dark-colour-2;
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 5px 5px 0 rgba(black,.4);
+    overflow: hidden;
+    padding: 15px;
+  }
 }
 
 div.notification-container {

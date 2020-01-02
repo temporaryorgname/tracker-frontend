@@ -2,10 +2,40 @@
 
 .diet-page-container {
   text-align: center;
-  display: inline-block;
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 100px;
+  box-sizing: border-box;
+
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: 42px;
+  grid-gap: 15px;
+  padding: 15px;
+
+  .main-card {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-gap: 15px;
+    padding: 100px 0;
+
+    span {
+      color: rgb(150,150,150);
+      font-size: 12px;
+      display: block;
+    }
+    input {
+      border-color: black;
+      background-color: white;
+      width: 100%;
+      max-width: 230px;
+    }
+  }
+  .card {
+    &.header {
+      height: 0px;
+      padding: 21px;
+      line-height: 0;
+    }
+  }
 
   .food-table-container {
     margin: 25px 3px;
@@ -39,35 +69,14 @@ h3.date {
 
 table.food-table {
   display: inline-block;
-  thead {
-    height: 32px;
-    > tr {
-      height: 32px;
-      > th {
-        height: 0;
-        padding: 16px 10px;
-        line-height: 0;
-      }
-    }
-  }
   tr {
     height: 42px;
-    border: 0;
-    background-color: $background-colour;
     td, th {
       padding: 21px 10px;
       line-height: 0;
-      border: 1px solid black;
     }
-    &.total {
-      &:hover {
-        background-color: $background-colour;
-      }
-      .new-entry-container {
-        border: 0;
-        font-size: 10px;
-        cursor: pointer;
-      }
+    th {
+      color: grey;
     }
     .empty {
       color: $faded-primary-colour;

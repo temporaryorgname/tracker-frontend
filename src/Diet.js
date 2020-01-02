@@ -1,11 +1,13 @@
-import React, { Component, useState, useEffect, useRef, Fragment } from 'react';
-import { Link } from "react-router-dom";
+import React, { 
+  Component, useState, useEffect, useRef, Fragment
+} from 'react';
+import { Link, useLocation } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 import axios from 'axios';
 
-import { connect, useDispatch } from "react-redux";
+import { connect, useDispatch, useSelector, shallowEqual } from "react-redux";
 
 import { 
   getLoadingStatus,
@@ -30,7 +32,8 @@ import {
 } from './Common.js';
 import {
   parseQueryString, dictToQueryString, formatDate,
-  entryToEntryString, entryStringToEntry, extractNameFromEntryString
+  entryToEntryString, entryStringToEntry, extractNameFromEntryString,
+  foodEntriesToTrees
 } from './Utils.js';
 
 import './Diet.scss';
@@ -348,7 +351,7 @@ export class DietPage extends Component {
     </main>);
   }
 }
-export const ConnectedDietPage = connect(
+export const ConnectedDietPage2 = connect(
   function(state, ownProps) {
     // Parse Query String
     let queryParams = parseQueryString(ownProps.location.search);
@@ -443,6 +446,113 @@ export const ConnectedDietPage = connect(
     };
   }
 )(DietPage);
+
+export function ConnectedDietPage(props) {
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const fetchEntry = id => dispatch(foodActions['fetchSingle'](id));
+  const fetchEntries = date => dispatch(foodActions['fetchMultiple']({date}));
+  const currentUid = useSelector(state => state.session.uid);
+  const [uid, setUid] = useState(currentUid);
+  const [date, setDate] = useState(formatDate(new Date()));
+  const [entries, setEntries] = useState([]);
+  const [mainEntryId, setMainEntryId] = useState(null);
+  const mainEntry = useSelector(state => {
+    if (mainEntryId === null) {
+      return null;
+    }
+    return state.food.entities[mainEntryId];
+  });
+  const loadingStatus = useSelector(state => {
+    let status = null;
+    if (mainEntryId === null) {
+      status = getLoadingStatus(state.loadingStatus['FOOD'], {date});
+    } else {
+      status = getLoadingStatus(state.loadingStatus['FOOD'], {id: mainEntryId});
+    }
+    return status || {};
+  });
+  const allEntriesFlat = useSelector(state => {
+    return Object.values(
+      state.food.entities
+    ).filter(entity => {
+      if (!entity) {
+        return false;
+      }
+      if (mainEntry && entity.date !== mainEntry.date) {
+        return false;
+      } else if (entity.date !== date) {
+        return false;
+      }
+      if (entity.premade === true) {
+        return false;
+      }
+      return true;
+    });
+  });
+  const allEntries = foodEntriesToTrees(allEntriesFlat);
+
+  // Query string change
+  useEffect(() => {
+    let queryParams = parseQueryString(location.search);
+    if (queryParams['uid']) {
+      setUid(queryParams['uid']);
+    }
+    if (queryParams['id']) {
+      setMainEntryId(queryParams['id']);
+    }
+    if (queryParams['date']) {
+      setDate(queryParams['date'] || formatDate(new Date()));
+    }
+  }, [location]);
+
+  // Load main entry
+  useEffect(() => {
+    if (loadingStatus.status === 'loading' ||
+        loadingStatus.status === 'loaded') {
+      if (mainEntryId === null) {
+        setEntries(Object.values(allEntries));
+      } else {
+        if (mainEntry.children) {
+          setEntries(mainEntry.children);
+        } else {
+          setEntries([]);
+        }
+      }
+    } else {
+      if (mainEntryId === null) {
+        fetchEntries(date);
+      } else {
+        fetchEntry(mainEntryId);
+      }
+    }
+  }, [mainEntryId, loadingStatus]);
+
+  return (<main className='diet-page-container'>
+    <div className='card col-12 header'>
+      Breadcrums and date
+    </div>
+    <div className='main-card col-12'>
+      <div className='card col-lg-4 col-sm-12'>
+        <h2>Card 1</h2>
+        <NewEntryField date={date}/>
+      </div>
+      <div className='card col-lg-4 col-sm-12'>
+        <h2>Card 2</h2>
+      </div>
+      <div className='card col-lg-4 col-sm-12'>
+        <h2>Card 3</h2>
+      </div>
+    </div>
+    <div className='card col-12'>
+      <h3>Log</h3>
+      <FoodTable entries={entries} />
+    </div>
+    <div className='card col-12'>
+      Photos go here
+    </div>
+  </main>);
+}
 
 export class DateSelector extends Component {
   constructor(props) {
@@ -990,7 +1100,7 @@ export class FoodTable extends Component {
               }
               return (
                 <tr key={entry.id}>
-                  <td>{entry.name} {children_count} <Link to={'/food?id='+id}><i className='material-icons'>create</i></Link></td>
+                  <td>{entry.name} {children_count} <Link to={'/food?id='+entry.id}><i className='material-icons'>create</i></Link></td>
                   <td>{entry.quantity || '-'}</td>
                   {createRow(entry.calories,total.calories)}
                   {createRow(entry.carb,total.carb)}
@@ -1000,9 +1110,7 @@ export class FoodTable extends Component {
             })
           }
           <tr className='total'>
-            <td className='new-entry-container' onClick={createNewEntry}>
-              + New Entry
-            </td>
+            <th>Total</th>
             <td>-</td>
             <td>{clipFloat(sum(entries,'calories'),0) || '-'}</td>
             <td>{clipFloat(sum(entries,'carb'),0) || '-'}</td>
@@ -1825,16 +1933,14 @@ function NewEntryField(props) {
   } else if (loadingSuggestions) {
     suggestionsDom = 'Loading...';
   }
+  suggestionsDom = null;
   return (
-    <div onBlur={onBlur}
-        onFocus={onFocus}
-        className={'new-entry-field-container'+ (props.visible ? '' : ' hidden')}>
+    <div className='new-entry-field-container'>
       <input type='text'
-          ref={inputRef}
           value={entryString}
           onChange={e => setEntryString(e.target.value)}
           onKeyDown={onKeyDown}/>
-      <div className='suggestions' tabIndex={-1} ref={suggestionsRef}>
+      <div className='suggestions' ref={suggestionsRef}>
         { suggestionsDom }
       </div>
     </div>
