@@ -309,7 +309,10 @@ export function fillEntry(dest, src) {
   }
 }
 
-export function foodEntriesToTrees(entries) {
+export function foodEntriesToTrees(entries,rootsOnly=false) {
+  /*
+   * rootsOnly: whether the function should return only the root nodes, or all nodes in the tree.
+  */
   let isArray = Array.isArray(entries);
   if (!isArray) {
     entries = Object.values(entries);
@@ -322,9 +325,16 @@ export function foodEntriesToTrees(entries) {
   entries = arrayToDict(entries,'id');
   let result = [];
   for (let e of Object.values(entries)) {
-    if (e.parent_id === null || e.parent_id === undefined) {
+    if (rootsOnly) {
       result.push(e);
-      continue;
+      if (e.parent_id === null || e.parent_id === undefined) {
+        continue;
+      }
+    } else {
+      if (e.parent_id === null || e.parent_id === undefined) {
+        result.push(e);
+        continue;
+      }
     }
     entries[e.parent_id].children.push(e)
   }

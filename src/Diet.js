@@ -447,33 +447,40 @@ export const ConnectedDietPage2 = connect(
   }
 )(DietPage);
 
-export function ConnectedDietPage(props) {
-  const location = useLocation();
+//function useQueryParams(defaults) {
+//  const location = useLocation();
+//  const params = {};
+//  const setters = {};
+//  useEffect(() => {
+//    let queryParams = parseQueryString(location.search);
+//    Object.entries(keys).forEach((k,v) => {
+//      setters[k](queryParams[k] || defaults[k]);
+//    });
+//  }, [location]);
+//}
+
+function useFoodEntries(id,date) {
   const dispatch = useDispatch();
   const fetchEntry = id => dispatch(foodActions['fetchSingle'](id));
   const fetchEntries = date => dispatch(foodActions['fetchMultiple']({date}));
-  const currentUid = useSelector(state => state.session.uid);
-  const [uid, setUid] = useState(currentUid);
-  const [date, setDate] = useState(formatDate(new Date()));
-  const [entries, setEntries] = useState([]);
-  const [mainEntryId, setMainEntryId] = useState(null);
+  //const [mainEntry,setMainEntry] = useState(null);
   const mainEntry = useSelector(state => {
-    if (mainEntryId === null) {
+    if (id === null) {
       return null;
     }
-    return state.food.entities[mainEntryId];
+    return state.food.entities[id];
   });
   const loadingStatus = useSelector(state => {
     let status = null;
-    if (mainEntryId === null) {
+    if (id === null) {
       status = getLoadingStatus(state.loadingStatus['FOOD'], {date});
     } else {
-      status = getLoadingStatus(state.loadingStatus['FOOD'], {id: mainEntryId});
+      status = getLoadingStatus(state.loadingStatus['FOOD'], {id});
     }
     return status || {};
   });
-  const allEntriesFlat = useSelector(state => {
-    return Object.values(
+  const children = useSelector(state => {
+    let entries = Object.values(
       state.food.entities
     ).filter(entity => {
       if (!entity) {
@@ -489,44 +496,54 @@ export function ConnectedDietPage(props) {
       }
       return true;
     });
+    let tree = foodEntriesToTrees(entries,false);
+    let nodes = foodEntriesToTrees(entries,true);
+    tree = arrayToDict(tree,'id');
+    nodes = arrayToDict(nodes,'id');
+    if (!id) {
+      return tree;
+    }
+    if (!nodes[id]) {
+      return {};
+    }
+    return arrayToDict(nodes[id].children,'id');
   });
-  const allEntries = foodEntriesToTrees(allEntriesFlat);
+
+  // Load entries
+  useEffect(() => {
+    if (id === null) {
+      return;
+    }
+    if (mainEntry) {
+      return;
+    }
+    fetchEntry(id);
+  }, [id]);
+  useEffect(() => {
+    if (loadingStatus.status === 'loading' ||
+        loadingStatus.status === 'loaded') {
+      return;
+    } 
+    fetchEntries(date);
+  }, [date]);
+  return [mainEntry, children, loadingStatus];
+}
+
+export function ConnectedDietPage(props) {
+  const location = useLocation();
+  const currentUid = useSelector(state => state.session.uid);
+  const [uid, setUid] = useState(currentUid);
+  const [date, setDate] = useState(formatDate(new Date()));
+  const [mainEntryId, setMainEntryId] = useState(null);
+  const [mainEntry, entries, loadingStatus] = useFoodEntries(mainEntryId,date);
 
   // Query string change
   useEffect(() => {
     let queryParams = parseQueryString(location.search);
-    if (queryParams['uid']) {
-      setUid(queryParams['uid']);
-    }
-    if (queryParams['id']) {
-      setMainEntryId(queryParams['id']);
-    }
-    if (queryParams['date']) {
-      setDate(queryParams['date'] || formatDate(new Date()));
-    }
+    setUid(queryParams['uid'] || currentUid);
+    setMainEntryId(queryParams['id'] || null);
+    setDate(queryParams['date'] || formatDate(new Date()));
   }, [location]);
-
-  // Load main entry
-  useEffect(() => {
-    if (loadingStatus.status === 'loading' ||
-        loadingStatus.status === 'loaded') {
-      if (mainEntryId === null) {
-        setEntries(Object.values(allEntries));
-      } else {
-        if (mainEntry.children) {
-          setEntries(mainEntry.children);
-        } else {
-          setEntries([]);
-        }
-      }
-    } else {
-      if (mainEntryId === null) {
-        fetchEntries(date);
-      } else {
-        fetchEntry(mainEntryId);
-      }
-    }
-  }, [mainEntryId, loadingStatus]);
 
   return (<main className='diet-page-container'>
     <div className='card col-12 header'>
@@ -535,7 +552,7 @@ export function ConnectedDietPage(props) {
     <div className='main-card col-12'>
       <div className='card col-lg-4 col-sm-12'>
         <h2>Card 1</h2>
-        <NewEntryField date={date}/>
+        <NewEntryField date={date} parentId={mainEntryId}/>
       </div>
       <div className='card col-lg-4 col-sm-12'>
         <h2>Card 2</h2>
