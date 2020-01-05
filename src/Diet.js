@@ -447,18 +447,6 @@ export const ConnectedDietPage2 = connect(
   }
 )(DietPage);
 
-//function useQueryParams(defaults) {
-//  const location = useLocation();
-//  const params = {};
-//  const setters = {};
-//  useEffect(() => {
-//    let queryParams = parseQueryString(location.search);
-//    Object.entries(keys).forEach((k,v) => {
-//      setters[k](queryParams[k] || defaults[k]);
-//    });
-//  }, [location]);
-//}
-
 function useFoodEntries(id,date) {
   const dispatch = useDispatch();
   const fetchEntry = id => dispatch(foodActions['fetchSingle'](id));
@@ -547,6 +535,8 @@ function useFoodEntries(id,date) {
 }
 
 export function ConnectedDietPage(props) {
+  const dispatch = useDispatch();
+  const updateEntry = e => dispatch(foodActions['update'](e));
   const location = useLocation();
   const currentUid = useSelector(state => state.session.uid);
   const [uid, setUid] = useState(currentUid);
@@ -592,6 +582,14 @@ export function ConnectedDietPage(props) {
     setBreadcrumbPath(path.reverse());
   }, [mainEntryId, allEntries, date]);
 
+  let entryEditorForm = null;
+  if (mainEntryId) {
+    entryEditorForm = (
+      <div className='card col-12'>
+        <EntryEditorForm entry={mainEntry || {}} onChange={updateEntry} />
+      </div>
+    );
+  }
   return (
     <main className='diet-page-container'>
       <div className='card col-12 header'>
@@ -611,6 +609,7 @@ export function ConnectedDietPage(props) {
       <div className='card col-sm-12 col-lg-4'>
         Photos go here
       </div>
+      {entryEditorForm}
     </main>
   );
 }
