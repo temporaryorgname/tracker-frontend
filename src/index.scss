@@ -23,8 +23,8 @@ main {
 
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  //grid-template-rows: 42px;
   grid-gap: 15px;
+  align-content: start;
   padding: 15px;
 
   .card {
@@ -349,13 +349,6 @@ table {
 }
 
 @media #{$computer-and-tablet} {
-  body {
-    //background-image: url('images/background.jpeg');
-    //background-attachment: fixed;
-    //background-size: cover;
-    //background-color: #cbbdb0;
-  }
-
   main {
     .main-card {
       margin: 100px 0;

@@ -4,12 +4,6 @@
   text-align: center;
   box-sizing: border-box;
 
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-template-rows: 42px;
-  grid-gap: 15px;
-  padding: 15px;
-
   .main-card {
     box-sizing: border-box;
     margin: 30px 0px;
