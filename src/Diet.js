@@ -463,51 +463,14 @@ function useFoodEntries(id,date) {
   const dispatch = useDispatch();
   const fetchEntry = id => dispatch(foodActions['fetchSingle'](id));
   const fetchEntries = date => dispatch(foodActions['fetchMultiple']({date}));
-  //const [mainEntry,setMainEntry] = useState(null);
-  const mainEntry = useSelector(state => {
-    if (id === null) {
-      return null;
-    }
-    return state.food.entities[id];
-  });
-  const loadingStatus = useSelector(state => {
-    let status = null;
-    if (id === null) {
-      status = getLoadingStatus(state.loadingStatus['FOOD'], {date});
-    } else {
-      status = getLoadingStatus(state.loadingStatus['FOOD'], {id});
-    }
-    return status || {};
-  });
-  const children = useSelector(state => {
-    let entries = Object.values(
-      state.food.entities
-    ).filter(entity => {
-      if (!entity) {
-        return false;
-      }
-      if (mainEntry && entity.date !== mainEntry.date) {
-        return false;
-      } else if (entity.date !== date) {
-        return false;
-      }
-      if (entity.premade === true) {
-        return false;
-      }
-      return true;
-    });
-    let tree = foodEntriesToTrees(entries,false);
-    let nodes = foodEntriesToTrees(entries,true);
-    tree = arrayToDict(tree,'id');
-    nodes = arrayToDict(nodes,'id');
-    if (!id) {
-      return tree;
-    }
-    if (!nodes[id]) {
-      return {};
-    }
-    return arrayToDict(nodes[id].children,'id');
-  });
+
+  const loadingStatuses = useSelector(state => state.loadingStatus['FOOD']);
+  const entries = useSelector(state => state.food.entities);
+
+  let [mainEntry,setMainEntry] = useState(null);
+  let [children, setChildren] = useState({});
+  let [allEntries, setAllEntries] = useState({});
+  let [loadingStatus, setLoadingStatus] = useState({});
 
   // Load entries
   useEffect(() => {
@@ -525,8 +488,62 @@ function useFoodEntries(id,date) {
       return;
     } 
     fetchEntries(date);
-  }, [date]);
-  return [mainEntry, children, loadingStatus];
+  }, [date, loadingStatus]);
+
+  // Compute values
+  useEffect(() => {
+    let e = Object.values(
+      entries
+    ).filter(entity => {
+      if (!entity) {
+        return false;
+      }
+      if (id) {
+        if (entries[id]) {
+          if (entity.date !== entries[id].date) {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      } else {
+        if (entity.date !== date) {
+          return false;
+        }
+      }
+      if (entity.premade === true) {
+        return false;
+      }
+      return true;
+    });
+    let tree = foodEntriesToTrees(e,false);
+    let nodes = foodEntriesToTrees(e,true);
+    tree = arrayToDict(tree,'id');
+    nodes = arrayToDict(nodes,'id');
+    if (id) {
+      setMainEntry(nodes[id]);
+      if (nodes[id]) {
+        setChildren(arrayToDict(nodes[id].children,'id'));
+      } else {
+        setChildren({});
+      }
+    } else {
+      setMainEntry(null);
+      setChildren(tree);
+    }
+    setAllEntries(nodes);
+  }, [id, date, entries]);
+  useEffect(() => {
+    let status = {};
+    if (id === null) {
+      status = getLoadingStatus(loadingStatuses, {date});
+    } else {
+      status = getLoadingStatus(loadingStatuses, {id});
+    }
+    setLoadingStatus(status || {});
+  }, [id, date, loadingStatuses]);
+
+  return [mainEntry, children, allEntries, loadingStatus];
 }
 
 export function ConnectedDietPage(props) {
@@ -535,7 +552,9 @@ export function ConnectedDietPage(props) {
   const [uid, setUid] = useState(currentUid);
   const [date, setDate] = useState(formatDate(new Date()));
   const [mainEntryId, setMainEntryId] = useState(null);
-  const [mainEntry, entries, loadingStatus] = useFoodEntries(mainEntryId,date);
+  const [
+    mainEntry, visibleEntries, allEntries, loadingStatus
+  ] = useFoodEntries(mainEntryId,date);
 
   // Query string change
   useEffect(() => {
@@ -545,30 +564,55 @@ export function ConnectedDietPage(props) {
     setDate(queryParams['date'] || formatDate(new Date()));
   }, [location]);
 
-  return (<main className='diet-page-container'>
-    <div className='card col-12 header'>
-      Breadcrums and date
-    </div>
-    <div className='main-card col-12'>
-      <div className='card col-lg-4 col-sm-12'>
-        <h2>Card 1</h2>
-        <NewEntryField date={date} parentId={mainEntryId}/>
+  // Set date to match the selected entry
+  useEffect(() => {
+    if (mainEntry && mainEntry.date !== date) {
+      setDate(mainEntry.date);
+    }
+  }, [mainEntry]);
+
+  // Compute path for breadcrumbs
+  const [breadcrumbPath, setBreadcrumbPath] = useState([]);
+  useEffect(() => {
+    let path = [];
+    let e0 = allEntries[mainEntryId];
+    let e = e0;
+    while (e) {
+      path.push({
+        text: e.name,
+        url: 'food?id='+e.id
+      });
+      e = allEntries[e.parent_id];
+    }
+    let d = (e0 || {}).date || date;
+    path.push({
+      text: d,
+      url: 'food?date='+d
+    });
+    setBreadcrumbPath(path.reverse());
+  }, [mainEntryId, allEntries, date]);
+
+  return (
+    <main className='diet-page-container'>
+      <div className='card col-12 header'>
+        <Breadcrumbs data={breadcrumbPath} />
+        <DateSelector date={date} onChange={setDate} />
       </div>
-      <div className='card col-lg-4 col-sm-12'>
-        <h2>Card 2</h2>
+      <div className='main-card col-12'>
+        <div className='card'>
+          <h2>New Entry</h2>
+          <NewEntryField date={date} parentId={mainEntryId}/>
+        </div>
       </div>
-      <div className='card col-lg-4 col-sm-12'>
-        <h2>Card 3</h2>
+      <div className='card col-sm-12 col-lg-8'>
+        <h3>Log</h3>
+        <FoodTable entries={visibleEntries} />
       </div>
-    </div>
-    <div className='card col-12'>
-      <h3>Log</h3>
-      <FoodTable entries={entries} />
-    </div>
-    <div className='card col-12'>
-      Photos go here
-    </div>
-  </main>);
+      <div className='card col-sm-12 col-lg-4'>
+        Photos go here
+      </div>
+    </main>
+  );
 }
 
 export class DateSelector extends Component {
@@ -595,7 +639,7 @@ export class DateSelector extends Component {
     } = this.props;
     var newDate = new Date(date);
     newDate.setDate(newDate.getDate());
-    this.onChange(newDate);
+    this.onChange(formatDate(newDate));
   }
   nextDate() {
     let {
@@ -603,7 +647,7 @@ export class DateSelector extends Component {
     } = this.props;
     var newDate = new Date(date);
     newDate.setDate(newDate.getDate()+2);
-    this.onChange(newDate);
+    this.onChange(formatDate(newDate));
   }
   render() {
     let {

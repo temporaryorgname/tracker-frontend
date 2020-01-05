@@ -12,11 +12,12 @@
 
   .main-card {
     box-sizing: border-box;
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-gap: 15px;
-    padding: 100px 0;
-
+    margin: 30px 0px;
+    .card {
+      display: inline-block;
+      padding: 100px 0;
+      width: 100%;
+    }
     span {
       color: rgb(150,150,150);
       font-size: 12px;
@@ -34,21 +35,47 @@
       height: 0px;
       padding: 21px;
       line-height: 0;
+      text-align: left;
+
+      .breadcrumbs {
+        display: inline;
+        color: grey;
+        a {
+          color: $secondary-colour;
+        }
+      }
     }
   }
 
   .food-table-container {
     margin: 25px 3px;
   }
+
+  @media #{$computer-and-tablet} {
+    .main-card {
+      margin: 100px 0;
+      .card {
+        padding: 100px;
+        width: unset;
+      }
+    }
+  }
 }
 
 h3.date {
+  display: inline-block;
+  line-height: 0;
+  vertical-align: bottom;
+  margin: 0;
+  float: right;
   i {
     vertical-align: middle;
+    line-height: 0;
   }
   span {
     vertical-align: middle;
     margin: 0 30px;
+    line-height: 0;
   }
 }
 
