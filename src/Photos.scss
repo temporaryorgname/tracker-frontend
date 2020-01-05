@@ -1,0 +1,23 @@
+@import '_variables';
+
+.photo-page-container {
+  .main-card {
+    .card {
+      h2 {
+        margin-top: 0;
+      }
+      padding: 40px 0;
+      input {
+        display: none;
+      }
+    }
+  }
+  @media #{$computer-and-tablet} {
+    .main-card {
+      .card {
+        padding: 40px 100px;
+      }
+    }
+  }
+}
+

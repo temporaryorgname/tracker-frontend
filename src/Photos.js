@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Link, Switch } from "react-router-dom";
+import { Route, Link, Switch, useLocation } from "react-router-dom";
 
 import axios from 'axios';
 
@@ -11,21 +11,74 @@ import {
 } from './actions/Actions.js';
 import { 
   getLoadingStatus,
-  parseQueryString
+  parseQueryString,
+  formatDate
 } from './Utils.js';
-import { FoodPhotoThumbnail } from './Common.js';
+import { FoodPhotoThumbnail, BigButton } from './Common.js';
 
-//import './Photo.scss';
+import './Photos.scss';
 
 export function PhotosPage(props) {
   const dispatch = useDispatch();
-  const queryParams = parseQueryString(props.location.search);
-
-  const uid = useSelector(state => queryParams['uid'] || state.session.uid);
-  const loadingStatus = useSelector(
-    state => state.loadingStatus['PHOTOS']
+  const uploadPhoto = (files, progressCallback, date) => dispatch(
+    photoActions['create'](files, progressCallback, date)
   );
+  const location = useLocation();
+  const currentUid = useSelector(state => state.session.uid);
+  const loadingStatus = useSelector(state => state.loadingStatus['PHOTOS']);
   const photos = useSelector(state => state.photos.entities);
+
+  const [uid, setUid] = useState(currentUid);
+  const [date, setDate] = useState(formatDate(new Date()));
+
+  // Query string change
+  useEffect(() => {
+    let queryParams = parseQueryString(location.search);
+    setUid(queryParams['uid'] || currentUid);
+  }, [location, currentUid]);
+
+  const [ulProgress,setUlProgress] = useState({});
+  const [ulErrors,setUlErrors] = useState([]);
+  function uploadFile(file) {
+    let that = this;
+    // Find first available index
+    let index = 0;
+    while (index in ulProgress) {
+      index++;
+    }
+    setUlProgress({
+      ...ulProgress,
+      [index]: 0
+    });
+    uploadPhoto(
+      file,
+      function(progress) {
+        setUlProgress({
+          ...ulProgress,
+          [index]: progress.loaded/progress.total
+        });
+      },
+      date
+    ).then(function(response){
+      //that.props.fetchPhotos(false);
+      let progress = {...ulProgress};
+      delete progress[index];
+      setUlProgress(progress);
+    }).catch(function(error){
+      setUlErrors([
+        ...ulErrors,
+        {
+          error: error.response.data,
+          file: file,
+          retry: function() {
+            setUlErrors(ulErrors.filter(e => e.file !== file));
+            uploadFile(file);
+          }
+        }
+      ])
+    });
+  }
+
   if (!getLoadingStatus(loadingStatus, {user_id: uid})) {
     dispatch(photoActions['fetchMultiple']({user_id: uid}));
   }
@@ -50,7 +103,19 @@ export function PhotosPage(props) {
   });
   return (
     <main className='photo-page-container'>
-      {photosDom}
+      <div className='main-card col-12'>
+        <div className='card'>
+          <h2>Upload Photo</h2>
+          <label>
+            <input type="file" name="file" accept="image/*" capture="camera"
+                onChange={(e) => uploadFile(e.target.files)}/>
+            <BigButton icon='add_a_photo' text='Upload Photo' />
+          </label>
+        </div>
+      </div>
+      <div className='card col-12'>
+        {photosDom}
+      </div>
     </main>
   );
 }
