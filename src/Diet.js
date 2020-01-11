@@ -599,6 +599,7 @@ export function ConnectedDietPage(props) {
       <div className='main-card col-12'>
         <div className='card'>
           <h2>New Entry</h2>
+          <span>Record your what you ate today:</span>
           <NewEntryField date={date} parentId={mainEntryId}/>
         </div>
       </div>
@@ -1997,6 +1998,7 @@ function NewEntryField(props) {
   return (
     <div className='new-entry-field-container'>
       <input type='text'
+          placeholder='e.g. Banana'
           value={entryString}
           onChange={e => setEntryString(e.target.value)}
           onKeyDown={onKeyDown}/>
