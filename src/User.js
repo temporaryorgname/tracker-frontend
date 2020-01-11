@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 
 import axios from 'axios';
 
@@ -29,7 +29,6 @@ class ConnectedUserPage extends Component {
   render() {
     return (
       <main className='user-page-container'>
-        <div className='background'></div>
         <UserProfile uid={this.state.params['uid']} />
       </main>
     );
@@ -189,6 +188,7 @@ class ConnectedUserProfile extends Component {
   render() {
     let form = (
       <>
+        <div className='card col-12'>
         <h3>Profile</h3>
         <form>
           <div className='success-message'>
@@ -214,6 +214,8 @@ class ConnectedUserProfile extends Component {
           </label>
           <button onClick={this.handleSaveProfile}>Save</button>
         </form>
+        </div>
+        <div className='card col-12'>
         <h3>Goals</h3>
         <form>
           <div className='success-message'>
@@ -241,6 +243,8 @@ class ConnectedUserProfile extends Component {
           </label>
           <button onClick={this.handleSaveGoals}>Save</button>
         </form>
+        </div>
+        <div className='card col-12'>
         <h3>Change Password</h3>
         <form>
           <div className='success-message'>
@@ -269,6 +273,7 @@ class ConnectedUserProfile extends Component {
           </label>
           <button onClick={this.handleChangePassword}>Save</button>
         </form>
+        </div>
       </>
     );
     let loadingStatus = (
@@ -278,10 +283,9 @@ class ConnectedUserProfile extends Component {
       loadingStatus = null;
     }
     return (
-      <div>
-        <h2>Account Settings</h2>
+      <>
         { loadingStatus || form }
-      </div>
+      </>
     );
   }
 }
