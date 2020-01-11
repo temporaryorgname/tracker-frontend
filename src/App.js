@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import axios from 'axios';
 import './App.scss';
 
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
 import { userProfileActions, notify, unnotify } from './actions/Actions.js';
 
@@ -55,7 +55,7 @@ class ConnectedApp extends Component {
 				component: TagsPage
 			},{
 				route: '/logout',
-				component: ConnectedLogoutPage
+				component: LogoutPage
 			},{
 				route: '/',
 				component: ConnectedOverviewPage,
@@ -281,34 +281,23 @@ const LoginPrompt = connect(
   }
 )(ConnectedLoginPrompt);
 
-class ConnectedLoginPage extends Component {
-  constructor(props) {
-    super(props);
-    this.handleLogin = this.handleLogin.bind(this);
+function LoginPage(props) {
+  const dispatch = useDispatch();
+  const fetchSession = () => dispatch(updateSession());
+  function handleLogin() {
+    props.history.push('/');
+    fetchSession();
   }
-  handleLogin() {
-    this.props.history.push('/');
-    this.props.fetchSession();
-  }
-  render() {
-    return (
-      <main>
-        <div className='background'></div>
-        <LoginPrompt onLogin={this.handleLogin}/>
-      </main>
-    );
-  }
+  return (
+    <main>
+      <div className='main-card col-12'>
+        <div className='card'>
+          <LoginPrompt onLogin={handleLogin}/>
+        </div>
+      </div>
+    </main>
+  );
 }
-const LoginPage = connect(
-  function(state, ownProps) {
-    return {};
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchSession: () => dispatch(updateSession())
-    }
-  }
-)(ConnectedLoginPage);
 
 class Signup extends Component {
   constructor(props) {
@@ -404,60 +393,39 @@ class Signup extends Component {
   }
 }
 
-class ConnectedSignupPage extends Component {
-  constructor(props) {
-    super(props);
-    this.handleSuccessfulSignup = this.handleSuccessfulSignup.bind(this);
+function SignupPage(props) {
+  const dispatch = useDispatch();
+  const fetchSession = () => dispatch(updateSession());
+  function handleSuccessfulSignup() {
+    fetchSession();
+    props.history.push('/');
   }
-  handleSuccessfulSignup() {
-    this.props.fetchSession();
-    this.props.history.push('/');
-  }
-  render() {
-    return (
-      <main>
-        <div className='background'></div>
-        <Signup onSignup={this.handleSuccessfulSignup}/>
-      </main>
-    );
-  }
+  return (
+    <main>
+      <div className='main-card col-12'>
+        <div className='card'>
+          <Signup onSignup={handleSuccessfulSignup}/>
+        </div>
+      </div>
+    </main>
+  );
 }
-const SignupPage = connect(
-  function(state, ownProps) {
-    return {};
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchSession: () => dispatch(updateSession())
-    }
-  }
-)(ConnectedSignupPage);
 
 function LogoutPage(props) {
-	props.logout().then(() => {
+  const dispatch = useDispatch();
+  const logout = () => dispatch(logout());
+	logout().then(() => {
 		console.log('logged out');
 	});
 	return 'Logging out...';
 }
-const ConnectedLogoutPage = connect(
-  function(state, ownProps) {
-    return {};
-  },
-  function(dispatch, ownProps) {
-    return {
-      logout: () => dispatch(logout())
-    }
-  }
-)(LogoutPage);
 
-class ErrorPage404 extends Component {
-  render() {
-    return (
-      <div>
-        404 - Page not found.
-      </div>
-    );
-  }
+function ErrorPage404(props) {
+  return (
+    <div>
+      404 - Page not found.
+    </div>
+  );
 }
 
 class ConnectedNotificationContainer extends Component {
