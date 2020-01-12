@@ -547,6 +547,13 @@ export function ConnectedDietPage(props) {
     mainEntry, visibleEntries, allEntries, loadingStatus
   ] = useFoodEntries(mainEntryId,date);
 
+  // Callbacks
+  function setDateWithHistory(date) {
+    let params = parseQueryString(location.search);
+    params.date = formatDate(date);
+    props.history.push(dictToQueryString(params, ['uid', 'date']));
+  }
+
   // Query string change
   useEffect(() => {
     let queryParams = parseQueryString(location.search);
@@ -595,7 +602,7 @@ export function ConnectedDietPage(props) {
     <main className='diet-page-container'>
       <div className='card col-12 header'>
         <Breadcrumbs data={breadcrumbPath} />
-        <DateSelector date={date} onChange={setDate} />
+        <DateSelector date={date} onChange={setDateWithHistory} />
       </div>
       <div className='main-card col-12'>
         <div className='card'>
