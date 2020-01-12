@@ -249,11 +249,11 @@ export const bodyweightSummaryActions = createActions('BODYWEIGHT_SUMMARY', '/da
 
 photoActions['create'] = (function(){
   let createPhoto = photoActions['create'];
-  return function(files, progressCallback, date=null) {
+  return function(files, progressCallback, data={}) {
     var formData = new FormData();
     formData.append("file", files[0]);
-    if (date) {
-      formData.append("date", date);
+    for (let [k,v] of Object.entries(data)) {
+      formData.append(k, v);
     }
     return createPhoto(formData, progressCallback);
   }

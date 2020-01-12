@@ -18,7 +18,7 @@ import { FoodPhotoThumbnail, BigButton } from './Common.js';
 
 import './Photos.scss';
 
-function usePhotoUploader(date) {
+export function usePhotoUploader(date,food_id=null) {
   const dispatch = useDispatch();
   const uploadPhoto = (files, progressCallback, date) => dispatch(
     photoActions['create'](files, progressCallback, date)
@@ -44,7 +44,7 @@ function usePhotoUploader(date) {
           [index]: progress.loaded/progress.total
         });
       },
-      date
+      {date: date || null, food_id: food_id || null}
     ).then(function(response){
       //that.props.fetchPhotos(false);
       let progress = {...ulProgress};
@@ -71,21 +71,27 @@ function usePhotoUploader(date) {
   ]
 }
 
-function usePhotos(uid) {
+export function usePhotos(uid) {
   const dispatch = useDispatch();
   const loadingStatus = useSelector(state => state.loadingStatus['PHOTOS']);
   const photos = useSelector(state => state.photos.entities);
+  const [photosByDate, setPhotosByDate] = useState({});
 
-  if (!getLoadingStatus(loadingStatus, {user_id: uid})) {
-    dispatch(photoActions['fetchMultiple']({user_id: uid}));
-  }
-  let photosByDate = {};
-  Object.values(photos).forEach(photo => {
-    if (!photosByDate[photo.date]) {
-      photosByDate[photo.date] = [];
+  useEffect(() => {
+    if (!getLoadingStatus(loadingStatus, {user_id: uid})) {
+      dispatch(photoActions['fetchMultiple']({user_id: uid}));
     }
-    photosByDate[photo.date].push(photo);
-  });
+  }, [uid]);
+  useEffect(() => {
+    let byDate = {};
+    Object.values(photos).forEach(photo => {
+      if (!byDate[photo.date]) {
+        byDate[photo.date] = [];
+      }
+      byDate[photo.date].push(photo);
+    });
+    setPhotosByDate(byDate);
+  }, [photos]);
   return photosByDate;
 }
 

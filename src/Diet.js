@@ -35,6 +35,7 @@ import {
   entryToEntryString, entryStringToEntry, extractNameFromEntryString,
   foodEntriesToTrees
 } from './Utils.js';
+import { usePhotos, usePhotoUploader } from './Photos.js';
 
 import './Diet.scss';
 
@@ -549,8 +550,8 @@ export function ConnectedDietPage(props) {
   // Query string change
   useEffect(() => {
     let queryParams = parseQueryString(location.search);
-    setUid(queryParams['uid'] || currentUid);
-    setMainEntryId(queryParams['id'] || null);
+    setUid(parseInt(queryParams['uid']) || currentUid);
+    setMainEntryId(parseInt(queryParams['id']) || null);
     setDate(queryParams['date'] || formatDate(new Date()));
   }, [location]);
 
@@ -603,12 +604,12 @@ export function ConnectedDietPage(props) {
           <NewEntryField date={date} parentId={mainEntryId}/>
         </div>
       </div>
-      <div className='card col-sm-12 col-lg-8'>
+      <div className='card col-12'>
         <h3>Log</h3>
         <FoodTable entries={visibleEntries} />
       </div>
-      <div className='card col-sm-12 col-lg-4'>
-        Photos go here
+      <div className='card col-12'>
+        <Gallery uid={uid} id={mainEntryId} date={date} />
       </div>
       {entryEditorForm}
     </main>
@@ -760,7 +761,7 @@ export class QuantityInput extends Component {
 // Photos
 //////////////////////////////////////////////////
 
-export class Gallery extends Component {
+export class Gallery2 extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -1095,7 +1096,66 @@ const ConnectedGallery = connect(
       ),
     };
   }
-)(Gallery);
+)(Gallery2);
+
+function useFoodPhotos(uid,id,date) {
+  const photos = usePhotos(uid);
+  const food = useSelector(state => state.food.entities);
+  //const [, , allEntries, ] = useFoodEntries(id,date);
+  const [filtered,setFiltered] = useState([]);
+  useEffect(() => {
+    if (id) {
+      if (typeof(id) !== 'number') {
+        console.error(
+          'Provided ID is not a number. Found type '+typeof(id)+'.');
+      }
+      setFiltered(
+        (photos[date]||[]).filter(p => {
+          let fid = p.food_id;
+          while (true) {
+            if (fid === id) {
+              return true;
+            }
+            if (!fid) {
+              return false;
+            }
+            fid = food[fid].parent_id;
+          }
+        })
+      );
+    } else if (date) {
+      setFiltered(photos[date] || []);
+    } else {
+      console.error('No id or date provided');
+    }
+  }, [id, date, photos, food]);
+  return filtered;
+}
+
+function Gallery(props) {
+  const {
+    uid,
+    id,
+    date
+  } = props;
+  const photos = useFoodPhotos(uid, id, date);
+  const [ulProgress,ulErrors,upload] = usePhotoUploader(date,id);
+  let photosDom = photos.map((photo) => {
+    return (<FoodPhotoThumbnail photoId={photo.id}
+        selected={false}
+        key={photo.id}/>);
+  });
+  return (
+    <div className='gallery'>
+      <label>
+        <input type="file" name="file" accept="image/*" capture="camera"
+            onChange={upload}/>
+        <BigButton icon='add_a_photo' text='Upload Photo' />
+      </label>
+      {photosDom}
+    </div>
+  );
+}
 
 //////////////////////////////////////////////////
 // Table
@@ -1131,6 +1191,38 @@ export class FoodTable extends Component {
         return acc+val;
       }, null);
     }
+    let rows = null;
+    if (Object.entries(entries).length === 0) {
+      rows = (
+        <tr><td colSpan='999'>No entries to show</td></tr>
+      )
+    } else {
+      rows = Object.entries(entries).map(function([id,entry]){
+        let children_count = '';
+        if (entry.children && Object.keys(entry.children).length > 0) {
+          children_count = '('+Object.keys(entry.children).length+')';
+        }
+        let total = computeDietEntryTotal([entry]);
+        function createRow(entryVal, computedVal, missingVal) {
+          if (entryVal) {
+            return <td>{clipFloat(entryVal,0)}</td>;
+          } else if (computedVal) {
+            return <td className='empty'>{clipFloat(computedVal,0)}</td>;
+          } else {
+            return <td className='empty'>-</td>;
+          }
+        }
+        return (
+          <tr key={entry.id}>
+            <td>{entry.name} {children_count} <Link to={'/food?id='+entry.id}><i className='material-icons'>create</i></Link></td>
+            <td>{entry.quantity || '-'}</td>
+            {createRow(entry.calories,total.calories)}
+            {createRow(entry.carb,total.carb)}
+            {createRow(entry.protein,total.protein)}
+          </tr>
+        );
+      });
+    }
     return (
       <table className='food-table'>
         <thead>
@@ -1143,33 +1235,7 @@ export class FoodTable extends Component {
           </tr>
         </thead>
         <tbody>
-          {
-            Object.entries(entries).map(function([id,entry]){
-              let children_count = '';
-              if (entry.children && Object.keys(entry.children).length > 0) {
-                children_count = '('+Object.keys(entry.children).length+')';
-              }
-              let total = computeDietEntryTotal([entry]);
-              function createRow(entryVal, computedVal, missingVal) {
-                if (entryVal) {
-                  return <td>{clipFloat(entryVal,0)}</td>;
-                } else if (computedVal) {
-                  return <td className='empty'>{clipFloat(computedVal,0)}</td>;
-                } else {
-                  return <td className='empty'>-</td>;
-                }
-              }
-              return (
-                <tr key={entry.id}>
-                  <td>{entry.name} {children_count} <Link to={'/food?id='+entry.id}><i className='material-icons'>create</i></Link></td>
-                  <td>{entry.quantity || '-'}</td>
-                  {createRow(entry.calories,total.calories)}
-                  {createRow(entry.carb,total.carb)}
-                  {createRow(entry.protein,total.protein)}
-                </tr>
-              );
-            })
-          }
+          {rows}
           <tr className='total'>
             <th>Total</th>
             <td>-</td>
