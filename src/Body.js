@@ -263,10 +263,18 @@ function NewBodyWeightEntryForm(props) {
 function StatsCards(props) {
   let {
     avg_weight,
-    units
+    units,
+    weight_change_per_day
   } = useSelector(state => 
     state.bodyweightSummary || {}
   );
+  let weightChangeDom = '(Data unavailable)';
+  if (weight_change_per_day) {
+    weightChangeDom = clipFloat(weight_change_per_day,2)+' '+units+'/day';
+    if (weight_change_per_day > 0) {
+      weightChangeDom = '+'+weightChangeDom;
+    }
+  }
   return (<>
     <div className='card row-1 col-lg-4 col-sm-4'>
       <h3>Body Weight Average</h3>
@@ -278,7 +286,9 @@ function StatsCards(props) {
     </div>
     <div className='card row-1 col-lg-4 col-sm-4'>
       <h3>Body Weight Change</h3>
-      <span>(Data unavailable)</span>
+      <span>
+        {weightChangeDom}
+      </span>
     </div>
   </>);
 }
