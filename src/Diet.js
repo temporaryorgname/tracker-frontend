@@ -1152,16 +1152,18 @@ function Gallery(props) {
         selected={false}
         key={photo.id}/>);
   });
-  return (
+  return (<>
     <div className='gallery'>
+      {photosDom}
+    </div>
+    <div className='controls'>
       <label>
         <input type="file" name="file" accept="image/*" capture="camera"
             onChange={upload}/>
-        <BigButton icon='add_a_photo' text='Upload Photo' />
+        <Button>Upload Photo</Button>
       </label>
-      {photosDom}
     </div>
-  );
+  </>);
 }
 
 //////////////////////////////////////////////////

@@ -46,8 +46,10 @@
   }
 
   .gallery {
-    overflow-x: scroll;
-    white-space: nowrap;
+    //overflow-x: scroll;
+    //white-space: nowrap;
+  }
+  .controls {
     input[type='file'] {
       display: none;
     }
