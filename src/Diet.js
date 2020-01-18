@@ -28,7 +28,8 @@ import {
   Checkbox, FoodPhotoThumbnail, DropdownMenu, Accordion,
   BigButton, Button,
   Modal, ModalHeader, ModalBody, ModalFooter,
-  Breadcrumbs
+  Breadcrumbs,
+  useDims
 } from './Common.js';
 import {
   parseQueryString, dictToQueryString, formatDate,
@@ -1181,10 +1182,6 @@ export class FoodTable extends Component {
     let {
       entries = this.state.entries,
     } = this.props;
-    let createNewEntry = () => console.error('Missing createNewEntry prop.');
-    if (this.props.createNewEntry) {
-      createNewEntry = this.props.createNewEntry;
-    }
     function sum(entries, prop) {
       return Object.values(entries).reduce(function(acc, entry){
         let val = entry[prop];

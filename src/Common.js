@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import { connect } from "react-redux";
@@ -539,6 +539,23 @@ export function Breadcrumbs(props) {
       }, [])
     }
   </div>);
+}
+
+export function useDims(ref) {
+  let [dims, setDims] = useState([null,null]);
+  function updateDims() {
+    setDims([ref.current.clientWidth, ref.current.clientHeight]);
+  }
+  useEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+    window.addEventListener('resize', updateDims);
+    return () => {
+      window.removeEventListener('resize', updateDims);
+    };
+  }, [ref.current]);
+  return dims;
 }
 
 export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Button, Accordion, DropdownMenu };

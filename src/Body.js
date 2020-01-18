@@ -18,6 +18,9 @@ import {
   getLoadingStatus,
   clipFloat,
 } from './Utils.js';
+import {
+  useDims
+} from './Common.js';
 
 import './Body.scss';
 
@@ -303,20 +306,8 @@ function BodyWeightTimeSeries(props) {
   );
   let updateData = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
   updateData();
-  let svg = useRef(null);
-  let [svgDims, setSvgDims] = useState([null,null]);
-  function updateDims() {
-    setSvgDims([svg.current.clientWidth, svg.current.clientHeight]);
-  }
-  useEffect(() => {
-    if (!svg.current) {
-      return;
-    }
-    window.addEventListener('resize', updateDims);
-    return () => {
-      window.removeEventListener('resize', updateDims);
-    };
-  }, [svg.current]);
+  const svg = useRef(null);
+  const svgDims = useDims(svg);
   useEffect(() => {
     // Check if data is loaded
     if (loadingStatus.status !== 'loaded') {
@@ -439,20 +430,8 @@ function BodyWeightHourlyStats(props) {
   );
   let updateData = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
   updateData();
-  let svg = useRef(null);
-  let [svgDims, setSvgDims] = useState([null,null]);
-  function updateDims() {
-    setSvgDims([svg.current.clientWidth, svg.current.clientHeight]);
-  }
-  useEffect(() => {
-    if (!svg.current) {
-      return;
-    }
-    window.addEventListener('resize', updateDims);
-    return () => {
-      window.removeEventListener('resize', updateDims);
-    };
-  }, [svg.current]);
+  const svg = useRef(null);
+  const svgDims = useDims(svg);
   useEffect(() => {
     console.log('RENDERING');
     // Check if data is loaded
