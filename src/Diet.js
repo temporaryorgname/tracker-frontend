@@ -824,6 +824,8 @@ export class Gallery2 extends Component {
         uploadingProgress: progress
       });
     }).catch(function(error){
+      console.error(error);
+      window.error = error;
       that.setState({
         uploadingCount: that.state.uploadingCount-1,
         errors: [...that.state.errors, 
@@ -1580,6 +1582,7 @@ class SearchTable extends Component {
       });
     }).catch(function(error){
       console.error(error);
+      window.error = error;
       that.setState({
         errorMessage: error.response.data.error,
         loading: false
@@ -1942,6 +1945,8 @@ function NewEntryField(props) {
       setSelectedSuggestion(null);
       console.log(response.data);
     }).catch(error => {
+      console.error(error);
+      window.error = error;
       setError(error.response.data.error);
       setLoadingSuggestions(false);
       setSelectedSuggestion(null);

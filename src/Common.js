@@ -357,7 +357,7 @@ function BigButton(props) {
 
 function Button(props) {
   return (
-    <div className='button' tabindex={0} {...props}>
+    <div className='button' tabIndex={0} {...props}>
       {props.children}
     </div>
   );

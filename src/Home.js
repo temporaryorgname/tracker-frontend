@@ -106,12 +106,12 @@ class OverviewPage extends Component {
     }
     return (
       <main className='overview-page-container'>
-        <div className='background'>
-        </div>
-        <h2>Hello {this.props.name}</h2>
-        <div className='progress-report'>
-          <h3>Progress Report</h3>
-          { content }
+        <div className='card col-12'>
+          <h2>Hello {this.props.name}</h2>
+          <div className='progress-report'>
+            <h3>Progress Report</h3>
+            { content }
+          </div>
         </div>
       </main>
     );

@@ -104,6 +104,8 @@ function createActions(dataType, path, autosortProps) {
         }).catch(function(error){
           // Set 'error' status
           console.log(error);
+          console.log(path)
+          window.error = error;
           dispatch({
             type: 'LOADING_FAILURE',
             payload: {
