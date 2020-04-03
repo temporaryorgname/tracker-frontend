@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from 'react';
+import React, { Component, useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import { connect } from "react-redux";
@@ -541,21 +541,50 @@ export function Breadcrumbs(props) {
   </div>);
 }
 
-export function useDims(ref) {
+export function useDims() {
   let [dims, setDims] = useState([null,null]);
+  let node = useRef(null);
   function updateDims() {
-    setDims([ref.current.clientWidth, ref.current.clientHeight]);
-  }
-  useEffect(() => {
-    if (!ref.current) {
+    if (!node.current) {
       return;
     }
+    setDims([node.current.clientWidth, node.current.clientHeight]);
+  }
+  let ref = useCallback(n => {
+    if (n === null) {
+      return;
+    }
+    node.current = n;
+  });
+  useEffect(() => {
     window.addEventListener('resize', updateDims);
     return () => {
       window.removeEventListener('resize', updateDims);
     };
-  }, [ref.current]);
-  return dims;
+  }, []);
+  return [ref, node, dims];
+}
+
+export function useSVG(render, dependencies) {
+  let node = useRef(null);
+  function runRender() {
+    if (!node.current) {
+      return;
+    }
+    render(node,[node.current.clientWidth, node.current.clientHeight]);
+  }
+  useEffect(runRender,dependencies);
+  let ref = useCallback(n => {
+    node.current = n;
+    runRender();
+  });
+  useEffect(() => {
+    window.addEventListener('resize', runRender);
+    return () => {
+      window.removeEventListener('resize', runRender);
+    };
+  }, []);
+  return ref;
 }
 
 export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Button, Accordion, DropdownMenu };

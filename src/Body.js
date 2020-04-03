@@ -19,7 +19,7 @@ import {
   clipFloat,
 } from './Utils.js';
 import {
-  useDims
+  useSVG
 } from './Common.js';
 
 import './Body.scss';
@@ -306,9 +306,7 @@ function BodyWeightTimeSeries(props) {
   );
   let updateData = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
   updateData();
-  const svg = useRef(null);
-  const svgDims = useDims(svg);
-  useEffect(() => {
+  let ref = useSVG((svg,svgDims) => {
     // Check if data is loaded
     if (loadingStatus.status !== 'loaded') {
       return;
@@ -327,8 +325,7 @@ function BodyWeightTimeSeries(props) {
       };
     }).filter((x) => x.value !== null);
     // Compute sizes and scales
-    var width = svg.current.width.baseVal.value;
-    var height = svg.current.height.baseVal.value;
+    let [width,height] = svgDims;
     var vbWidth = svg.current.viewBox.baseVal.width;
     var vbHeight = svg.current.viewBox.baseVal.height;
     let scale = vbHeight/height;
@@ -397,17 +394,17 @@ function BodyWeightTimeSeries(props) {
       .attr("font-size", fontSize)
       .attr('transform', 'translate('+fontSize+','+((vbHeight-paddingBottom)/2)+') rotate(-90)')
       .text('Weight');
-  }, [svg.current, ...svgDims, history.data, loadingStatus.status]);
+  }, [history.data, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
-    <svg ref={svg} width='100%' viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+    <svg ref={ref} width='100%' viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
       <g className='x-gridlines'></g>
       <g className='y-gridlines'></g>
       <g className='x-axis'></g>
       <g className='y-axis'></g>
       <text className='x-axis'></text>
       <text className='y-axis'></text>
-      <svg ref={svg} viewBox='0 0 800 300'>
+      <svg viewBox='0 0 800 300'>
         <g className='curves'>
           <path d=""></path>
         </g>
@@ -430,10 +427,7 @@ function BodyWeightHourlyStats(props) {
   );
   let updateData = () => dispatch(bodyweightSummaryActions['fetchMultiple']());
   updateData();
-  const svg = useRef(null);
-  const svgDims = useDims(svg);
-  useEffect(() => {
-    console.log('RENDERING');
+  let ref = useSVG((svg,svgDims) => {
     // Check if data is loaded
     if (loadingStatus.status !== 'loaded') {
       return;
@@ -466,8 +460,7 @@ function BodyWeightHourlyStats(props) {
         };
       });
 
-    var width = svg.current.width.baseVal.value;
-    var height = svg.current.height.baseVal.value;
+    let [width,height] = svgDims;
     var vbWidth = svg.current.viewBox.baseVal.width;
     var vbHeight = svg.current.viewBox.baseVal.height;
     let scale = vbHeight/height;
@@ -626,17 +619,17 @@ function BodyWeightHourlyStats(props) {
       .on('mouseover', mouseover)
       .on('mousemove', mousemove)
       .on('mouseout', mouseout);
-  }, [svg.current, svgDims, hourly_mean, hourly_std, loadingStatus.status]);
+  }, [hourly_mean, hourly_std, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
-    <svg ref={svg} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+    <svg ref={ref} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
       <g className='x-gridlines'></g>
       <g className='y-gridlines'></g>
       <g className='x-axis'></g>
       <g className='y-axis'></g>
       <text className='x-axis'></text>
       <text className='y-axis'></text>
-      <svg ref={svg} viewBox='0 0 800 300'>
+      <svg viewBox='0 0 800 300'>
         <g className='std'>
           <path d=""></path>
         </g>
