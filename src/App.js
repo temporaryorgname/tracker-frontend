@@ -413,8 +413,9 @@ function SignupPage(props) {
 
 function LogoutPage(props) {
   const dispatch = useDispatch();
-  const logout = () => dispatch(logout());
-	logout().then(() => {
+  dispatch(
+    logout()
+  ).then(() => {
 		console.log('logged out');
 	});
 	return 'Logging out...';
