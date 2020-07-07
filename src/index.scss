@@ -40,7 +40,7 @@ main {
     margin: 30px 0px;
     .card {
       display: inline-block;
-      padding: 100px;
+      padding: 100px 0;
       width: 100%;
     }
     span {
@@ -354,6 +354,7 @@ table {
       margin: 100px 0;
       .card {
         width: unset;
+        padding: 100px;
       }
     }
   }
