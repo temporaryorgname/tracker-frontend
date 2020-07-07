@@ -119,11 +119,26 @@ export function PhotosPage(props) {
       <div className='main-card col-12'>
         <div className='card'>
           <h2>Upload Photo</h2>
+          {
+            ulErrors.map(error => {
+              return (<div class='error-message'>
+                {error.error}
+                <span onClick={error.retry}>Retry</span>
+              </div>);
+            })
+          }
           <label>
             <input type="file" name="file" accept="image/*" capture="camera"
                 onChange={uploadCallback}/>
             <BigButton icon='add_a_photo' text='Upload Photo' />
           </label>
+          {
+            Object.values(ulProgress).map(progress => {
+              return (<div class='progress'>
+                Uploading: {progress*100}
+              </div>);
+            })
+          }
         </div>
       </div>
       <div className='card col-12'>
