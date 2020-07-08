@@ -89,6 +89,8 @@ export function usePhotos(uid) {
   useEffect(() => {
     let byDate = {};
     Object.values(photos).forEach(photo => {
+      if (!photo)
+        return; // Skip deleted photos
       if (!byDate[photo.date]) {
         byDate[photo.date] = [];
       }
@@ -156,6 +158,7 @@ function Gallery(props) {
   const {
     uid
   } = props;
+  const dispatch = useDispatch();
   const history = useHistory();
   const photosByDate = usePhotos(uid);
   const [maxPhotos,setMaxPhotos] = useState(10);
@@ -190,10 +193,24 @@ function Gallery(props) {
       break;
     }
   }
+
+  function deleteSelectedPhotos() {
+    if (window.confirm('Are you sure you want to delete the selected photos?')) {
+      for (let pid of selectedPhotos) {
+        dispatch(photoActions['deleteSingle'](pid));
+      }
+      setSelectedPhotos(new Set());
+    }
+  }
+
   return (<>
     {photosDom}
     <div>
       <button onClick={()=>setMaxPhotos(maxPhotos+10)}>Show More</button>
+      {
+        selectedPhotos.size > 0 &&
+        <button onClick={deleteSelectedPhotos}>Delete Selected</button>
+      }
     </div>
   </>);
 }
@@ -225,7 +242,7 @@ export function PhotoPage(props) {
     state => Object.values(
       state.photos.entities
     ).filter(
-      p => food && food.id && p.food_id == food.id
+      p => p && food && food.id && p.food_id == food.id
     )
   );
 
@@ -289,7 +306,8 @@ export function PhotoPage(props) {
         <div className='card col-12'>
           {
             otherPhotos.map(photo =>
-              <FoodPhotoThumbnail photoId={photo.id} />
+              <FoodPhotoThumbnail key={photo.id}
+                  photoId={photo.id} />
             )
           }
         </div>

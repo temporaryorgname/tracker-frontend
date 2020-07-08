@@ -593,9 +593,15 @@ export function ConnectedDietPage(props) {
 
   let entryEditorForm = null;
   if (mainEntryId) {
+    function deleteEntry() {
+      if (window.confirm('Are you sure you want to delete this entry?')) {
+        dispatch(foodActions['deleteSingle'](mainEntryId));
+      }
+    }
     entryEditorForm = (
       <div className='card col-12'>
         <EntryEditorForm entry={mainEntry || {}} onChange={updateEntry} />
+        <button onClick={deleteEntry}>Delete</button>
       </div>
     );
   }
