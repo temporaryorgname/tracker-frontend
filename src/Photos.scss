@@ -31,9 +31,6 @@
   position: relative;
   overflow-x: hidden;
   white-space: nowrap;
-  * {
-    vertical-align: middle;
-  }
   .control {
     position: absolute;
     top: 0;
@@ -70,6 +67,12 @@
   .scrollable-container {
     transition: transform 0.2s ease;
     transform: translateX(0);
+    > * {
+      vertical-align: middle;
+    }
+    .thumbnail {
+      cursor: pointer;
+    }
   }
   label {
     margin: 0;

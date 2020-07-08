@@ -130,9 +130,15 @@ export function PhotosPage(props) {
             })
           }
           <label>
-            <input type="file" name="file" accept="image/*" capture="camera"
+            <input type="file" name="file" accept="image/*"
+                capture="environment"
                 onChange={uploadCallback}/>
-            <BigButton icon='add_a_photo' text='Upload Photo' />
+            <BigButton icon='add_a_photo' text='Take a Photo' />
+          </label>
+          <label>
+            <input type="file" name="file" accept="image/*"
+                onChange={uploadCallback}/>
+            <BigButton icon='publish' text='Upload Photo' />
           </label>
           {
             Object.values(ulProgress).map(progress => {
@@ -255,7 +261,6 @@ export function FoodPhotosGallery(props) {
     setScrollPos(pos);
   }
   
-  window.ref = ref;
   const [scrollMin,scrollMax] = scrollLimits;
   let style = {transform: 'translateX('+scrollPos+'px)'};
   return (<div className='food-photos-gallery'>
@@ -270,7 +275,7 @@ export function FoodPhotosGallery(props) {
         photos.map(photo =>
           <FoodPhotoThumbnail key={photo.id}
               photoId={photo.id}
-              onDoubleClick={()=>history.push('/photo?id='+photo.id)}/>
+              onClick={()=>history.push('/photo?id='+photo.id)}/>
         )
       }
     </div>
