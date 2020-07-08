@@ -5,7 +5,7 @@ import './App.scss';
 
 import { connect, useDispatch } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
-import { userProfileActions, notify, unnotify } from './actions/Actions.js';
+import { userProfileActions, unnotify } from './actions/Actions.js';
 
 import { ConnectedOverviewPage } from './Home.js'
 import { ConnectedDietPage } from './Diet.js'
@@ -139,13 +139,11 @@ function NavigationBar(props) {
   const [menuVisible, setMenuVisible] = useState(false);
   const toggleMenu = () => setMenuVisible(!menuVisible);
   let {
-    location = {},
     title = '',
     route,
     loggedIn,
     uid
   } = props;
-  let path = location.pathname;
 
   // Class names
   let navClasses = ['nav'];

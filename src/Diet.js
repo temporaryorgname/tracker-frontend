@@ -1,5 +1,5 @@
 import React, { 
-  Component, useState, useEffect, useRef, Fragment
+  Component, useState, useEffect, useRef
 } from 'react';
 import { Link, useLocation } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -7,7 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 import axios from 'axios';
 
-import { connect, useDispatch, useSelector, shallowEqual } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { 
   getLoadingStatus,
@@ -16,20 +16,17 @@ import {
   computeDietEntryTotal,
   computeScale,
   splitUnits,
-  fillEntry
 } from './Utils.js';
 import { 
   foodActions,
-  photoActions,
-  notify
+  //photoActions,
 } from './actions/Actions.js';
 
 import {
-  Checkbox, FoodPhotoThumbnail, DropdownMenu, Accordion,
-  BigButton, Button,
+  Checkbox, FoodPhotoThumbnail, DropdownMenu,
+  Button,
   Modal, ModalHeader, ModalBody, ModalFooter,
-  Breadcrumbs,
-  useDims
+  Breadcrumbs
 } from './Common.js';
 import {
   parseQueryString, dictToQueryString, formatDate,
@@ -39,415 +36,6 @@ import {
 import { usePhotos, usePhotoUploader } from './Photos.js';
 
 import './Diet.scss';
-
-function toggleSet(s,x) {
-  if (s.has(x)) {
-    s = new Set(s)
-    s.delete(x);
-    return s;
-  } else {
-    return new Set(s).add(x);
-  }
-}
-
-function getFoodEntrySelectorById(id) {
-  return (state) => {
-    let status = getLoadingStatus(state.loadingStatus['FOOD'], {id: id});
-    //let entities = state.food.entries || {};
-    //let entity = entities[id];
-    let entity = null;
-    console.log('getFoodEntrySelectorById');
-    console.log(entity);
-    return {entity, status};
-  }
-}
-
-export class DietPage extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      newEntryFormVisible: false,
-      newEntry: {},
-      dupEntryFormVisible: false,
-      dupEntry: {}
-    };
-    [
-      'onDateChange',
-      'showNewEntryForm','onChangeNewEntry','onCreateNewEntry',
-      'onDeleteEntry',
-      'onDuplicateEntry','onChangeDupEntry','onCreateDupEntry',
-      'renderAutocompleteTable','renderBreadcrumbs'
-    ].forEach(x=>this[x]=this[x].bind(this));
-    if (this.props.id) {
-      this.props.fetchEntry(this.props.id);
-    } else {
-      this.props.fetchEntries(this.props.date);
-    }
-  }
-  componentDidUpdate(prevProps) {
-    if (prevProps.date !== this.props.date) {
-      this.props.fetchEntries(this.props.date);
-      this.setState({
-        selected: new Set()
-      });
-    }
-  }
-  onDateChange(date) {
-    let {
-      params = {}
-    } = this.props;
-    params.date = formatDate(date);
-    this.props.history.push(dictToQueryString(params, ['uid', 'date']));
-    this.setState({
-      newEntry: {
-        ...this.state.newEntry,
-        date: date
-      }
-    });
-  }
-  showNewEntryForm() {
-    let {
-      date = formatDate(new Date())
-    } = this.props;
-    this.setState({
-      newEntryFormVisible: true,
-      newEntry: {
-        date: date
-      }
-    });
-  }
-  onChangeNewEntry(e) {
-    this.setState({
-      newEntry: e
-    });
-  }
-  onChangeDupEntry(e) {
-    this.setState({
-      dupEntry: e
-    });
-  }
-  onCreateNewEntry() {
-    if (this.props.mainEntry) {
-      this.props.createEntry({
-        ...this.state.newEntry,
-        parent_id: this.props.mainEntry.id
-      });
-    } else {
-      this.props.createEntry(this.state.newEntry);
-    }
-    this.setState({
-      newEntryFormVisible: false,
-      newEntry: {}
-    });
-  }
-  onCreateDupEntry() {
-    this.props.createEntry({
-      ...this.state.dupEntry,
-      parent_id: null
-    });
-    this.setState({
-      dupEntryFormVisible: false,
-      dupEntry: {}
-    });
-  }
-  onDeleteEntry() {
-    let {
-      mainEntry
-    } = this.props;
-    if (window.confirm('Delete entry "'+mainEntry.name+'"?')) {
-      this.props.deleteEntries([{id: mainEntry.id}]);
-      if (mainEntry.parent_id === null) {
-        this.props.history.push('/food?date='+formatDate(mainEntry.date));
-      } else {
-        this.props.history.push('/food?id='+mainEntry.parent_id);
-      }
-    }
-  }
-  onDuplicateEntry() {
-    if (this.props.mainEntry) {
-      function clean(entry) {
-        let cleanedEntry = {...entry};
-        delete cleanedEntry.id;
-        delete cleanedEntry.parent_id;
-        cleanedEntry.children = cleanedEntry.children.map(clean);
-        return cleanedEntry;
-      }
-      let dupEntry = clean(this.props.mainEntry);
-      dupEntry.copied_from = this.props.mainEntry.id;
-      this.setState({
-        dupEntryFormVisible: true,
-        dupEntry: dupEntry
-      });
-    }
-  }
-  renderAutocompleteTable() {
-    let {
-      id,
-      date,
-      mainEntry,
-      createEntry,
-      updateEntry,
-      notify
-    } = this.props
-    let searchTableControls = null;
-    if (id) {
-      searchTableControls = [{
-        value: 'Add', 
-        callback: (x) => createEntry(
-          {date: date, parent_id: id, ...x}
-        ).then(function(response){
-          let newEntry = Object.values(response.data.entities.food)[0];
-          let url = '/food?id='+newEntry.id;
-          notify({
-            content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
-          });
-        }),
-        requiresSelected: true
-      },{
-        value: 'Fill Entry', 
-        callback: (x) => updateEntry(
-          fillEntry(mainEntry,{date: date, ...x})
-        ),
-        requiresSelected: true
-      }];
-    } else {
-      searchTableControls = [
-        {
-          value: 'Add', 
-          callback: (x) => createEntry(
-            {date: date, ...x, photo_ids: [], parent_id: null}
-          ).then(function(response){
-            let newEntry = Object.values(response.data.entities.food)[0];
-            let url = '/food?id='+newEntry.id;
-            notify({
-              content: <span>Successfully copied entry <Link to={url}>Edit</Link></span>
-            });
-          }),
-          requiresSelected: true
-        }
-      ];
-    }
-    return (
-      <SearchTable controls={searchTableControls} editable={true} />
-    );
-  }
-  renderBreadcrumbs() {
-    let {
-      mainEntry,
-      allEntries = {},
-    } = this.props;
-    if (mainEntry) {
-      let path = [];
-      let entry = mainEntry;
-      while (entry.parent_id) {
-        entry = allEntries[entry.parent_id];
-        if (entry) {
-          path.push({
-            text: entry.name || '(Unnamed Entry)',
-            url: '/food?id='+entry.id
-          });
-        } else {
-          path.push({
-            text: '...',
-            url: '#'
-          });
-          break;
-        }
-      }
-      path.push({
-        text: mainEntry.date,
-        url: 'food?date='+mainEntry.date
-      });
-      return (
-        <Breadcrumbs data={path.reverse()} />
-      );
-    } else {
-      return null;
-    }
-  }
-  render() {
-    let {
-      mainEntry = null,
-      entries = {},
-      date = formatDate(new Date()),
-      uid,
-      id,
-      updateEntry,
-    } = this.props;
-    let mainEntryEditor = null;
-    let mainEntryControls = null;
-    if (id) {
-      if (mainEntry) {
-        mainEntryEditor = (<>
-          <h3>{mainEntry.name}</h3>
-          <Accordion heading='Details'>
-            <EntryEditorForm entry={mainEntry} onChange={this.props.updateEntry}/>
-          </Accordion>
-        </>);
-        mainEntryControls = (<>
-          <button onClick={this.onDuplicateEntry}>Duplicate</button>
-          <button onClick={this.onDeleteEntry}>Delete</button>
-        </>);
-      } else {
-        mainEntryEditor = 'Loading...';
-      }
-    } else {
-      mainEntryEditor = (
-        <DateSelector date={date} onChange={this.onDateChange} />
-      );
-    }
-    return (<main className='diet-page-container'>
-      {this.renderBreadcrumbs()}
-      {mainEntryEditor}
-      <div className='food-table-container'>
-      {
-        Object.entries(entries).length > 0
-        ? <FoodTable entries={entries} createNewEntry={this.showNewEntryForm} />
-        : <BigButton icon='fastfood' onClick={this.showNewEntryForm} text='New Entry' />
-      }
-      <EntryEditorFormModal
-          entry={this.state.dupEntry}
-          onChange={this.onChangeDupEntry}
-          isOpen={this.state.dupEntryFormVisible}
-          toggle={x => this.setState({dupEntryFormVisible: x})} 
-          onSubmit={this.onCreateDupEntry}
-          controls={[
-            {text: 'Create Entry', callback: this.onCreateDupEntry}
-          ]}/>
-      </div>
-      <NewEntryField 
-          date={this.props.date}
-          parentId={id}
-          onBlur={() => this.setState({newEntryFormVisible: false})}
-          visible={this.state.newEntryFormVisible}/>
-      <Accordion heading='Suggestions'>
-        <Suggestions date={date}
-            parent={mainEntry ? mainEntry.name : null}
-            siblings={Object.entries(entries).map(e => e.name).filter(x => x)}
-            onSelect={name => this.props.createEntry({
-              date, name,
-              parent_id: mainEntry ? mainEntry.id : null
-            })}/>
-      </Accordion>
-      <Accordion heading='Photos'>
-        <ConnectedGallery uid={uid} date={date} foodId={id}/>
-      </Accordion>
-      <Accordion heading='Search Past Entries'>
-        {this.renderAutocompleteTable()}
-      </Accordion>
-      { mainEntry &&
-        <Accordion heading='Nutrition Search'>
-          <NutritionSearch name={mainEntry.name}
-            units={splitUnits(mainEntry.quantity).units} 
-            onSelect={(x) => updateEntry(
-              fillEntry(mainEntry,x)
-            )}/>
-        </Accordion>
-      }
-      { mainEntry &&
-        <Accordion heading='Advanced Details'>
-          <AdvancedDetailsForm entry={mainEntry} onChange={this.props.updateEntry} />
-        </Accordion>
-      }
-      {mainEntryControls}
-    </main>);
-  }
-}
-export const ConnectedDietPage2 = connect(
-  function(state, ownProps) {
-    // Parse Query String
-    let queryParams = parseQueryString(ownProps.location.search);
-    let uid = queryParams['uid'] || state.session.uid;
-    let id = queryParams['id'];
-    let date = id ? null : (queryParams['date'] || formatDate(new Date()));
-
-    // Get data from state
-    if (id) {
-      let mainEntry = state.food.entities[id];
-      let mainEntryLoadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {id: id});
-      if (!mainEntry) {
-        return {
-          uid,
-          date,
-          params: queryParams,
-          mainEntry: mainEntry,
-          entries: [],
-          dirty: state.food.dirtyEntities.size > 0,
-          id
-        }
-      }
-
-      let allEntries = Object.values(state.food.entities).filter(
-        entity => entity && entity.date === mainEntry.date && (!entity.premade || entity.premade == null)
-      );
-      for (let id of Object.keys(allEntries)) {
-        allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
-      }
-      let subentries = Object.values(allEntries)
-          .filter(e => e.parent_id == mainEntry.id);
-      mainEntry.children = subentries;
-      let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: mainEntry.date});
-      return {
-        uid,
-        date: mainEntry.date,
-        params: queryParams,
-        mainEntry: mainEntry,
-        entries: arrayToDict(subentries, 'id'),
-        allEntries: arrayToDict(allEntries, 'id'),
-        dirty: state.food.dirtyEntities.size > 0,
-        id
-      }
-    } else {
-      let loadingStatus = getLoadingStatus(state.loadingStatus['FOOD'], {date: date});
-      let allEntries = Object.values(state.food.entities).filter(
-        entity => entity && entity.date === date && (!entity.premade || entity.premade == null)
-      );
-      let entriesWithoutParents = allEntries.filter(e => !e.parent_id);
-      allEntries = arrayToDict(allEntries, 'id');
-      entriesWithoutParents = arrayToDict(entriesWithoutParents, 'id');
-      // Add children to entries
-      for (let id of Object.keys(allEntries)) {
-        allEntries[id].children = allEntries[id].children_ids.map(id=>allEntries[id]).filter(entry=>entry);
-      }
-      return {
-        uid,
-        date,
-        params: queryParams,
-        entries: entriesWithoutParents,
-        allEntries: allEntries,
-        dirty: state.food.dirtyEntities.size > 0
-      }
-    }
-  },
-  function(dispatch, ownProps) {
-    return {
-      // Diet entries
-      fetchEntries: date => dispatch(foodActions['fetchMultiple']({date: date})),
-      fetchEntry: id => dispatch(foodActions['fetchSingle'](id)),
-      updateEntry: entry => dispatch(foodActions['update'](entry)),
-      deleteEntries: ids => dispatch(foodActions['deleteMultiple'](ids)),
-      createEntry: data => dispatch(foodActions['create'](data)),
-      // Photos
-      fetchPhotos: (cache) => dispatch(
-        photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date}, cache)
-      ),
-      updatePhoto: (data) => dispatch(
-        photoActions['update'](data)
-      ),
-      uploadPhoto: (files, progressCallback) => dispatch(
-        photoActions['create'](files, progressCallback, ownProps.date)
-      ),
-      createFood: (data) => dispatch(
-        foodActions['create'](data)
-      ),
-      deletePhoto: (id) => dispatch(
-        photoActions['deleteSingle'](id)
-      ),
-      // Misc
-      notify: x => dispatch(notify(x)),
-    };
-  }
-)(DietPage);
 
 function useFoodEntries(id,date) {
   const dispatch = useDispatch();
@@ -561,14 +149,14 @@ export function ConnectedDietPage(props) {
     setUid(parseInt(queryParams['uid']) || currentUid);
     setMainEntryId(parseInt(queryParams['id']) || null);
     setDate(queryParams['date'] || formatDate(new Date()));
-  }, [location]);
+  }, [location, currentUid]);
 
   // Set date to match the selected entry
   useEffect(() => {
     if (mainEntry && mainEntry.date !== date) {
       setDate(mainEntry.date);
     }
-  }, [mainEntry]);
+  }, [mainEntry, date]);
 
   // Compute path for breadcrumbs
   const [breadcrumbPath, setBreadcrumbPath] = useState([]);
@@ -774,345 +362,6 @@ export class QuantityInput extends Component {
 //////////////////////////////////////////////////
 // Photos
 //////////////////////////////////////////////////
-
-export class Gallery2 extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedPhotoIds: new Set(),
-      uploadingProgress: {},
-      errors: [],
-      editorVisible: false
-    };
-    [
-      'handleUpload','uploadFile','handleSelectPhoto','handleDelete',
-      'renderEmptyView',
-      'renderThumbnails','renderUploadingThumbnails','renderErrorThumbnails'
-    ].forEach(x=>this[x]=this[x].bind(this));
-    this.props.fetchPhotos(this.props.uid);
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevProps.date !== this.props.date) {
-      this.props.fetchPhotos(this.props.uid);
-    }
-  }
-  handleUpload(event) {
-    this.uploadFile(event.target.files);
-  }
-  uploadFile(file) {
-    let that = this;
-    // Find first available index
-    let index = 0;
-    while (index in this.state.uploadingProgress) {
-      index++;
-    }
-    this.setState({
-      uploadingProgress: {
-        ...this.state.uploadingProgress,
-        [index]: 0
-      }
-    });
-    this.props.uploadPhoto(
-      file,
-      function(progress) {
-        that.setState({
-          uploadingProgress: {
-            ...that.state.uploadingProgress,
-            [index]: progress.loaded/progress.total
-          }
-        });
-      }
-    ).then(function(response){
-      //that.props.fetchPhotos(false);
-      let progress = {...that.state.uploadingProgress};
-      delete progress[index];
-      that.setState({
-        uploadingProgress: progress
-      });
-    }).catch(function(error){
-      console.error(error);
-      window.error = error;
-      that.setState({
-        uploadingCount: that.state.uploadingCount-1,
-        errors: [...that.state.errors, 
-          {
-            error: error.response.data,
-            file: file,
-            retry: function() {
-              that.setState({
-                errors: that.state.errors.filter(e => e.file !== file)
-              });
-              that.uploadFile(file);
-            }
-          }
-        ]
-      });
-    });
-  }
-  handleSelectPhoto(photoIds) {
-    this.setState({
-      selectedPhotoIds: photoIds
-    });
-  }
-  handleDelete() {
-    if (!window.confirm('Are you sure you want to delete the '+this.state.selectedPhotoIds.size+' selected photos?')) {
-      return;
-    }
-    Array.from(this.state.selectedPhotoIds).forEach(this.props.deletePhoto)
-    this.setState({
-      selectedPhotoIds: new Set()
-    });
-  }
-  handleCreateEntryFromPhotos() {
-  }
-  render() {
-    let {
-      photosLoadingStatus,
-      selectedPhotoIds = this.state.selectedPhotoIds,
-      date
-    } = this.props;
-    if (!photosLoadingStatus) {
-      return (
-        <div>
-          Waiting to load
-        </div>
-      );
-    } else if (photosLoadingStatus.status === 'loading') {
-      return (
-        <div>
-          LOADING...
-        </div>
-      );
-    } else if (photosLoadingStatus.status === 'error') {
-      return (
-        <div className='error-message'>
-          {photosLoadingStatus.error}
-        </div>
-      );
-    } else if (photosLoadingStatus.status === 'loaded') {
-      // Check if there's any data to render
-      let photosAvail = Object.keys(this.props.photos).length > 0;
-      let errorsAvail = this.state.errors.length > 0;
-      let uploadAvail = Object.keys(this.state.uploadingProgress).length > 0;
-      if (photosAvail || errorsAvail || uploadAvail) {
-        // Render controls
-        let controls = [];
-        controls.push(
-          <label key='upload'>
-            <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
-            <Button>Upload</Button>
-          </label>
-        );
-        controls.push(
-          <button key='select'>Select Photos</button>
-        );
-        if (selectedPhotoIds.size > 0) {
-          controls.push(
-            <button key='delete' onClick={this.handleDelete}>Delete</button>
-          );
-          // Compute editor URL
-          let foodIds = new Set();
-          let photoIds = Array.from(selectedPhotoIds);
-          for (let pid of photoIds) {
-            foodIds.add(this.props.photos[pid].food_id);
-          }
-          if (foodIds.size > 1) {
-            //queryString = null;
-          } else if (foodIds.size === 1 && !foodIds.has(null)) {
-            let queryString = 'id='+foodIds.values().next().value;
-            controls.push(
-              <Link to={'/food/editor?'+queryString} key='edit'>
-                <button>Edit Entry</button>
-              </Link>
-            );
-          } else {
-            let openForm = function() {
-              this.setState({
-                newEntry: {
-                  date: date,
-                  photo_ids: photoIds
-                },
-                editorVisible: true
-              });
-            }.bind(this);
-            let toggleForm = function(x) {
-              this.setState({
-                editorVisible: x
-              });
-            }.bind(this);
-            let createEntry = function() {
-              this.setState({
-                editorVisible: false,
-                selectedPhotoIds: new Set()
-              });
-              this.props.createFood(this.state.newEntry);
-            }.bind(this);
-            controls.push(
-              <Fragment key='new'>
-              <button onClick={openForm}>New Entry</button>
-              <EntryEditorFormModal
-                  isOpen={this.state.editorVisible}
-                  entry={this.state.newEntry}
-                  onChange={e => this.setState({newEntry: e})} 
-                  toggle={toggleForm}
-                  onSubmit={createEntry}
-                  controls={[
-                    {text: 'Create', callback: createEntry}
-                  ]}/>
-              </Fragment>
-            );
-          }
-        }
-        // Render thumbnails
-        let thumbnails = this.renderThumbnails();
-        let uploadingThumbnails = this.renderUploadingThumbnails();
-        let errorThumbnails = this.renderErrorThumbnails();
-        return (
-          <div className='gallery small'>
-            <div className='thumbnails'>
-              {thumbnails}
-              {uploadingThumbnails}
-              {errorThumbnails}
-            </div>
-            <div className='controls'>{controls}</div>
-          </div>
-        );
-      } else {
-        return this.renderEmptyView();
-      }
-    }
-  }
-  renderEmptyView() {
-    return (
-      <div className='gallery empty-view'>
-        <div>There are no photos to show.</div>
-        <label>
-          <input type="file" name="file" accept="image/*" capture="camera" onChange={this.handleUpload}/>
-          <BigButton icon='add_a_photo' text='Upload Photo' />
-        </label>
-      </div>
-    );
-  }
-  renderThumbnails() {
-    let {
-      photos,
-      selectedPhotoIds = this.state.selectedPhotoIds,
-      disabledPhotos = new Set(),
-      onSelectPhoto = this.handleSelectPhoto,
-    } = this.props;
-    return Object.entries(photos).map(
-      function([photoId,photo]){
-        photoId = parseInt(photoId);
-        if (disabledPhotos.has(photoId)) {
-          return (
-            <div className='photo-viewer-thumbnail disabled'
-                key={photoId} >
-              <FoodPhotoThumbnail photoId={photoId}
-                  selected={selectedPhotoIds.has(photoId)}/>
-            </div>
-          );
-        } else {
-          return (
-            <div className='photo-viewer-thumbnail'
-                key={photoId}
-                onClick={()=>onSelectPhoto(toggleSet(selectedPhotoIds,photoId))} >
-              <FoodPhotoThumbnail photoId={photoId}
-                  url={photo.url}
-                  selected={selectedPhotoIds.has(photoId)}/>
-            </div>
-          );
-        }
-      }
-    );
-  }
-  renderUploadingThumbnails() {
-    return Object.entries(this.state.uploadingProgress).map(function([k,v]) {
-      return (
-        <div className='photo-viewer-thumbnail'
-            key={'uploading-'+k}>
-          <div className='thumbnail'>
-            Uploading... ({Math.floor(v*100)}%)
-          </div>
-        </div>
-      );
-    });
-  }
-  renderErrorThumbnails() {
-    return this.state.errors.map(function(e,i){
-      return (
-        <div className='photo-viewer-thumbnail'
-            key={'error-'+i}
-            onClick={()=>null}>
-          <div className='thumbnail error-message'>
-            {e.error}
-          </div>
-        </div>
-      );
-    });
-  }
-}
-const ConnectedGallery = connect(
-  function(state, ownProps) {
-    let {
-      date,
-      uid,
-      foodId
-    } = ownProps;
-    let photos = {};
-    let photosLoadingStatus = getLoadingStatus(
-      state.loadingStatus['PHOTOS'],
-      {user_id: uid, date: date}
-    );
-    let photosReady = photosLoadingStatus && photosLoadingStatus.status === 'loaded';
-    if (photosReady) {
-      // Get all photos for the given date
-      photos = Object.values(
-        state.photos.entities
-      ).filter(function(photo) {
-        return photo && photo.date === date;
-      });
-      if (foodId) {
-        function check(id) {
-          if (id === null) {
-            return false;
-          }
-          if (id === parseInt(foodId)) {
-            return true;
-          }
-          if (!state.food.entities[id]) {
-            return false;
-          }
-          return check(state.food.entities[id].parent_id);
-        }
-        photos = photos.filter(photo => check(photo.food_id));
-      }
-      photos = arrayToDict(photos, 'id');
-    }
-    return {
-      photosLoadingStatus,
-      photos
-    };
-  },
-  function(dispatch, ownProps) {
-    return {
-      fetchPhotos: (cache) => dispatch(
-        photoActions['fetchMultiple']({user_id: ownProps.uid, date: ownProps.date}, cache)
-      ),
-      updatePhoto: (data) => dispatch(
-        photoActions['update'](data)
-      ),
-      uploadPhoto: (files, progressCallback) => dispatch(
-        photoActions['create'](files, progressCallback, ownProps.date)
-      ),
-      createFood: (data) => dispatch(
-        foodActions['create'](data)
-      ),
-      deletePhoto: (id) => dispatch(
-        photoActions['deleteSingle'](id)
-      ),
-    };
-  }
-)(Gallery2);
 
 function useFoodPhotos(uid,id,date) {
   const photos = usePhotos(uid);
@@ -1867,7 +1116,7 @@ function NutritionSearch(props){
       console.error(error);
       setLoading(false);
     });
-  }, [props.name, props.units]);
+  }, [name, units]);
   // Callback for key presses
   function getKeyPressHandler(entry) {
     return e => {
@@ -2080,11 +1329,17 @@ function NewEntryField(props) {
   suggestionsDom = null;
   return (
     <div className='new-entry-field-container'>
+      {
+        error &&
+        <div className='error-message'>{error}</div>
+      }
       <input type='text'
           placeholder='e.g. Banana'
           value={entryString}
           onChange={e => setEntryString(e.target.value)}
-          onKeyDown={onKeyDown}/>
+          onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur} />
       <div className='suggestions' ref={suggestionsRef}>
         { suggestionsDom }
       </div>

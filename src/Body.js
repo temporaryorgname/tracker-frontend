@@ -1,13 +1,13 @@
-import React, { Component, useState, useRef, useEffect } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 
 import { select, mouse } from "d3-selection";
 import { line, area, curveBasis } from "d3-shape";
 import { scaleTime, scaleLinear, scalePoint } from "d3-scale";
-import { extent, bisect } from "d3-array";
+import { extent } from "d3-array";
 import { axisBottom, axisLeft } from "d3-axis";
 import { } from "d3-transition"; // Needed for selection.transition
 
-import { connect, useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
   bodyweightActions,
   bodyweightSummaryActions

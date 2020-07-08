@@ -19,6 +19,8 @@ function createReducer(entityName) {
             ...state,
             entities: {...state.entities, ...entities}
           };
+        } else {
+          return state;
         }
       }
       case 'CREATE_'+entityName+'_SUCCESS': {

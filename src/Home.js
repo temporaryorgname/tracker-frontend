@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Link } from "react-router-dom";
 import './Home.scss';
 import { BigButton } from './Common.js';
 
@@ -162,7 +161,7 @@ export const ConnectedOverviewPage = connect(
       avgCalories: avgCalories,
       caloriesLeft: caloriesLeft,
       targetWeight: targetWeight,
-      weightGoal: user.weight_goal,
+      weightGoal: weightGoal,
       caloriesChange: state.foodSummary.calorie_change_per_day,
       avgWeight: state.bodyweightSummary.avg_weight,
       bodyweightChange: state.bodyweightSummary.weight_change_per_day

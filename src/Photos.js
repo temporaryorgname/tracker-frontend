@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Route, Link, Switch, useLocation, useHistory
+  useLocation, useHistory
 } from "react-router-dom";
 
-import axios from 'axios';
-
-import { connect, shallowEqual, useSelector, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 import { 
   photoActions,
-  foodActions,
-  notify
+  foodActions
 } from './actions/Actions.js';
 import { 
   getLoadingStatus,
   parseQueryString,
-  formatDate
+  formatDate,
+  toggleSet
 } from './Utils.js';
 import { FoodPhotoThumbnail, BigButton } from './Common.js';
 import { EntryEditorForm } from './Diet.js';
@@ -30,7 +28,6 @@ export function usePhotoUploader(date,food_id=null) {
   const [ulProgress,setUlProgress] = useState({});
   const [ulErrors,setUlErrors] = useState([]);
   function uploadFile(file) {
-    let that = this;
     // Find first available index
     let index = 0;
     while (index in ulProgress) {
@@ -106,7 +103,6 @@ export function PhotosPage(props) {
   const currentUid = useSelector(state => state.session.uid);
 
   const [uid, setUid] = useState(currentUid);
-  const [date, setDate] = useState(formatDate(new Date()));
 
   // Query string change
   useEffect(() => {
@@ -118,7 +114,7 @@ export function PhotosPage(props) {
     ulProgress,
     ulErrors,
     uploadCallback
-  ] = usePhotoUploader(date);
+  ] = usePhotoUploader(formatDate(new Date()));
 
   return (
     <main className='photos-page-container'>
@@ -164,13 +160,7 @@ function Gallery(props) {
   const [maxPhotos,setMaxPhotos] = useState(10);
   const [selectedPhotos, setSelectedPhotos] = useState(new Set());
   function toggleSelectPhoto(id) {
-    let selected = new Set(selectedPhotos);
-    if (selected.has(id)) {
-      selected.delete(id);
-    } else {
-      selected.add(id);
-    }
-    setSelectedPhotos(selected);
+    setSelectedPhotos(toggleSet(selectedPhotos,id));
   }
 
   let sortedDates = Object.keys(photosByDate).sort().reverse();
@@ -242,7 +232,7 @@ export function PhotoPage(props) {
     state => Object.values(
       state.photos.entities
     ).filter(
-      p => p && food && food.id && p.food_id == food.id
+      p => p && food && food.id && p.food_id === food.id
     )
   );
 
@@ -270,7 +260,7 @@ export function PhotoPage(props) {
     if (food && food.id) {
       dispatch(photoActions['fetchMultiple']({food_id: food.id}));
     }
-  }, [food])
+  }, [food]);
 
   // Query string change
   useEffect(() => {
@@ -299,7 +289,8 @@ export function PhotoPage(props) {
       <div className='card col-12 photo'>
         {
           photo &&
-          <img src={process.env.REACT_APP_SERVER_ADDRESS+photo.file_url} />
+          <img src={process.env.REACT_APP_SERVER_ADDRESS+photo.file_url}
+              alt='Food'/>
         }
       </div>
       {

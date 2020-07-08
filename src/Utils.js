@@ -92,6 +92,17 @@ export const arrayToDict = function(a, k) {
   return output;
 }
 
+// Set utils
+export const toggleSet = function(s,x) {
+  if (s.has(x)) {
+    s = new Set(s)
+    s.delete(x);
+    return s;
+  } else {
+    return new Set(s).add(x);
+  }
+}
+
 // String utils
 export const formatString = function(string, values) {
   return Object.keys(values).reduce(function(acc,key){

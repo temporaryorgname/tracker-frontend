@@ -1,10 +1,6 @@
 import axios from 'axios';
 import { 
   getLoadingStatus,
-  formatString,
-  extractPlaceholders,
-  splitDict,
-  dictToQueryString
 } from '../Utils.js';
 
 function toUpperCaseSnakeCase(str) {
@@ -44,7 +40,6 @@ function createActions(dataType, path, autosortProps) {
   return {
     fetchSingle: function(id) {
       console.log('FETCH '+dataType);
-      const ACTION = 'FETCH_'+dataType;
       return function(dispatch, getState) {
         // Send request
         return axios.get(
@@ -62,7 +57,6 @@ function createActions(dataType, path, autosortProps) {
     fetchMultiple: function(filters, cache=true) {
       filters = filters || {};
       console.log('FETCH '+dataType);
-      const ACTION = 'FETCH_'+dataType;
       return function(dispatch, getState) {
         // Check if this is already loading/loaded
         if (filters && cache) {

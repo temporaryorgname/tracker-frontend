@@ -8,7 +8,6 @@ import {
   photoActions
 } from './actions/Actions.js';
 import './Common.scss';
-import { storiesOf } from '@storybook/react';
 
 class Checkbox extends Component {
   render() {
@@ -445,7 +444,6 @@ class DropdownMenu extends Component {
     const kbUp = 38;
     const kbDown = 40;
     let {
-      options = [],
       value = this.state.value,
       hoverValue = this.state.hoverValue,
       collapsed = this.state.collapsed
@@ -550,7 +548,7 @@ export function useDims() {
       return;
     }
     node.current = n;
-  });
+  }, []);
   useEffect(() => {
     window.addEventListener('resize', updateDims);
     return () => {
@@ -562,23 +560,23 @@ export function useDims() {
 
 export function useSVG(render, dependencies) {
   let node = useRef(null);
-  function runRender() {
+  let runRender = useCallback(() => {
     if (!node.current) {
       return;
     }
     render(node,[node.current.clientWidth, node.current.clientHeight]);
-  }
+  }, [render]);
   useEffect(runRender,dependencies);
   let ref = useCallback(n => {
     node.current = n;
     runRender();
-  });
+  },[runRender]);
   useEffect(() => {
     window.addEventListener('resize', runRender);
     return () => {
       window.removeEventListener('resize', runRender);
     };
-  }, []);
+  }, [runRender]);
   return ref;
 }
 
