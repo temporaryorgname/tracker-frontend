@@ -26,3 +26,55 @@
     max-width: 100%;
   }
 }
+
+.food-photos-gallery {
+  position: relative;
+  overflow-x: hidden;
+  white-space: nowrap;
+  * {
+    vertical-align: middle;
+  }
+  .control {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 42px;
+    color: white;
+    opacity: 30%;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    border-radius: 5px;
+    > i {
+      position: absolute;
+      line-height: 0;
+      top: 50%;
+    }
+    &.left {
+      background: linear-gradient(to right,  rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+      left: 0;
+      i {
+        left: 0;
+      }
+    }
+    &.right {
+      background: linear-gradient(to left,  rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+      right: 0;
+      i {
+        right: 0;
+      }
+    }
+    &:hover {
+      opacity: 80%;
+    }
+  }
+  .scrollable-container {
+    transition: transform 0.2s ease;
+    transform: translateX(0);
+  }
+  label {
+    margin: 0;
+    input[type='file'] {
+      display: none;
+    }
+  }
+}

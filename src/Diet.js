@@ -33,7 +33,7 @@ import {
   entryToEntryString, entryStringToEntry, extractNameFromEntryString,
   foodEntriesToTrees
 } from './Utils.js';
-import { usePhotos, usePhotoUploader } from './Photos.js';
+import { usePhotos, usePhotoUploader, FoodPhotosGallery } from './Photos.js';
 
 import './Diet.scss';
 
@@ -211,7 +211,7 @@ export function ConnectedDietPage(props) {
         <FoodTable entries={visibleEntries} />
       </div>
       <div className='card col-12'>
-        <Gallery uid={uid} id={mainEntryId} date={date} />
+        <FoodPhotosGallery uid={uid} foodId={mainEntryId} date={date}/>
       </div>
       {entryEditorForm}
     </main>
@@ -363,7 +363,7 @@ export class QuantityInput extends Component {
 // Photos
 //////////////////////////////////////////////////
 
-function useFoodPhotos(uid,id,date) {
+export function useFoodPhotos(uid,id,date) {
   const photos = usePhotos(uid);
   const food = useSelector(state => state.food.entities);
   //const [, , allEntries, ] = useFoodEntries(id,date);
@@ -371,9 +371,7 @@ function useFoodPhotos(uid,id,date) {
   useEffect(() => {
     if (id) {
       if (typeof(id) !== 'number') {
-        console.error(
-          'Provided ID is not a number. Found type '+typeof(id)+'.');
-      }
+        console.error( 'Provided ID is not a number. Found type '+typeof(id)+'.'); }
       setFiltered(
         (photos[date]||[]).filter(p => {
           let fid = p.food_id;

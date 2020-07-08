@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   useLocation, useHistory
 } from "react-router-dom";
@@ -16,7 +16,7 @@ import {
   toggleSet
 } from './Utils.js';
 import { FoodPhotoThumbnail, BigButton } from './Common.js';
-import { EntryEditorForm } from './Diet.js';
+import { EntryEditorForm, useFoodPhotos } from './Diet.js';
 
 import './Photos.scss';
 
@@ -205,11 +205,80 @@ function Gallery(props) {
   </>);
 }
 
+export function FoodPhotosGallery(props) {
+  const {
+    foodId = null,
+    uid = null,
+    date = formatDate(new Date()),
+  } = props;
+  const dispatch = useDispatch();
+  const photos = useFoodPhotos(uid, foodId, date);
+  const [
+    ulProgress,
+    ulErrors,
+    uploadCallback
+  ] = usePhotoUploader(date, foodId);
+  const ref = useRef();
+  const [scrollWidth, setScrollWidth] = useState(0);
+  const [clientWidth, setClientWidth] = useState(0);
+  const [scrollPos, setScrollPos] = useState(0);
+  const [scrollLimits, setScrollLimits] = useState([0,0])
+
+  useEffect(() => {
+    setScrollWidth(ref.current.scrollWidth);
+    setClientWidth(ref.current.clientWidth);
+    setScrollLimits([
+      -(ref.current.scrollWidth-ref.current.clientWidth*0.5), 0
+    ]);
+  }, [ref]);
+
+  function scroll(direction) {
+    const [min,max] = scrollLimits;
+    let pos = scrollPos+direction*0.8*clientWidth;
+    if (pos > max) {
+      pos = max;
+    } else if (pos < min) {
+      pos = min;
+    }
+    setScrollPos(pos);
+  }
+  
+  const [scrollMin,scrollMax] = scrollLimits;
+  let style = {transform: 'translateX('+scrollPos+'px)'};
+  return (<div className='food-photos-gallery'>
+    <div className='scrollable-container' ref={ref} style={style}>
+      <label>
+        <input type="file" name="file" accept="image/*" capture="camera"
+            onChange={uploadCallback}/>
+        <BigButton icon='add_a_photo' text='Upload Photo' />
+      </label>
+      <BigButton icon='collections' text='Select Photo' />
+      {
+        photos.map(photo =>
+          <FoodPhotoThumbnail key={photo.id}
+              photoId={photo.id} />
+        )
+      }
+    </div>
+    {
+      scrollPos < scrollMax &&
+      <div className='control left' onClick={()=>scroll(1)}>
+        <i className='material-icons'>navigate_before</i>
+      </div>
+    }
+    {
+      scrollPos > scrollMin &&
+      <div className='control right' onClick={()=>scroll(-1)}>
+        <i className='material-icons'>navigate_next</i>
+      </div>
+    }
+  </div>);
+}
+
 export function PhotoPage(props) {
   const location = useLocation();
   const dispatch = useDispatch();
 
-  //const [photoId, setPhotoId] = useState(null);
   const [photoId, setPhotoId] = useState(null);
   const photo = useSelector(
     state => photoId ? state.photos.entities[photoId] : null
@@ -228,13 +297,6 @@ export function PhotoPage(props) {
       }
     }
   )
-  const otherPhotos = useSelector(
-    state => Object.values(
-      state.photos.entities
-    ).filter(
-      p => p && food && food.id && p.food_id === food.id
-    )
-  );
 
   if (!photo && photoId) {
     dispatch(photoActions['fetchSingle'](photoId));
@@ -254,13 +316,6 @@ export function PhotoPage(props) {
       });
     }
   }, [photo]);
-
-  // If the food entry changes, check if there are other photos associated with that food entry. If so, load them.
-  useEffect(() => {
-    if (food && food.id) {
-      dispatch(photoActions['fetchMultiple']({food_id: food.id}));
-    }
-  }, [food]);
 
   // Query string change
   useEffect(() => {
@@ -294,16 +349,15 @@ export function PhotoPage(props) {
         }
       </div>
       {
-        <div className='card col-12'>
-          {
-            otherPhotos.map(photo =>
-              <FoodPhotoThumbnail key={photo.id}
-                  photoId={photo.id} />
-            )
-          }
+        (food && food.id) &&
+        <div className='card col-12 other-photos'>
+          <h2>Other Photos</h2>
+          <FoodPhotosGallery foodId={food.id}
+              date={food.date}/>
         </div>
       }
       <div className='card col-12'>
+        <h2>Nutritional Information Entry</h2>
         {
           food &&
           <EntryEditorForm entry={food}
