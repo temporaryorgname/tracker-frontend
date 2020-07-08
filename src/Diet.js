@@ -366,7 +366,7 @@ export class QuantityInput extends Component {
 export function useFoodPhotos(uid,id,date) {
   const photos = usePhotos(uid);
   const food = useSelector(state => state.food.entities);
-  //const [, , allEntries, ] = useFoodEntries(id,date);
+  const [, , , ] = useFoodEntries(id,date); // Load data
   const [filtered,setFiltered] = useState([]);
   useEffect(() => {
     if (id) {
@@ -380,6 +380,9 @@ export function useFoodPhotos(uid,id,date) {
               return true;
             }
             if (!fid) {
+              return false;
+            }
+            if (!food[fid]) {
               return false;
             }
             fid = food[fid].parent_id;

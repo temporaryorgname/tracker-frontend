@@ -212,6 +212,7 @@ export function FoodPhotosGallery(props) {
     date = formatDate(new Date()),
   } = props;
   const dispatch = useDispatch();
+  const history = useHistory();
   const photos = useFoodPhotos(uid, foodId, date);
   const [
     ulProgress,
@@ -224,13 +225,24 @@ export function FoodPhotosGallery(props) {
   const [scrollPos, setScrollPos] = useState(0);
   const [scrollLimits, setScrollLimits] = useState([0,0])
 
+  // Check for dimension changes and update accordingly
+  let resizeObs = useRef( // Keep reference so we don't create a new one each time
+    new ResizeObserver(x => {
+      if (!ref.current) return;
+      let s = ref.current.scrollWidth; // Width of full div
+      let c = ref.current.clientWidth; // Width of the visile window
+      setScrollWidth(s);
+      setClientWidth(c);
+      setScrollLimits([
+        s > c ? -(s-c*0.8) : 0,
+        0
+      ]);
+    })
+  );
   useEffect(() => {
-    setScrollWidth(ref.current.scrollWidth);
-    setClientWidth(ref.current.clientWidth);
-    setScrollLimits([
-      -(ref.current.scrollWidth-ref.current.clientWidth*0.5), 0
-    ]);
-  }, [ref]);
+    resizeObs.current.observe(ref.current);
+    return () => resizeObs.current.unobserve(ref.current);
+  }, [ref.current]);
 
   function scroll(direction) {
     const [min,max] = scrollLimits;
@@ -243,6 +255,7 @@ export function FoodPhotosGallery(props) {
     setScrollPos(pos);
   }
   
+  window.ref = ref;
   const [scrollMin,scrollMax] = scrollLimits;
   let style = {transform: 'translateX('+scrollPos+'px)'};
   return (<div className='food-photos-gallery'>
@@ -256,7 +269,8 @@ export function FoodPhotosGallery(props) {
       {
         photos.map(photo =>
           <FoodPhotoThumbnail key={photo.id}
-              photoId={photo.id} />
+              photoId={photo.id}
+              onDoubleClick={()=>history.push('/photo?id='+photo.id)}/>
         )
       }
     </div>
