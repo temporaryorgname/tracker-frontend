@@ -1,7 +1,9 @@
-import React, { Component, useState, useEffect, useCallback, useRef } from 'react';
+import React, {
+  Component, useState, useEffect, useCallback, useRef
+} from 'react';
 import { Link } from "react-router-dom";
 import axios from 'axios';
-import { connect } from "react-redux";
+import { connect, useSelector } from "react-redux";
 import { 
   photoActions
 } from './actions/Actions.js';
@@ -82,44 +84,37 @@ class ModalFooter extends Component {
   }
 }
 
-class ConnectedFoodPhotoThumbnail extends Component {
-  render() {
-    // Set the appropriate class names if the thumbnail is selected
-    var classNames = ['thumbnail'];
-    if (this.props.selected) {
-      classNames.push('selected');
-    }
-    classNames = classNames.join(' ');
-    // Show image if it's loaded. If not, show a placeholder icon
-    var image = this.props.data 
-      ? <img src={this.props.data} alt='Thumbnail'/> 
-      : <i className="material-icons">fastfood</i>;
+function FoodPhotoThumbnail(props) {
+  const {
+    selected,
+    photoId,
+    onClick = ()=> {},
+    onDoubleClick = () => console.log('double!')
+  } = props;
+  const photo = useSelector(
+    state => { return state.photos.entities[photoId] || {} }
+  );
+  let data = process.env.REACT_APP_SERVER_ADDRESS+photo.file_url;
 
-    return (
-      <div className={classNames}>
-        {image}
-      </div>
-    );
+  // Set the appropriate class names if the thumbnail is selected
+  var classNames = ['thumbnail'];
+  if (selected) {
+    classNames.push('selected');
   }
+  classNames = classNames.join(' ');
+  // Show image if it's loaded. If not, show a placeholder icon
+  var image = data 
+    ? <img src={data} alt='Thumbnail'/> 
+    : <i className="material-icons">fastfood</i>;
+
+  return (
+    <div className={classNames}
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}>
+      {image}
+    </div>
+  );
 }
-const FoodPhotoThumbnail = connect(
-  function(state, ownProps) {
-    let photo = state.photos.entities[ownProps.photoId] || {};
-    let data = process.env.REACT_APP_SERVER_ADDRESS+photo.file_url;
-    if (data) {
-      return {
-        data: data
-      };
-    } else {
-      return {
-        data: null
-      }
-    }
-  },
-  function(dispatch, ownProps) {
-    return {};
-  }
-)(ConnectedFoodPhotoThumbnail);
 
 class ConnectedThumbnailsList extends Component {
   constructor(props) {

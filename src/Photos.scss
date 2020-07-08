@@ -1,6 +1,6 @@
 @import '_variables';
 
-.photo-page-container {
+.photos-page-container {
   .main-card {
     .card {
       h2 {
@@ -21,3 +21,8 @@
   }
 }
 
+.photo-page-container {
+  .photo img {
+    max-width: 100%;
+  }
+}

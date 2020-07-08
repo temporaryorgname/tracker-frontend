@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Link, Switch, useLocation } from "react-router-dom";
+import {
+  Route, Link, Switch, useLocation, useHistory
+} from "react-router-dom";
 
 import axios from 'axios';
 
@@ -7,6 +9,7 @@ import { connect, shallowEqual, useSelector, useDispatch } from "react-redux";
 
 import { 
   photoActions,
+  foodActions,
   notify
 } from './actions/Actions.js';
 import { 
@@ -15,6 +18,7 @@ import {
   formatDate
 } from './Utils.js';
 import { FoodPhotoThumbnail, BigButton } from './Common.js';
+import { EntryEditorForm } from './Diet.js';
 
 import './Photos.scss';
 
@@ -115,7 +119,7 @@ export function PhotosPage(props) {
   ] = usePhotoUploader(date);
 
   return (
-    <main className='photo-page-container'>
+    <main className='photos-page-container'>
       <div className='main-card col-12'>
         <div className='card'>
           <h2>Upload Photo</h2>
@@ -152,8 +156,19 @@ function Gallery(props) {
   const {
     uid
   } = props;
+  const history = useHistory();
   const photosByDate = usePhotos(uid);
   const [maxPhotos,setMaxPhotos] = useState(10);
+  const [selectedPhotos, setSelectedPhotos] = useState(new Set());
+  function toggleSelectPhoto(id) {
+    let selected = new Set(selectedPhotos);
+    if (selected.has(id)) {
+      selected.delete(id);
+    } else {
+      selected.add(id);
+    }
+    setSelectedPhotos(selected);
+  }
 
   let sortedDates = Object.keys(photosByDate).sort().reverse();
   let photosDom = [];
@@ -164,8 +179,10 @@ function Gallery(props) {
     photosByDate[d].forEach(photo => {
       photosDom.push(
         <FoodPhotoThumbnail photoId={photo.id}
-            selected={false}
-            key={photo.id}/>
+            selected={selectedPhotos.has(photo.id)}
+            key={photo.id}
+            onClick={()=>toggleSelectPhoto(photo.id)}
+            onDoubleClick={()=>history.push('/photo?id='+photo.id)}/>
       );
     });
     count += photosByDate[d].length;
@@ -179,4 +196,116 @@ function Gallery(props) {
       <button onClick={()=>setMaxPhotos(maxPhotos+10)}>Show More</button>
     </div>
   </>);
+}
+
+export function PhotoPage(props) {
+  const location = useLocation();
+  const dispatch = useDispatch();
+
+  //const [photoId, setPhotoId] = useState(null);
+  const [photoId, setPhotoId] = useState(null);
+  const photo = useSelector(
+    state => photoId ? state.photos.entities[photoId] : null
+  )
+  const [newFoodEntry, setNewFoodEntry] = useState(null);
+  const food = useSelector(
+    state => {
+      if (photo) {
+        if (photo.food_id) {
+          return state.food.entities[photo.food_id];
+        } else {
+          return newFoodEntry;
+        }
+      } else {
+        return null;
+      }
+    }
+  )
+  const otherPhotos = useSelector(
+    state => Object.values(
+      state.photos.entities
+    ).filter(
+      p => food && food.id && p.food_id == food.id
+    )
+  );
+
+  if (!photo && photoId) {
+    dispatch(photoActions['fetchSingle'](photoId));
+  }
+  if (!food && photo && photo.food_id) {
+    dispatch(foodActions['fetchSingle'](photo.food_id));
+  }
+
+  // If the photo is loaded, and it's not associated with any food entry,
+  // Create a new entry and fill in data from the photo.
+  useEffect(() => {
+    if (photo && !photo.food_id) {
+      setNewFoodEntry({
+        date: photo.date,
+        user_id: photo.user_id,
+        photo_ids: [photo.id]
+      });
+    }
+  }, [photo]);
+
+  // If the food entry changes, check if there are other photos associated with that food entry. If so, load them.
+  useEffect(() => {
+    if (food && food.id) {
+      dispatch(photoActions['fetchMultiple']({food_id: food.id}));
+    }
+  }, [food])
+
+  // Query string change
+  useEffect(() => {
+    let queryParams = parseQueryString(location.search);
+    setPhotoId(queryParams['id']);
+  }, [location]);
+
+  function foodOnChange(entry) {
+    if (photo && photo.food_id) {
+      dispatch(foodActions['update'](entry));
+    } else {
+      setNewFoodEntry(entry);
+    }
+  }
+  function foodCreateEntry() {
+    dispatch(foodActions['create'](newFoodEntry));
+  }
+  function foodDeleteEntry() {
+    if (window.confirm('Are you sure you want to delete this entry?')) {
+      dispatch(foodActions['deleteSingle'](food.id));
+    }
+  }
+
+  return (
+    <main className='photo-page-container'>
+      <div className='card col-12 photo'>
+        {
+          photo &&
+          <img src={process.env.REACT_APP_SERVER_ADDRESS+photo.file_url} />
+        }
+      </div>
+      {
+        <div className='card col-12'>
+          {
+            otherPhotos.map(photo =>
+              <FoodPhotoThumbnail photoId={photo.id} />
+            )
+          }
+        </div>
+      }
+      <div className='card col-12'>
+        {
+          food &&
+          <EntryEditorForm entry={food}
+              onChange={foodOnChange} /> 
+        }
+        {
+          (photo && !photo.food_id) ?
+          <button onClick={foodCreateEntry}>Create New Entry</button> :
+          <button onClick={foodDeleteEntry}>Delete Entry</button>
+        }
+      </div>
+    </main>
+  );
 }
