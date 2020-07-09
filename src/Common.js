@@ -580,5 +580,13 @@ export function useSVG(render, dependencies) {
   return ref;
 }
 
+export function Loading() {
+  return (<div className='loading'>
+    <span>&middot;</span>
+    <span>&middot;</span>
+    <span>&middot;</span>
+  </div>);
+}
+
 export { Checkbox, Modal, ModalHeader, ModalBody, ModalFooter, FoodPhotoThumbnail, ThumbnailsList, AutocompleteInput, BigButton, Button, Accordion, DropdownMenu };
 
