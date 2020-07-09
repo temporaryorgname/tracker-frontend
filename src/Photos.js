@@ -131,14 +131,8 @@ export function PhotosPage(props) {
           }
           <label>
             <input type="file" name="file" accept="image/*"
-                capture="environment"
                 onChange={uploadCallback}/>
-            <BigButton icon='add_a_photo' text='Take a Photo' />
-          </label>
-          <label>
-            <input type="file" name="file" accept="image/*"
-                onChange={uploadCallback}/>
-            <BigButton icon='publish' text='Upload Photo' />
+            <BigButton icon='add_a_photo' text='Upload Photo' />
           </label>
           {
             Object.values(ulProgress).map(progress => {
