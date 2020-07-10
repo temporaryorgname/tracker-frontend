@@ -19,7 +19,8 @@ import {
   clipFloat,
 } from './Utils.js';
 import {
-  useSVG
+  useSVG,
+  Loading
 } from './Common.js';
 
 import './Body.scss';
@@ -128,7 +129,7 @@ function BodyWeightTable(props) {
       case 'loading':
         status = (
           <tr className='status'>
-            <td colSpan='999'>LOADING</td>
+            <td colSpan='999'><Loading /></td>
           </tr>
         );
         break;
@@ -397,19 +398,20 @@ function BodyWeightTimeSeries(props) {
   }, [history.data, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
-    <svg ref={ref} width='100%' viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
-      <g className='x-gridlines'></g>
-      <g className='y-gridlines'></g>
-      <g className='x-axis'></g>
-      <g className='y-axis'></g>
-      <text className='x-axis'></text>
-      <text className='y-axis'></text>
-      <svg viewBox='0 0 800 300'>
-        <g className='curves'>
-          <path d=""></path>
-        </g>
+      <svg ref={ref} width='100%' viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+        <g className='x-gridlines'></g>
+        <g className='y-gridlines'></g>
+        <g className='x-axis'></g>
+        <g className='y-axis'></g>
+        <text className='x-axis'></text>
+        <text className='y-axis'></text>
+        <svg viewBox='0 0 800 300'>
+          <g className='curves'>
+            <path d=""></path>
+          </g>
+        </svg>
       </svg>
-    </svg>
+      { loadingStatus.status === 'loading' && <Loading /> }
     </div>
   )
 }
@@ -622,24 +624,25 @@ function BodyWeightHourlyStats(props) {
   }, [hourly_mean, hourly_std, loadingStatus.status]);
   return (
     <div className='bodyweight-plot-container'>
-    <svg ref={ref} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
-      <g className='x-gridlines'></g>
-      <g className='y-gridlines'></g>
-      <g className='x-axis'></g>
-      <g className='y-axis'></g>
-      <text className='x-axis'></text>
-      <text className='y-axis'></text>
-      <svg viewBox='0 0 800 300'>
-        <g className='std'>
-          <path d=""></path>
-        </g>
-        <g className='curves'>
-          <path d=""></path>
-        </g>
-        <g className='hover'>
-        </g>
+      <svg ref={ref} viewBox='0 0 800 300' preserveAspectRatio="xMidYMid slice">
+        <g className='x-gridlines'></g>
+        <g className='y-gridlines'></g>
+        <g className='x-axis'></g>
+        <g className='y-axis'></g>
+        <text className='x-axis'></text>
+        <text className='y-axis'></text>
+        <svg viewBox='0 0 800 300'>
+          <g className='std'>
+            <path d=""></path>
+          </g>
+          <g className='curves'>
+            <path d=""></path>
+          </g>
+          <g className='hover'>
+          </g>
+        </svg>
       </svg>
-    </svg>
+      { loadingStatus.status === 'loading' && <Loading overlay={true}/> }
     </div>
   )
 }

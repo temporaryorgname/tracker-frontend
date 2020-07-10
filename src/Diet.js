@@ -26,7 +26,7 @@ import {
   Checkbox, FoodPhotoThumbnail, DropdownMenu,
   Button,
   Modal, ModalHeader, ModalBody, ModalFooter,
-  Breadcrumbs
+  Breadcrumbs, Loading
 } from './Common.js';
 import {
   parseQueryString, dictToQueryString, formatDate,
@@ -208,7 +208,7 @@ export function ConnectedDietPage(props) {
       </div>
       <div className='card col-12'>
         <h3>Log</h3>
-        <FoodTable entries={visibleEntries} />
+        <FoodTable entries={visibleEntries} loadingStatus={loadingStatus} />
       </div>
       <div className='card col-12'>
         <FoodPhotosGallery uid={uid} foodId={mainEntryId} date={date}/>
@@ -429,88 +429,89 @@ function Gallery(props) {
 // Table
 //////////////////////////////////////////////////
 
-export class FoodTable extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      entries: {}
-    };
+export function FoodTable(props) {
+  let {
+    entries = {},
+    loadingStatus = {}
+  } = props;
+  function sum(entries, prop) {
+    // Given a tree of entries, return the sum of
+    // values under the key `prop` for all children
+    return Object.values(entries).reduce(function(acc, entry){
+      let val = entry[prop];
+      if (!val && entry.children) {
+        val = sum(entry.children, prop);
+      }
+      if (!val) {
+        return acc;
+      }
+      if (!acc) {
+        return val;
+      }
+      return acc+val;
+    }, null);
   }
-  render() {
-    let {
-      entries = this.state.entries,
-    } = this.props;
-    function sum(entries, prop) {
-      return Object.values(entries).reduce(function(acc, entry){
-        let val = entry[prop];
-        if (!val && entry.children) {
-          val = sum(entry.children, prop);
+  let rows = null;
+  if (loadingStatus.status === 'loading') {
+    // Show loading thing
+    rows = (
+      <tr><td colSpan='999'><Loading /></td></tr>
+    )
+  } else if (Object.entries(entries).length === 0) {
+    // Nothing to show
+    rows = (
+      <tr><td colSpan='999'>No entries to show</td></tr>
+    )
+  } else {
+    rows = Object.entries(entries).map(function([id,entry]){
+      let children_count = '';
+      if (entry.children && Object.keys(entry.children).length > 0) {
+        children_count = '('+Object.keys(entry.children).length+')';
+      }
+      let total = computeDietEntryTotal([entry]);
+      function createRow(entryVal, computedVal, missingVal) {
+        if (entryVal) {
+          return <td>{clipFloat(entryVal,0)}</td>;
+        } else if (computedVal) {
+          return <td className='empty'>{clipFloat(computedVal,0)}</td>;
+        } else {
+          return <td className='empty'>-</td>;
         }
-        if (!val) {
-          return acc;
-        }
-        if (!acc) {
-          return val;
-        }
-        return acc+val;
-      }, null);
-    }
-    let rows = null;
-    if (Object.entries(entries).length === 0) {
-      rows = (
-        <tr><td colSpan='999'>No entries to show</td></tr>
-      )
-    } else {
-      rows = Object.entries(entries).map(function([id,entry]){
-        let children_count = '';
-        if (entry.children && Object.keys(entry.children).length > 0) {
-          children_count = '('+Object.keys(entry.children).length+')';
-        }
-        let total = computeDietEntryTotal([entry]);
-        function createRow(entryVal, computedVal, missingVal) {
-          if (entryVal) {
-            return <td>{clipFloat(entryVal,0)}</td>;
-          } else if (computedVal) {
-            return <td className='empty'>{clipFloat(computedVal,0)}</td>;
-          } else {
-            return <td className='empty'>-</td>;
-          }
-        }
-        return (
-          <tr key={entry.id}>
-            <td>{entry.name} {children_count} <Link to={'/food?id='+entry.id}><i className='material-icons'>create</i></Link></td>
-            <td>{entry.quantity || '-'}</td>
-            {createRow(entry.calories,total.calories)}
-            {createRow(entry.carb,total.carb)}
-            {createRow(entry.protein,total.protein)}
-          </tr>
-        );
-      });
-    }
-    return (
-      <table className='food-table'>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Qty</th>
-            <th>Cal</th>
-            <th>Carb</th>
-            <th>Prot</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows}
-          <tr className='total'>
-            <th>Total</th>
-            <td>-</td>
-            <td>{clipFloat(sum(entries,'calories'),0) || '-'}</td>
-            <td>{clipFloat(sum(entries,'carb'),0) || '-'}</td>
-            <td>{clipFloat(sum(entries,'protein'),0) || '-'}</td>
-          </tr>
-        </tbody>
-      </table>
-    );
+      }
+      return (
+        <tr key={entry.id}>
+          <td>{entry.name} {children_count} <Link to={'/food?id='+entry.id}><i className='material-icons'>create</i></Link></td>
+          <td>{entry.quantity || '-'}</td>
+          {createRow(entry.calories,total.calories)}
+          {createRow(entry.carb,total.carb)}
+          {createRow(entry.protein,total.protein)}
+        </tr>
+      );
+    });
   }
+  return (
+    <table className='food-table'>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Qty</th>
+          <th>Cal</th>
+          <th>Carb</th>
+          <th>Prot</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows}
+        <tr className='total'>
+          <th>Total</th>
+          <td>-</td>
+          <td>{clipFloat(sum(entries,'calories'),0) || '-'}</td>
+          <td>{clipFloat(sum(entries,'carb'),0) || '-'}</td>
+          <td>{clipFloat(sum(entries,'protein'),0) || '-'}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
 }
 
 //////////////////////////////////////////////////

@@ -580,8 +580,11 @@ export function useSVG(render, dependencies) {
   return ref;
 }
 
-export function Loading() {
-  return (<div className='loading'>
+export function Loading(props) {
+  const {
+    overlay = false
+  } = props;
+  return (<div className={'loading' + (overlay ? ' overlay' : '')}>
     <span>&middot;</span>
     <span>&middot;</span>
     <span>&middot;</span>

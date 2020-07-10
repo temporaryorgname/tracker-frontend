@@ -42,6 +42,7 @@
   .bodyweight-table-container {
     display: inline-block;
     max-width: 500px;
+    position: relative;
 
     table {
       width: 100%;
@@ -64,6 +65,7 @@
 
   .bodyweight-plot-container {
     padding: 20px;
+    position: relative;
     svg {
       text {
         fill: white;

@@ -306,6 +306,14 @@ div.breadcrumbs {
 
 div.loading {
   font-size: 32px;
+  &.overlay {
+    position: absolute;
+    line-height: 0;
+    top: 50%;
+    left: 0;
+    text-align: center;
+    width: 100%;
+  }
   span {
     display: inline-block;
     animation-name: bounce;
