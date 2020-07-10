@@ -1,4 +1,4 @@
-import React, { Component, useState } from 'react';
+import React, { Component, useState, useRef } from 'react';
 import { BrowserRouter as Router, Route, Link, Switch } from "react-router-dom";
 import axios from 'axios';
 import './App.scss';
@@ -7,12 +7,13 @@ import { connect, useDispatch } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
 import { userProfileActions, unnotify } from './actions/Actions.js';
 
-import { ConnectedOverviewPage } from './Home.js'
-import { ConnectedDietPage } from './Diet.js'
-import { BodyStatsPage } from './Body.js'
-import { UserPage } from './User.js'
-import { DataPage, TagsPage } from './Data.js'
-import { PhotosPage, PhotoPage } from './Photos.js'
+import { ConnectedOverviewPage } from './Home.js';
+import { ConnectedDietPage } from './Diet.js';
+import { BodyStatsPage } from './Body.js';
+import { UserPage } from './User.js';
+import { DataPage, TagsPage } from './Data.js';
+import { PhotosPage, PhotoPage } from './Photos.js';
+import { useClickOutsideHandler } from './Common.js';
 
 class ConnectedApp extends Component {
   constructor(props) {
@@ -144,6 +145,8 @@ function NavigationBar(props) {
     loggedIn,
     uid
   } = props;
+  const ref = useRef(null);
+  useClickOutsideHandler(ref, () => setMenuVisible(false));
 
   // Class names
   let navClasses = ['nav'];
@@ -177,7 +180,7 @@ function NavigationBar(props) {
     );
   }
   return (
-    <nav>
+    <nav ref={ref}>
       <span className='title'>{route ? <Link to={route}>{title}</Link> : title}</span>
       <div className='toggle-menu' onClick={toggleMenu}>
         <i className='material-icons'>menu</i>
