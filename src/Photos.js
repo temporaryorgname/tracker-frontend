@@ -380,6 +380,7 @@ export function FoodPhotosSelectorGallery(props) {
 export function PhotoPage(props) {
   const location = useLocation();
   const dispatch = useDispatch();
+  const history = useHistory();
 
   const [photoId, setPhotoId] = useState(null);
   const photo = useSelector(
@@ -471,6 +472,15 @@ export function PhotoPage(props) {
           <button onClick={foodDeleteEntry}>Delete Entry</button>
         }
       </div>
+      {
+        photo &&
+        <div className='card col-12'>
+          <h2>Misc</h2>
+          <button onClick={() => history.push('/food?uid='+photo.user_id+'date='+photo.date)}>
+            View Diet Log
+          </button>
+        </div>
+      }
     </main>
   );
 }
