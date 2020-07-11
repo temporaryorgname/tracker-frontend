@@ -88,7 +88,8 @@ function FoodPhotoThumbnail(props) {
     selected,
     photoId,
     onClick = ()=> {},
-    onDoubleClick = () => console.log('double!')
+    onDoubleClick = () => console.log('double!'),
+    overlay = null,
   } = props;
   const photo = useSelector(
     state => { return state.photos.entities[photoId] || {} }
@@ -111,6 +112,7 @@ function FoodPhotoThumbnail(props) {
         onClick={onClick}
         onDoubleClick={onDoubleClick}>
       {image}
+      <div className='overlay'>{overlay}</div>
     </div>
   );
 }

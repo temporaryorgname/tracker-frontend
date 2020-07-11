@@ -13,7 +13,8 @@ import {
   getLoadingStatus,
   parseQueryString,
   formatDate,
-  toggleSet
+  toggleSet,
+  subtractSets
 } from './Utils.js';
 import { FoodPhotoThumbnail, BigButton } from './Common.js';
 import { EntryEditorForm, useFoodPhotos } from './Diet.js';
@@ -225,6 +226,41 @@ export function FoodPhotosGallery(props) {
   const [scrollPos, setScrollPos] = useState(0);
   const [scrollLimits, setScrollLimits] = useState([0,0])
 
+  // 'view' = display photos associated with this food entry
+  // 'select' = Display all photos for this date so a new set can be selected
+  const [mode, setMode] = useState('view');
+  const [selectedSet, setSelectedSet] = useState(null);
+  const selectedPhotos = useSelector(
+    state => selectedSet && 
+      Array.from(selectedSet).map(id => state.photos.entities[id])
+  );
+  function handleSelectedPhotosChange() {
+    let originalSet = new Set(photos.map(p => p.id));
+    let deletedIds = subtractSets(originalSet,selectedSet);
+    let addedIds = subtractSets(selectedSet,originalSet);
+    for (let photo of selectedPhotos) {
+      dispatch(photoActions['update']({
+        ...photo,
+        food_id: foodId
+      }));
+    }
+    for (let photo of photos) {
+      if (deletedIds.has(photo.id)) {
+        dispatch(photoActions['update']({
+          ...photo,
+          food_id: null
+        }));
+      }
+    }
+    setMode('view');
+  }
+  function enableSelectMode() {
+    setSelectedSet(new Set(
+      photos.map(p => p.id)
+    ));
+    setMode('select');
+  }
+
   // Check for dimension changes and update accordingly
   let resizeObs = useRef( // Keep reference so we don't create a new one each time
     new ResizeObserver(x => {
@@ -255,16 +291,15 @@ export function FoodPhotosGallery(props) {
     setScrollPos(pos);
   }
   
-  const [scrollMin,scrollMax] = scrollLimits;
-  let style = {transform: 'translateX('+scrollPos+'px)'};
-  return (<div className='food-photos-gallery'>
-    <div className='scrollable-container' ref={ref} style={style}>
+  function renderView() {
+    return (<>
       <label>
         <input type="file" name="file" accept="image/*" capture="camera"
             onChange={uploadCallback}/>
         <BigButton icon='add_a_photo' text='Upload Photo' />
       </label>
-      <BigButton icon='collections' text='Select Photo' />
+      <BigButton icon='collections' text='Select Photo'
+          onClick={enableSelectMode}/>
       {
         photos.map(photo =>
           <FoodPhotoThumbnail key={photo.id}
@@ -272,6 +307,20 @@ export function FoodPhotosGallery(props) {
               onClick={()=>history.push('/photo?id='+photo.id)}/>
         )
       }
+    </>);
+  }
+  function renderSelect() {
+    return (
+      <FoodPhotosSelectorGallery date={date} uid={uid}
+          onChange={setSelectedSet} selectedPhotos={selectedSet} />
+    );
+  }
+
+  const [scrollMin,scrollMax] = scrollLimits;
+  let style = {transform: 'translateX('+scrollPos+'px)'};
+  return (<div className='food-photos-gallery'>
+    <div className='scrollable-container' ref={ref} style={style}>
+      { mode === 'view' ? renderView() : renderSelect() }
     </div>
     {
       scrollPos < scrollMax &&
@@ -285,7 +334,47 @@ export function FoodPhotosGallery(props) {
         <i className='material-icons'>navigate_next</i>
       </div>
     }
+    {
+      mode === 'select' &&
+      <>
+        <button onClick={handleSelectedPhotosChange}>Done</button>
+        <button onClick={() => setMode('view')}>Cancel</button>
+      </>
+    }
   </div>);
+}
+
+export function FoodPhotosSelectorGallery(props) {
+  const {
+    uid = null,
+    date = formatDate(new Date()),
+    onChange = () => {},
+    selectedPhotos = new Set(),
+  } = props;
+  const dispatch = useDispatch();
+  const photos = useFoodPhotos(uid, null, date);
+  const ref = useRef();
+
+  function toggleSelected(id) {
+    onChange(toggleSet(selectedPhotos,id));
+  }
+
+  function getOverlay(photo) {
+    if (selectedPhotos.has(photo.id)) {
+      return <i className='material-icons'>check</i>;
+    } else if (photo.food_id) {
+      return <i className='material-icons'>fastfood</i>;
+    } else {
+      return null;
+    }
+  }
+  return photos.map(photo =>
+    <FoodPhotoThumbnail key={photo.id}
+        photoId={photo.id}
+        selected={selectedPhotos.has(photo.id)}
+        onClick={() => toggleSelected(photo.id)}
+        overlay={getOverlay(photo)}/>
+  );
 }
 
 export function PhotoPage(props) {

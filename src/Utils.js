@@ -103,6 +103,17 @@ export const toggleSet = function(s,x) {
   }
 }
 
+export const subtractSets = function(s1,s2) {
+  // Return s1-s2
+  let s = new Set();
+  for (let x of s1) {
+    if (!s2.has(x)) {
+      s.add(x);
+    }
+  }
+  return s;
+}
+
 // String utils
 export const formatString = function(string, values) {
   return Object.keys(values).reduce(function(acc,key){
