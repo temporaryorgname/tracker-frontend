@@ -13,6 +13,7 @@ main.user-page-container {
       white-space: nowrap;
       display: block;
       margin-left: 20px;
+      vertical-align: middle;
       span {
         display: inline-block;
         width: 50%;
@@ -22,6 +23,10 @@ main.user-page-container {
       input {
         display: inline-block;
         max-width: 40%;
+      }
+      .dropdown {
+        width: 40%;
+        margin: 5px;
       }
     }
     button {

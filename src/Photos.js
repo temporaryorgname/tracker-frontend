@@ -221,10 +221,6 @@ export function FoodPhotosGallery(props) {
     uploadCallback
   ] = usePhotoUploader(date, foodId);
   const ref = useRef();
-  const [scrollWidth, setScrollWidth] = useState(0);
-  const [clientWidth, setClientWidth] = useState(0);
-  const [scrollPos, setScrollPos] = useState(0);
-  const [scrollLimits, setScrollLimits] = useState([0,0])
 
   // 'view' = display photos associated with this food entry
   // 'select' = Display all photos for this date so a new set can be selected
@@ -261,12 +257,15 @@ export function FoodPhotosGallery(props) {
     setMode('select');
   }
 
+  // Scrolling
+  const [scrollWidth, setScrollWidth] = useState(0);
+  const [clientWidth, setClientWidth] = useState(0);
+  const [scrollPos, setScrollPos] = useState(0);
+  const [scrollLimits, setScrollLimits] = useState([0,0])
   function updateScrollLimits() {
     if (!ref.current) return;
     let s = ref.current.scrollWidth; // Width of full div
     let c = ref.current.clientWidth; // Width of the visile window
-    console.log('FOOOOOOOOOOO '+s+' '+c);
-    window.ref = ref;
     setScrollWidth(s);
     setClientWidth(c);
     setScrollLimits([
@@ -274,14 +273,12 @@ export function FoodPhotosGallery(props) {
       0
     ]);
   }
-  // Check for dimension changes and update accordingly
   let resizeObs = useRef( // Keep reference so we don't create a new one each time
     new ResizeObserver(x => {
       updateScrollLimits();
     })
   );
-  // Check if new child was added to the scrollable container
-  let mutationObs = useRef(
+  let mutationObs = useRef( // Children addition does not trigger ResizeObserver
     new MutationObserver((mutations,observer) => {
       for (let mutation of mutations) {
         if (mutation.type === 'childList') {
@@ -303,7 +300,6 @@ export function FoodPhotosGallery(props) {
       mutationObs.current.disconnect();
     }
   }, [ref.current]);
-
   function scroll(direction) {
     const [min,max] = scrollLimits;
     let pos = scrollPos+direction*0.8*clientWidth;
@@ -315,6 +311,7 @@ export function FoodPhotosGallery(props) {
     setScrollPos(pos);
   }
   
+  // Render
   function renderView() {
     return (<>
       <label>

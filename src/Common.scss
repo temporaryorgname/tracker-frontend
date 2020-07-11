@@ -183,10 +183,13 @@ div.autocomplete-input {
   // Default styles
   > .heading {
     box-sizing: border-box;
+    background-color: $background-colour;
+    color: $primary-colour;
     cursor: pointer;
     height: 0;
     padding: 16px;
     padding-right: 0;
+    margin: 0;
     font-size: 14px;
     line-height: 0;
     vertical-align: middle;
@@ -194,7 +197,7 @@ div.autocomplete-input {
     border: 1px solid black;
     border-radius: 5px;
     > i.material-icons {
-      animation: ease 0.3s;
+      animation: ease 0.2s;
       vertical-align: middle;
       margin: 0 5px 0 10px;
       //position: absolute;
@@ -205,9 +208,10 @@ div.autocomplete-input {
   }
   > .options {
     box-sizing: border-box;
-    animation: ease 0.3s;
+    animation: ease 0.2s;
     border: 1px solid black;
     border-radius: 5px;
+    margin: 0;
     position: absolute;
     top: 100%;
     left: 0;
@@ -215,11 +219,13 @@ div.autocomplete-input {
     z-index: 1;
     box-shadow: $shadow;
     background-color: $background-colour;
-    transition: all .3s ease;
+    color: $primary-colour;
+    transition: all .2s ease;
     transform-origin: top;
     > .option {
       box-sizing: border-box;
       padding: 16px;
+      margin: 0;
       line-height: 0;
       text-align: left;
       white-space: nowrap;

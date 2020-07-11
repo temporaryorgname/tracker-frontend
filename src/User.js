@@ -12,6 +12,9 @@ import {
   bodyweightActions,
   userProfileActions
 } from './actions/Actions.js';
+import {
+  DropdownMenu
+} from './Common.js';
 
 import './User.scss';
 
@@ -207,10 +210,12 @@ class ConnectedUserProfile extends Component {
           </label>
           <label>
             <span>Prefered Units</span>
-            <select name='prefered_units' value={this.state.form.prefered_units} onChange={this.handleFormChange}>
-              <option value='lbs'>Imperial (lbs)</option>
-              <option value='kgs'>Metric (kg)</option>
-            </select>
+            <DropdownMenu value={this.state.form.prefered_units}
+              options={{
+                lbs: 'Imperial (lbs)',
+                kgs: 'Metric (kgs)'}}
+              onChange={x=>this.setState(
+                {form: {...this.state.form,prefered_units: x}})} />
           </label>
           <button onClick={this.handleSaveProfile}>Save</button>
         </form>
@@ -226,12 +231,14 @@ class ConnectedUserProfile extends Component {
           </div>
           <label>
             <span>Bodyweight goal</span>
-            <select name='weight_goal' value={this.state.form.weight_goal} onChange={this.handleFormChange}>
-              <option value='none'>None</option>
-              <option value='gain'>Gain weight</option>
-              <option value='lose'>Lose weight</option>
-              <option value='maintain'>Maintain</option>
-            </select>
+            <DropdownMenu value={this.state.form.weight_goal}
+              options={{
+                none: 'None',
+                gain: 'Gain weight',
+                lose: 'Lose weight',
+                maintain: 'Maintain'}}
+              onChange={x=>this.setState(
+                {form: {...this.state.form,weight_goal: x}})} />
           </label>
           <label>
             <span>Target weight</span>
