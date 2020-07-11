@@ -8,7 +8,7 @@ $light-colour-2: #C988DA;
 $dark-colour-2: #3F2942;
 $background-gradient: linear-gradient(to bottom right, $light-colour-1, $light-colour-2);
 
-$focus-colour: rgba($primary-colour, 0.1);
+$focus-colour: rgba($light-colour-2, 0.1);
 $success-colour: green;
 $error-colour: red;
 

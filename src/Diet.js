@@ -1200,10 +1200,7 @@ function NewEntryField(props) {
       setSuggestions(response.data.frequent);
       setLoadingSuggestions(false);
       setSelectedSuggestion(null);
-      console.log(response.data);
     }).catch(error => {
-      console.error(error);
-      window.error = error;
       setError(error.response.data.error);
       setLoadingSuggestions(false);
       setSelectedSuggestion(null);

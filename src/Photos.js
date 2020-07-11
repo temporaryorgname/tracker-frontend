@@ -261,23 +261,47 @@ export function FoodPhotosGallery(props) {
     setMode('select');
   }
 
+  function updateScrollLimits() {
+    if (!ref.current) return;
+    let s = ref.current.scrollWidth; // Width of full div
+    let c = ref.current.clientWidth; // Width of the visile window
+    console.log('FOOOOOOOOOOO '+s+' '+c);
+    window.ref = ref;
+    setScrollWidth(s);
+    setClientWidth(c);
+    setScrollLimits([
+      s > c ? -(s-c*0.8) : 0,
+      0
+    ]);
+  }
   // Check for dimension changes and update accordingly
   let resizeObs = useRef( // Keep reference so we don't create a new one each time
     new ResizeObserver(x => {
-      if (!ref.current) return;
-      let s = ref.current.scrollWidth; // Width of full div
-      let c = ref.current.clientWidth; // Width of the visile window
-      setScrollWidth(s);
-      setClientWidth(c);
-      setScrollLimits([
-        s > c ? -(s-c*0.8) : 0,
-        0
-      ]);
+      updateScrollLimits();
+    })
+  );
+  // Check if new child was added to the scrollable container
+  let mutationObs = useRef(
+    new MutationObserver((mutations,observer) => {
+      for (let mutation of mutations) {
+        if (mutation.type === 'childList') {
+          updateScrollLimits();
+          return;
+        }
+      }
     })
   );
   useEffect(() => {
+    if (!ref.current) return;
     resizeObs.current.observe(ref.current);
-    return () => resizeObs.current.unobserve(ref.current);
+    mutationObs.current.observe(ref.current, {childList: true});
+    for (let child of ref.current.children) {
+      resizeObs.current.observe(child);
+    }
+    return () => {
+      resizeObs.current.disconnect();
+      mutationObs.current.disconnect();
+    }
   }, [ref.current]);
 
   function scroll(direction) {
