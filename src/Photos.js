@@ -303,12 +303,35 @@ export function FoodPhotosGallery(props) {
   function scroll(direction) {
     const [min,max] = scrollLimits;
     let pos = scrollPos+direction*0.8*clientWidth;
-    if (pos > max) {
-      pos = max;
-    } else if (pos < min) {
-      pos = min;
-    }
     setScrollPos(pos);
+  }
+  useEffect(() => { // Check scrolling boundaries
+    const [min,max] = scrollLimits;
+    if (scrollPos > max) {
+      setScrollPos(max);
+    } else if (scrollPos < min) {
+      setScrollPos(min);
+    }
+  }, [scrollPos]);
+  const [dragStartPos,setDragStartPos] = useState(null);
+  const [dragDelta, setDragDelta] = useState(0);
+  function handleMouseDown(e) {
+    if (e.touches && e.touches.length === 1) {
+      setDragStartPos(e.touches[0].clientX);
+    }
+  }
+  function handleMouseUp(e) {
+    setDragStartPos(null);
+    setScrollPos(scrollPos+dragDelta);
+    setDragDelta(0);
+  }
+  function handleMouseMove(e) {
+    if (!dragStartPos) {
+      return;
+    }
+    if (e.touches && e.touches.length === 1) {
+      setDragDelta(e.touches[0].clientX-dragStartPos);
+    }
   }
   
   // Render
@@ -338,8 +361,11 @@ export function FoodPhotosGallery(props) {
   }
 
   const [scrollMin,scrollMax] = scrollLimits;
-  let style = {transform: 'translateX('+scrollPos+'px)'};
-  return (<div className='food-photos-gallery'>
+  let style = {transform: 'translateX('+(scrollPos+dragDelta)+'px)'};
+  return (<div className='food-photos-gallery'
+        onTouchStart={handleMouseDown}
+        onTouchEnd={handleMouseUp}
+        onTouchMove={handleMouseMove}>
     <div className='scrollable-container' ref={ref} style={style}>
       { mode === 'view' ? renderView() : renderSelect() }
     </div>

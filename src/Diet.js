@@ -398,33 +398,6 @@ export function useFoodPhotos(uid,id,date) {
   return filtered;
 }
 
-function Gallery(props) {
-  const {
-    uid,
-    id,
-    date
-  } = props;
-  const photos = useFoodPhotos(uid, id, date);
-  const [ulProgress,ulErrors,upload] = usePhotoUploader(date,id);
-  let photosDom = photos.map((photo) => {
-    return (<FoodPhotoThumbnail photoId={photo.id}
-        selected={false}
-        key={photo.id}/>);
-  });
-  return (<>
-    <div className='gallery'>
-      {photosDom}
-    </div>
-    <div className='controls'>
-      <label>
-        <input type="file" name="file" accept="image/*" capture="camera"
-            onChange={upload}/>
-        <Button>Upload Photo</Button>
-      </label>
-    </div>
-  </>);
-}
-
 //////////////////////////////////////////////////
 // Table
 //////////////////////////////////////////////////
