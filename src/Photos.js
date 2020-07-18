@@ -497,7 +497,7 @@ export function PhotoPage(props) {
         photo &&
         <div className='card col-12'>
           <h2>Misc</h2>
-          <button onClick={() => history.push('/food?uid='+photo.user_id+'date='+photo.date)}>
+          <button onClick={() => history.push('/food?uid='+photo.user_id+'&date='+photo.date)}>
             View Diet Log
           </button>
         </div>
