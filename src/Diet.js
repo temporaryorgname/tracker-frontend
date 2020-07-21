@@ -124,7 +124,7 @@ function useFoodEntries(id,date) {
   return [mainEntry, children, allEntries, loadingStatus];
 }
 
-export function ConnectedDietPage(props) {
+export function DietPage(props) {
   const dispatch = useDispatch();
   const updateEntry = e => dispatch(foodActions['update'](e));
   const location = useLocation();

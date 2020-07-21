@@ -7,8 +7,8 @@ import { connect, useDispatch } from "react-redux";
 import { login, logout, updateSession } from './actions/User.js';
 import { userProfileActions, unnotify } from './actions/Actions.js';
 
-import { ConnectedOverviewPage } from './Home.js';
-import { ConnectedDietPage } from './Diet.js';
+import { OverviewPage } from './Home.js';
+import { DietPage } from './Diet.js';
 import { BodyStatsPage } from './Body.js';
 import { UserPage } from './User.js';
 import { DataPage, TagsPage } from './Data.js';
@@ -34,7 +34,7 @@ class ConnectedApp extends Component {
 		let loggedInRoutes = [
 			{
 				route: '/food',
-				component: ConnectedDietPage,
+				component: DietPage,
 				title: 'Diet Log'
 			},{
 				route: '/photos',
@@ -63,7 +63,7 @@ class ConnectedApp extends Component {
 				component: LogoutPage
 			},{
 				route: '/',
-				component: ConnectedOverviewPage,
+				component: OverviewPage,
 				title: 'Overview'
 			}
 		];

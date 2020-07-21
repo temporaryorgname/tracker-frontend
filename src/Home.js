@@ -12,7 +12,7 @@ import {
   clipFloat
 } from './Utils.js';
 
-export function ConnectedOverviewPage(props) {
+export function OverviewPage(props) {
   const dispatch = useDispatch();
 
   const uid = useSelector(state => state.session.uid);
