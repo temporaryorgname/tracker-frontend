@@ -26,9 +26,10 @@
   }
   .card {
     &.header {
-      height: 0px;
-      padding: 21px;
-      line-height: 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      padding: 5px;
       text-align: left;
 
       .breadcrumbs {
@@ -68,18 +69,14 @@
 
 h3.date {
   display: inline-block;
-  line-height: 0;
-  vertical-align: bottom;
   margin: 0;
-  float: right;
+  white-space: nowrap;
   i {
     vertical-align: middle;
-    line-height: 0;
   }
   span {
     vertical-align: middle;
     margin: 0 30px;
-    line-height: 0;
   }
 }
 
