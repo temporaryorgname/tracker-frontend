@@ -1298,7 +1298,7 @@ function NewEntryField(props) {
   } else if (loadingSuggestions) {
     suggestionsDom = 'Loading...';
   }
-  suggestionsDom = null;
+  suggestionsDom = null; // XXX: Disabled for now
   return (
     <div className='new-entry-field-container'>
       {
@@ -1312,9 +1312,14 @@ function NewEntryField(props) {
           onKeyDown={onKeyDown}
           onFocus={onFocus}
           onBlur={onBlur} />
-      <div className='suggestions' ref={suggestionsRef}>
-        { suggestionsDom }
-      </div>
+      {
+        false &&
+        suggestions &&
+        suggestions.length > 0 &&
+        <div className='suggestions' ref={suggestionsRef}>
+          { suggestionsDom }
+        </div>
+      }
     </div>
   );
 }
