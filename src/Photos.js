@@ -424,6 +424,11 @@ export function FoodPhotosSelectorGallery(props) {
   );
 }
 
+function PhotoEditorForm(props) {
+  return (<div>
+  </div>);
+}
+
 export function PhotoPage(props) {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -497,6 +502,9 @@ export function PhotoPage(props) {
           <img src={process.env.REACT_APP_SERVER_ADDRESS+photo.file_url}
               alt='Food'/>
         }
+      </div>
+      <div className='card col-12 photo'>
+        <h2>Photo Info</h2>
       </div>
       {
         (food && food.id) &&
