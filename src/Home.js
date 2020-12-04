@@ -181,50 +181,36 @@ function TodayCalories(props) {
   );
 }
 
-class ResponsiveSVG extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      width: null,
+function ResponsiveSVG(props) {
+  const {
+    children,
+    onResize,
+  } = props;
+
+  const ref = useRef(null);
+  const [width,setWidth] = useState(null);
+  useEffect(()=>{
+    function handleResize() {
+      setWidth(ref.current.getBoundingClientRect().width);
     }
-    this.handleResize = this.handleResize.bind(this)
-  }
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (prevState.width !== this.state.width) {
-      if (this.props.onResize) {
-        this.props.onResize(this.state.width);
-      }
-    }
-  }
-  componentDidMount() {
-    this.handleResize();
-    window.addEventListener('resize', this.handleResize);
-  }
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
-  }
-  handleResize() {
-    let width = this.state.width;
-    let newWidth = this.svgContainer.getBoundingClientRect().width;
-    if (width !== newWidth) {
-      this.setState({
-        width: newWidth,
-      });
-    }
-  }
-  render() {
-    let children = this.props.children;
-    if (this.state.width === null) {
-      children = null;
-    }
-    return (
-      <div
-        ref={(el) => { this.svgContainer = el }}
-        className="responsive-svg-wrapper">
-        {children}
-      </div>
-    )
-  }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return ()=>{
+      window.removeEventListener('resize', handleResize);
+    };
+  },[]);
+
+  useEffect(()=>{
+    onResize(width);
+  },[width]);
+
+  useEffect(()=>{},[])
+
+  return (
+    <div ref={ref} className="responsive-svg-wrapper">
+      {width && children}
+    </div>
+  );
 }
 
 class ProgressBar extends Component {
@@ -255,9 +241,9 @@ class ProgressBar extends Component {
           <svg width={width+2} height={height+2}>
             <rect className='total' x="1" y="1" rx="3" ry="3" width={width} height={height} />
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={progressWidth} height={height} />
-            <text textAnchor='middle' x={width/2} y={height-6} >{centerText}</text>
-            <text className='left' textAnchor='start' x={6} y={height-6} >{leftText}</text>
-            <text className='right' textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
+            <text className='middle' textAnchor='middle' y={height-6} >{centerText}</text>
+            <text className='left' textAnchor='start' y={height-6} >{leftText}</text>
+            <text className='right' textAnchor='end' y={height-6} >{rightText}</text>
           </svg>
           </ResponsiveSVG>
         </div>
@@ -269,9 +255,9 @@ class ProgressBar extends Component {
           <svg width={width+2} height={height+2}>
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={width} height={height} />
             <rect className='progress' x="1" y="1" rx="3" ry="3" width={progressWidth} height={height} />
-            <text textAnchor='middle' x={width/2} y={height-6} >{centerText}</text>
-            <text className='left' textAnchor='start' x={6} y={height-6} >{leftText}</text>
-            <text className='right' textAnchor='end' x={width-6} y={height-6} >{rightText}</text>
+            <text className='middle' textAnchor='middle' y={height-6} >{centerText}</text>
+            <text className='left' textAnchor='start' y={height-6} >{leftText}</text>
+            <text className='right' textAnchor='end' y={height-6} >{rightText}</text>
           </svg>
         </div>
       );

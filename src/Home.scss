@@ -28,6 +28,15 @@
     text-align: center;
     margin-top: 20px;
     margin-bottom: 20px;
+    text.right{
+      transform: translateX(1%);
+    }
+    text.middle {
+      transform: translateX(50%);
+    }
+    text.right{
+      transform: translateX(99%);
+    }
   }
   svg {
     width: unset;
